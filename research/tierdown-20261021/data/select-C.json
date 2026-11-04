@@ -1,0 +1,1472 @@
+{
+ "slice": "C",
+ "evidence": "development (calibration slice)",
+ "nodes": [
+  {
+   "site": "kinetics/extract:*",
+   "tier": "memo",
+   "answered": 20,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.024175007999999994,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 31828,
+   "refLatencyP95": 73147,
+   "errors": [
+    [
+     "abstain",
+     20
+    ]
+   ]
+  },
+  {
+   "site": "kinetics/extract:*",
+   "tier": "claude-haiku-5-5",
+   "answered": 20,
+   "usable": 20,
+   "usableRate": 1,
+   "agreement": 0.885126914115722,
+   "disagreement": 0.11487308588427803,
+   "exactRate": 0.1,
+   "tierUsdPerDecision": 0.006088510500000001,
+   "refUsdPerDecision": 0.024175007999999994,
+   "tierLatencyP50": 31558,
+   "tierLatencyP95": 49042,
+   "refLatencyP50": 31828,
+   "refLatencyP95": 73147,
+   "errors": []
+  },
+  {
+   "site": "kinetics/prose-events-a",
+   "tier": "memo",
+   "answered": 5,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.043531393999999994,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 71253,
+   "refLatencyP95": 83423,
+   "errors": [
+    [
+     "abstain",
+     5
+    ]
+   ]
+  },
+  {
+   "site": "kinetics/prose-events-a",
+   "tier": "claude-haiku-5-5",
+   "answered": 5,
+   "usable": 5,
+   "usableRate": 1,
+   "agreement": 0.9652322998164784,
+   "disagreement": 0.0347677001835216,
+   "exactRate": 0,
+   "tierUsdPerDecision": 0.007330838000000001,
+   "refUsdPerDecision": 0.043531393999999994,
+   "tierLatencyP50": 34086,
+   "tierLatencyP95": 43411,
+   "refLatencyP50": 71253,
+   "refLatencyP95": 83423,
+   "errors": []
+  },
+  {
+   "site": "kinetics/well-events",
+   "tier": "memo",
+   "answered": 3,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.14842373333333334,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 23688,
+   "refLatencyP95": 29903,
+   "errors": [
+    [
+     "abstain",
+     3
+    ]
+   ]
+  },
+  {
+   "site": "kinetics/well-events",
+   "tier": "claude-haiku-5-5",
+   "answered": 3,
+   "usable": 3,
+   "usableRate": 1,
+   "agreement": 0.7692810457516339,
+   "disagreement": 0.23071895424836608,
+   "exactRate": 0,
+   "tierUsdPerDecision": 0.009802906666666668,
+   "refUsdPerDecision": 0.14842373333333334,
+   "tierLatencyP50": 50258,
+   "tierLatencyP95": 84991,
+   "refLatencyP50": 23688,
+   "refLatencyP95": 29903,
+   "errors": []
+  },
+  {
+   "site": "records/countries",
+   "tier": "rule",
+   "answered": 11,
+   "usable": 11,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.000466680909090909,
+   "tierLatencyP50": 3,
+   "tierLatencyP95": 36,
+   "refLatencyP50": 2700,
+   "refLatencyP95": 4663,
+   "errors": []
+  },
+  {
+   "site": "records/countries",
+   "tier": "memo",
+   "answered": 11,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.000466680909090909,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 2700,
+   "refLatencyP95": 4663,
+   "errors": [
+    [
+     "abstain",
+     11
+    ]
+   ]
+  },
+  {
+   "site": "records/countries",
+   "tier": "mercury-3",
+   "answered": 4,
+   "usable": 4,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00039826499999999997,
+   "tierLatencyP50": 2185,
+   "tierLatencyP95": 2884,
+   "refLatencyP50": 2403,
+   "refLatencyP95": 3127,
+   "errors": []
+  },
+  {
+   "site": "records/country-names",
+   "tier": "rule",
+   "answered": 19,
+   "usable": 19,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00021063657894736842,
+   "tierLatencyP50": 2,
+   "tierLatencyP95": 21,
+   "refLatencyP50": 1714,
+   "refLatencyP95": 2976,
+   "errors": []
+  },
+  {
+   "site": "records/country-names",
+   "tier": "memo",
+   "answered": 19,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00021063657894736842,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 1714,
+   "refLatencyP95": 2976,
+   "errors": [
+    [
+     "abstain",
+     19
+    ]
+   ]
+  },
+  {
+   "site": "records/country-names",
+   "tier": "mercury-3",
+   "answered": 16,
+   "usable": 16,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0002072496875,
+   "tierLatencyP50": 853,
+   "tierLatencyP95": 1581,
+   "refLatencyP50": 1689,
+   "refLatencyP95": 2752,
+   "errors": []
+  },
+  {
+   "site": "records/date-order",
+   "tier": "rule",
+   "answered": 10,
+   "usable": 10,
+   "usableRate": 1,
+   "agreement": 0.9166666666666667,
+   "disagreement": 0.08333333333333326,
+   "exactRate": 0.8,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.002052481,
+   "tierLatencyP50": 1,
+   "tierLatencyP95": 24,
+   "refLatencyP50": 14470,
+   "refLatencyP95": 20344,
+   "errors": []
+  },
+  {
+   "site": "records/date-order",
+   "tier": "memo",
+   "answered": 10,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.002052481,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 14470,
+   "refLatencyP95": 20344,
+   "errors": [
+    [
+     "abstain",
+     10
+    ]
+   ]
+  },
+  {
+   "site": "records/date-order",
+   "tier": "mercury-3",
+   "answered": 10,
+   "usable": 10,
+   "usableRate": 1,
+   "agreement": 0.95,
+   "disagreement": 0.050000000000000044,
+   "exactRate": 0.9,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.002052481,
+   "tierLatencyP50": 826,
+   "tierLatencyP95": 1985,
+   "refLatencyP50": 14470,
+   "refLatencyP95": 20344,
+   "errors": []
+  },
+  {
+   "site": "records/rules",
+   "tier": "memo",
+   "answered": 11,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.03651638181818182,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 6840,
+   "refLatencyP95": 10615,
+   "errors": [
+    [
+     "abstain",
+     11
+    ]
+   ]
+  },
+  {
+   "site": "records/rules",
+   "tier": "mercury-3",
+   "answered": 5,
+   "usable": 3,
+   "usableRate": 0.6,
+   "agreement": 0.9242424242424242,
+   "disagreement": 0.0757575757575758,
+   "exactRate": 0,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0340236,
+   "tierLatencyP50": 7822,
+   "tierLatencyP95": 11628,
+   "refLatencyP50": 6477,
+   "refLatencyP95": 9267,
+   "errors": [
+    [
+     "MODEL_SCHEMA",
+     2
+    ]
+   ]
+  },
+  {
+   "site": "records/rules",
+   "tier": "claude-haiku-5-5",
+   "answered": 11,
+   "usable": 11,
+   "usableRate": 1,
+   "agreement": 0.9376675849403124,
+   "disagreement": 0.06233241505968756,
+   "exactRate": 0.09090909090909091,
+   "tierUsdPerDecision": 0.0016049731818181818,
+   "refUsdPerDecision": 0.03651638181818182,
+   "tierLatencyP50": 10126,
+   "tierLatencyP95": 13708,
+   "refLatencyP50": 6840,
+   "refLatencyP95": 10615,
+   "errors": []
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "memo",
+   "answered": 10,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.04325199550000001,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 36137,
+   "refLatencyP95": 104135,
+   "errors": [
+    [
+     "abstain",
+     10
+    ]
+   ]
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "mercury-3",
+   "answered": 5,
+   "usable": 3,
+   "usableRate": 0.6,
+   "agreement": 0.7272727272727272,
+   "disagreement": 0.2727272727272728,
+   "exactRate": 0,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.002964493,
+   "tierLatencyP50": 9420,
+   "tierLatencyP95": 18768,
+   "refLatencyP50": 14769,
+   "refLatencyP95": 22930,
+   "errors": [
+    [
+     "MODEL_TRUNCATED",
+     2
+    ]
+   ]
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "claude-haiku-5-5",
+   "answered": 10,
+   "usable": 10,
+   "usableRate": 1,
+   "agreement": 0.9656891495601174,
+   "disagreement": 0.03431085043988258,
+   "exactRate": 0.3,
+   "tierUsdPerDecision": 0.0046460655,
+   "refUsdPerDecision": 0.04325199550000001,
+   "tierLatencyP50": 12837,
+   "tierLatencyP95": 23590,
+   "refLatencyP50": 36137,
+   "refLatencyP95": 104135,
+   "errors": []
+  },
+  {
+   "site": "records/vendex-entries",
+   "tier": "memo",
+   "answered": 5,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0016284679999999999,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 7979,
+   "refLatencyP95": 10742,
+   "errors": [
+    [
+     "abstain",
+     5
+    ]
+   ]
+  },
+  {
+   "site": "records/vendex-entries",
+   "tier": "mercury-3",
+   "answered": 5,
+   "usable": 5,
+   "usableRate": 1,
+   "agreement": 0.9939393939393939,
+   "disagreement": 0.0060606060606061,
+   "exactRate": 0.8,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0016284679999999999,
+   "tierLatencyP50": 9635,
+   "tierLatencyP95": 11215,
+   "refLatencyP50": 7979,
+   "refLatencyP95": 10742,
+   "errors": []
+  },
+  {
+   "site": "records/void-values",
+   "tier": "memo",
+   "answered": 10,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0031789145,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 20268,
+   "refLatencyP95": 31377,
+   "errors": [
+    [
+     "abstain",
+     10
+    ]
+   ]
+  },
+  {
+   "site": "records/void-values",
+   "tier": "mercury-3",
+   "answered": 10,
+   "usable": 10,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0031789145,
+   "tierLatencyP50": 2209,
+   "tierLatencyP95": 4053,
+   "refLatencyP50": 20268,
+   "refLatencyP95": 31377,
+   "errors": []
+  }
+ ],
+ "inject": {
+  "B-ref": {
+   "units": 0,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {},
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0,
+   "refUsd": 0,
+   "basePass": 0,
+   "pass": 0,
+   "latencyP50": null,
+   "latencyP95": null,
+   "refLatencyP50": null,
+   "refLatencyP95": null
+  },
+  "kinetics/extract:*@claude-haiku-5-5": {
+   "units": 2,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "flip": 1,
+    "changed": 1
+   },
+   "passFail": 1,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.13629892500000002,
+   "refUsd": 0.48350016000000007,
+   "basePass": 1,
+   "pass": 0,
+   "latencyP50": 345713,
+   "latencyP95": 345713,
+   "refLatencyP50": 317224,
+   "refLatencyP95": 317224
+  },
+  "kinetics/extract:*@memo": {
+   "units": 2,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 2
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.48350016000000007,
+   "refUsd": 0.48350016000000007,
+   "basePass": 1,
+   "pass": 1,
+   "latencyP50": 317224,
+   "latencyP95": 317224,
+   "refLatencyP50": 317224,
+   "refLatencyP95": 317224
+  },
+  "kinetics/prose-events-a@claude-haiku-5-5": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 4,
+    "changed": 1
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.03665419,
+   "refUsd": 0.21765696999999998,
+   "basePass": 4,
+   "pass": 4,
+   "latencyP50": 34086,
+   "latencyP95": 43411,
+   "refLatencyP50": 71253,
+   "refLatencyP95": 83423
+  },
+  "kinetics/prose-events-a@memo": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 5
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.21765696999999998,
+   "refUsd": 0.21765696999999998,
+   "basePass": 4,
+   "pass": 4,
+   "latencyP50": 71253,
+   "latencyP95": 83423,
+   "refLatencyP50": 71253,
+   "refLatencyP95": 83423
+  },
+  "kinetics/well-events@claude-haiku-5-5": {
+   "units": 3,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "flip": 2,
+    "same": 1
+   },
+   "passFail": 2,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.056765510000000005,
+   "refUsd": 0.47262799,
+   "basePass": 3,
+   "pass": 1,
+   "latencyP50": 86820,
+   "latencyP95": 120356,
+   "refLatencyP50": 59053,
+   "refLatencyP95": 70513
+  },
+  "kinetics/well-events@memo": {
+   "units": 3,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 3
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.47262799,
+   "refUsd": 0.47262799,
+   "basePass": 3,
+   "pass": 3,
+   "latencyP50": 59053,
+   "latencyP95": 70513,
+   "refLatencyP50": 59053,
+   "refLatencyP95": 70513
+  },
+  "records/countries@memo": {
+   "units": 11,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 11
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.461557965,
+   "refUsd": 0.461557965,
+   "basePass": 10,
+   "pass": 10,
+   "latencyP50": 33853,
+   "latencyP95": 62173,
+   "refLatencyP50": 33853,
+   "refLatencyP95": 62173
+  },
+  "records/countries@mercury-3": {
+   "units": 4,
+   "unmeasured": 0,
+   "incomplete": 7,
+   "outcomes": {
+    "same": 4
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.15089249000000002,
+   "refUsd": 0.15248555000000003,
+   "basePass": 3,
+   "pass": 3,
+   "latencyP50": 30702,
+   "latencyP95": 31871,
+   "refLatencyP50": 31281,
+   "refLatencyP95": 31390
+  },
+  "records/countries@rule": {
+   "units": 11,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 11
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.45642447500000005,
+   "refUsd": 0.461557965,
+   "basePass": 10,
+   "pass": 10,
+   "latencyP50": 30886,
+   "latencyP95": 58882,
+   "refLatencyP50": 33853,
+   "refLatencyP95": 62173
+  },
+  "records/country-names@memo": {
+   "units": 19,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 19
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.5159532549999999,
+   "refUsd": 0.5159532549999999,
+   "basePass": 12,
+   "pass": 12,
+   "latencyP50": 65201,
+   "latencyP95": 121946,
+   "refLatencyP50": 65201,
+   "refLatencyP95": 121946
+  },
+  "records/country-names@mercury-3": {
+   "units": 16,
+   "unmeasured": 0,
+   "incomplete": 3,
+   "outcomes": {
+    "same": 16
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.4484506750000001,
+   "refUsd": 0.45176667,
+   "basePass": 9,
+   "pass": 9,
+   "latencyP50": 63634,
+   "latencyP95": 92990,
+   "refLatencyP50": 64338,
+   "refLatencyP95": 94996
+  },
+  "records/country-names@rule": {
+   "units": 19,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 19
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.5119511600000001,
+   "refUsd": 0.5159532549999999,
+   "basePass": 12,
+   "pass": 12,
+   "latencyP50": 63102,
+   "latencyP95": 120626,
+   "refLatencyP50": 65201,
+   "refLatencyP95": 121946
+  },
+  "records/date-order@memo": {
+   "units": 10,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 10
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.10258574000000001,
+   "refUsd": 0.10258574000000001,
+   "basePass": 7,
+   "pass": 7,
+   "latencyP50": 65201,
+   "latencyP95": 84889,
+   "refLatencyP50": 65201,
+   "refLatencyP95": 84889
+  },
+  "records/date-order@mercury-3": {
+   "units": 10,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 9,
+    "flip": 1
+   },
+   "passFail": 0,
+   "failPass": 1,
+   "deopts": 0,
+   "judgeUsd": 0.08206092999999999,
+   "refUsd": 0.10258574000000001,
+   "basePass": 7,
+   "pass": 8,
+   "latencyP50": 55286,
+   "latencyP95": 69173,
+   "refLatencyP50": 65201,
+   "refLatencyP95": 84889
+  },
+  "records/date-order@rule": {
+   "units": 10,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "flip": 2,
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 2,
+   "deopts": 0,
+   "judgeUsd": 0.08206092999999999,
+   "refUsd": 0.10258574000000001,
+   "basePass": 7,
+   "pass": 9,
+   "latencyP50": 54357,
+   "latencyP95": 68475,
+   "refLatencyP50": 65201,
+   "refLatencyP95": 84889
+  },
+  "records/rules@claude-haiku-5-5": {
+   "units": 11,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "deopt": 2,
+    "same": 8,
+    "flip": 1
+   },
+   "passFail": 1,
+   "failPass": 0,
+   "deopts": 2,
+   "judgeUsd": 0.7425656699999998,
+   "refUsd": 0.461557965,
+   "basePass": 10,
+   "pass": 7,
+   "latencyP50": 37496,
+   "latencyP95": 64940,
+   "refLatencyP50": 33853,
+   "refLatencyP95": 62173
+  },
+  "records/rules@memo": {
+   "units": 11,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 11
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.461557965,
+   "refUsd": 0.461557965,
+   "basePass": 10,
+   "pass": 10,
+   "latencyP50": 33853,
+   "latencyP95": 62173,
+   "refLatencyP50": 33853,
+   "refLatencyP95": 62173
+  },
+  "records/rules@mercury-3": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 6,
+   "outcomes": {
+    "same": 5
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.19163488500000003,
+   "refUsd": 0.19163488500000003,
+   "basePass": 4,
+   "pass": 4,
+   "latencyP50": 39068,
+   "latencyP95": 53330,
+   "refLatencyP50": 31281,
+   "refLatencyP95": 41702
+  },
+  "records/source-rules@claude-haiku-5-5": {
+   "units": 10,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "changed": 2,
+    "same": 7,
+    "deopt": 1
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 1,
+   "judgeUsd": 0.1992203514285714,
+   "refUsd": 0.45664808,
+   "basePass": 4,
+   "pass": 4,
+   "latencyP50": 29651,
+   "latencyP95": 38469,
+   "refLatencyP50": 57457,
+   "refLatencyP95": 121946
+  },
+  "records/source-rules@memo": {
+   "units": 10,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 10
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.45664808,
+   "refUsd": 0.45664808,
+   "basePass": 4,
+   "pass": 4,
+   "latencyP50": 57457,
+   "latencyP95": 121946,
+   "refLatencyP50": 57457,
+   "refLatencyP95": 121946
+  },
+  "records/source-rules@mercury-3": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 5,
+   "outcomes": {
+    "same": 5
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.023247314999999998,
+   "refUsd": 0.023247314999999998,
+   "basePass": 1,
+   "pass": 1,
+   "latencyP50": 37494,
+   "latencyP95": 42487,
+   "refLatencyP50": 21556,
+   "refLatencyP95": 34593
+  },
+  "records/vendex-entries@memo": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 16,
+   "outcomes": {
+    "same": 5
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.023247314999999998,
+   "refUsd": 0.023247314999999998,
+   "basePass": 1,
+   "pass": 1,
+   "latencyP50": 21556,
+   "latencyP95": 34593,
+   "refLatencyP50": 21556,
+   "refLatencyP95": 34593
+  },
+  "records/vendex-entries@mercury-3": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 16,
+   "outcomes": {
+    "same": 4,
+    "changed": 1
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.015104975,
+   "refUsd": 0.023247314999999998,
+   "basePass": 1,
+   "pass": 1,
+   "latencyP50": 23544,
+   "latencyP95": 35248,
+   "refLatencyP50": 21556,
+   "refLatencyP95": 34593
+  },
+  "records/void-values@memo": {
+   "units": 10,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 10
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.10258574000000001,
+   "refUsd": 0.10258574000000001,
+   "basePass": 7,
+   "pass": 7,
+   "latencyP50": 65201,
+   "latencyP95": 84889,
+   "refLatencyP50": 65201,
+   "refLatencyP95": 84889
+  },
+  "records/void-values@mercury-3": {
+   "units": 10,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 10
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.07079659500000002,
+   "refUsd": 0.10258574000000001,
+   "basePass": 7,
+   "pass": 7,
+   "latencyP50": 47470,
+   "latencyP95": 59611,
+   "refLatencyP50": 65201,
+   "refLatencyP95": 84889
+  }
+ },
+ "selection": {
+  "sites": [
+   {
+    "site": "records/rules",
+    "class": "high",
+    "delta": 0.02,
+    "selected": null,
+    "savingPerUnitC": null,
+    "candidates": [
+     {
+      "tier": "claude-haiku-5-5",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement 0.062, usable 1.000)",
+      "disagreement": 0.06233241505968756,
+      "usableRate": 1,
+      "units": 11,
+      "passFail": 1,
+      "failPass": 0,
+      "savingPerUnit": -0.025546154999999984
+     },
+     {
+      "tier": "mercury-3",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement 0.076, usable 0.600)",
+      "disagreement": 0.0757575757575758,
+      "usableRate": 0.6,
+      "units": 5,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 11,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "records/source-rules",
+    "class": "mid",
+    "delta": 0.05,
+    "selected": "claude-haiku-5-5",
+    "savingPerUnitC": 0.02574277285714286,
+    "candidates": [
+     {
+      "tier": "claude-haiku-5-5",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0.03431085043988258,
+      "usableRate": 1,
+      "units": 10,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.02574277285714286
+     },
+     {
+      "tier": "mercury-3",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement 0.273, usable 0.600)",
+      "disagreement": 0.2727272727272728,
+      "usableRate": 0.6,
+      "units": 5,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 10,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "kinetics/well-events",
+    "class": "high",
+    "delta": 0.02,
+    "selected": null,
+    "savingPerUnitC": null,
+    "candidates": [
+     {
+      "tier": "claude-haiku-5-5",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement 0.231, usable 1.000)",
+      "disagreement": 0.23071895424836608,
+      "usableRate": 1,
+      "units": 3,
+      "passFail": 2,
+      "failPass": 0,
+      "savingPerUnit": 0.13862082666666667
+     },
+     {
+      "tier": "mercury-3",
+      "eligible": false,
+      "reason": "no C answers"
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 3,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "kinetics/prose-events-a",
+    "class": "high",
+    "delta": 0.02,
+    "selected": "claude-haiku-5-5",
+    "savingPerUnitC": 0.036200555999999995,
+    "candidates": [
+     {
+      "tier": "claude-haiku-5-5",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0.0347677001835216,
+      "usableRate": 1,
+      "units": 5,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.036200555999999995
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 5,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "kinetics/extract:*",
+    "class": "mid",
+    "delta": 0.05,
+    "selected": null,
+    "savingPerUnitC": null,
+    "candidates": [
+     {
+      "tier": "claude-haiku-5-5",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement 0.115, usable 1.000)",
+      "disagreement": 0.11487308588427803,
+      "usableRate": 1,
+      "units": 2,
+      "passFail": 1,
+      "failPass": 0,
+      "savingPerUnit": 0.17360061750000003
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 2,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "records/date-order",
+    "class": "high",
+    "delta": 0.02,
+    "selected": "mercury-3",
+    "savingPerUnitC": 0.002052481000000002,
+    "candidates": [
+     {
+      "tier": "mercury-3",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0.050000000000000044,
+      "usableRate": 1,
+      "units": 10,
+      "passFail": 0,
+      "failPass": 1,
+      "savingPerUnit": 0.002052481000000002
+     },
+     {
+      "tier": "rule",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement 0.083, usable 1.000)",
+      "disagreement": 0.08333333333333326,
+      "usableRate": 1,
+      "units": 10,
+      "passFail": 0,
+      "failPass": 2,
+      "savingPerUnit": 0.002052481000000002
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 10,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "records/void-values",
+    "class": "high",
+    "delta": 0.02,
+    "selected": "mercury-3",
+    "savingPerUnitC": 0.003178914499999999,
+    "candidates": [
+     {
+      "tier": "mercury-3",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0,
+      "usableRate": 1,
+      "units": 10,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.003178914499999999
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 10,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "records/vendex-entries",
+    "class": "low",
+    "delta": 0.1,
+    "selected": "mercury-3",
+    "savingPerUnitC": 0.0016284679999999997,
+    "candidates": [
+     {
+      "tier": "mercury-3",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0.0060606060606061,
+      "usableRate": 1,
+      "units": 5,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.0016284679999999997
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 5,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "records/country-names",
+    "class": "low",
+    "delta": 0.1,
+    "selected": "rule",
+    "savingPerUnitC": 0.00021063657894735877,
+    "candidates": [
+     {
+      "tier": "mercury-3",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0,
+      "usableRate": 1,
+      "units": 16,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.00020724968749999406
+     },
+     {
+      "tier": "rule",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0,
+      "usableRate": 1,
+      "units": 19,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.00021063657894735877
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 19,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   },
+   {
+    "site": "records/countries",
+    "class": "low",
+    "delta": 0.1,
+    "selected": "rule",
+    "savingPerUnitC": 0.0004666809090909057,
+    "candidates": [
+     {
+      "tier": "mercury-3",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0,
+      "usableRate": 1,
+      "units": 4,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.0003982650000000018
+     },
+     {
+      "tier": "rule",
+      "eligible": true,
+      "reason": null,
+      "disagreement": 0,
+      "usableRate": 1,
+      "units": 11,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0.0004666809090909057
+     },
+     {
+      "tier": "memo",
+      "eligible": false,
+      "reason": "Bound 2 on C fails (disagreement undefined, usable 0.000)",
+      "disagreement": null,
+      "usableRate": 0,
+      "units": 11,
+      "passFail": 0,
+      "failPass": 0,
+      "savingPerUnit": 0
+     }
+    ]
+   }
+  ],
+  "order": [
+   {
+    "site": "kinetics/prose-events-a",
+    "tier": "claude-haiku-5-5",
+    "class": "high",
+    "delta": 0.02
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "claude-haiku-5-5",
+    "class": "mid",
+    "delta": 0.05
+   },
+   {
+    "site": "records/void-values",
+    "tier": "mercury-3",
+    "class": "high",
+    "delta": 0.02
+   },
+   {
+    "site": "records/date-order",
+    "tier": "mercury-3",
+    "class": "high",
+    "delta": 0.02
+   },
+   {
+    "site": "records/vendex-entries",
+    "tier": "mercury-3",
+    "class": "low",
+    "delta": 0.1
+   },
+   {
+    "site": "records/countries",
+    "tier": "rule",
+    "class": "low",
+    "delta": 0.1
+   },
+   {
+    "site": "records/country-names",
+    "tier": "rule",
+    "class": "low",
+    "delta": 0.1
+   }
+  ],
+  "screen": {
+   "records/void-values": "mercury-3",
+   "records/vendex-entries": "mercury-3",
+   "records/country-names": "rule",
+   "records/countries": "rule"
+  }
+ },
+ "baselines": {
+  "B-screen": {
+   "records/void-values": "mercury-3",
+   "records/vendex-entries": "mercury-3",
+   "records/country-names": "rule",
+   "records/countries": "rule"
+  },
+  "B-all-haiku": {
+   "records/rules": "claude-haiku-5-5",
+   "records/source-rules": "claude-haiku-5-5",
+   "kinetics/well-events": "claude-haiku-5-5",
+   "kinetics/prose-events-a": "claude-haiku-5-5",
+   "kinetics/extract:*": "claude-haiku-5-5"
+  },
+  "B-all-mercury": {
+   "records/rules": "mercury-3",
+   "records/source-rules": "mercury-3",
+   "kinetics/well-events": "mercury-3",
+   "records/date-order": "mercury-3",
+   "records/void-values": "mercury-3",
+   "records/vendex-entries": "mercury-3",
+   "records/country-names": "mercury-3",
+   "records/countries": "mercury-3"
+  },
+  "B-sink": {
+   "kinetics/extract:*": "claude-haiku-5-5",
+   "records/date-order": "rule",
+   "records/void-values": "mercury-3",
+   "records/vendex-entries": "mercury-3",
+   "records/country-names": "rule",
+   "records/countries": "rule"
+  },
+  "B-memo": {
+   "records/rules": "memo",
+   "records/source-rules": "memo",
+   "kinetics/well-events": "memo",
+   "kinetics/prose-events-a": "memo",
+   "kinetics/extract:*": "memo",
+   "records/date-order": "memo",
+   "records/void-values": "memo",
+   "records/vendex-entries": "memo",
+   "records/country-names": "memo",
+   "records/countries": "memo"
+  }
+ },
+ "assignSpecs": {
+  "policy": "policy=kinetics/prose-events-a:claude-haiku-5-5,records/source-rules:claude-haiku-5-5,records/void-values:mercury-3,records/date-order:mercury-3,records/vendex-entries:mercury-3,records/countries:rule,records/country-names:rule",
+  "B-screen": "B-screen=records/void-values:mercury-3,records/vendex-entries:mercury-3,records/country-names:rule,records/countries:rule",
+  "B-all-haiku": "B-all-haiku=records/rules:claude-haiku-5-5,records/source-rules:claude-haiku-5-5,kinetics/well-events:claude-haiku-5-5,kinetics/prose-events-a:claude-haiku-5-5,kinetics/extract:*:claude-haiku-5-5",
+  "B-all-mercury": "B-all-mercury=records/rules:mercury-3,records/source-rules:mercury-3,kinetics/well-events:mercury-3,records/date-order:mercury-3,records/void-values:mercury-3,records/vendex-entries:mercury-3,records/country-names:mercury-3,records/countries:mercury-3",
+  "B-sink": "B-sink=kinetics/extract:*:claude-haiku-5-5,records/date-order:rule,records/void-values:mercury-3,records/vendex-entries:mercury-3,records/country-names:rule,records/countries:rule",
+  "B-memo": "B-memo=records/rules:memo,records/source-rules:memo,kinetics/well-events:memo,kinetics/prose-events-a:memo,kinetics/extract:*:memo,records/date-order:memo,records/void-values:memo,records/vendex-entries:memo,records/country-names:memo,records/countries:memo"
+ }
+}

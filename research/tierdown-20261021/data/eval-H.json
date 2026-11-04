@@ -1,0 +1,1559 @@
+{
+ "slice": "H",
+ "evidence": "development (archived dev runs held out from every choice; not sealed)",
+ "nodes": [
+  {
+   "site": "kinetics/extract:*",
+   "tier": "memo",
+   "answered": 30,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.02698887566666667,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 28441,
+   "refLatencyP95": 71802,
+   "errors": [
+    [
+     "abstain",
+     30
+    ]
+   ]
+  },
+  {
+   "site": "kinetics/extract:*",
+   "tier": "claude-haiku-5-5",
+   "answered": 30,
+   "usable": 30,
+   "usableRate": 1,
+   "agreement": 0.8469406793413252,
+   "disagreement": 0.15305932065867478,
+   "exactRate": 0.16666666666666666,
+   "tierUsdPerDecision": 0.006650126166666665,
+   "refUsdPerDecision": 0.02698887566666667,
+   "tierLatencyP50": 37976,
+   "tierLatencyP95": 62198,
+   "refLatencyP50": 28441,
+   "refLatencyP95": 71802,
+   "errors": []
+  },
+  {
+   "site": "kinetics/prose-events-a",
+   "tier": "memo",
+   "answered": 5,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.122404672,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 84932,
+   "refLatencyP95": 149835,
+   "errors": [
+    [
+     "abstain",
+     5
+    ]
+   ]
+  },
+  {
+   "site": "kinetics/prose-events-a",
+   "tier": "claude-haiku-5-5",
+   "answered": 5,
+   "usable": 5,
+   "usableRate": 1,
+   "agreement": 0.963918578670046,
+   "disagreement": 0.036081421329953955,
+   "exactRate": 0,
+   "tierUsdPerDecision": 0.008135407,
+   "refUsdPerDecision": 0.122404672,
+   "tierLatencyP50": 52620,
+   "tierLatencyP95": 56079,
+   "refLatencyP50": 84932,
+   "refLatencyP95": 149835,
+   "errors": []
+  },
+  {
+   "site": "kinetics/well-events",
+   "tier": "memo",
+   "answered": 2,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.1480579,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 26472,
+   "refLatencyP95": 26472,
+   "errors": [
+    [
+     "abstain",
+     2
+    ]
+   ]
+  },
+  {
+   "site": "kinetics/well-events",
+   "tier": "claude-haiku-5-5",
+   "answered": 2,
+   "usable": 2,
+   "usableRate": 1,
+   "agreement": 0.6833333333333333,
+   "disagreement": 0.31666666666666665,
+   "exactRate": 0,
+   "tierUsdPerDecision": 0.0072848224999999996,
+   "refUsdPerDecision": 0.1480579,
+   "tierLatencyP50": 48473,
+   "tierLatencyP95": 48473,
+   "refLatencyP50": 26472,
+   "refLatencyP95": 26472,
+   "errors": []
+  },
+  {
+   "site": "records/countries",
+   "tier": "rule",
+   "answered": 8,
+   "usable": 8,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.000445594375,
+   "tierLatencyP50": 3,
+   "tierLatencyP95": 6,
+   "refLatencyP50": 3064,
+   "refLatencyP95": 4234,
+   "errors": []
+  },
+  {
+   "site": "records/countries",
+   "tier": "memo",
+   "answered": 8,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.000445594375,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 3064,
+   "refLatencyP95": 4234,
+   "errors": [
+    [
+     "abstain",
+     8
+    ]
+   ]
+  },
+  {
+   "site": "records/countries",
+   "tier": "mercury-3",
+   "answered": 8,
+   "usable": 8,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.000445594375,
+   "tierLatencyP50": 2135,
+   "tierLatencyP95": 2833,
+   "refLatencyP50": 3064,
+   "refLatencyP95": 4234,
+   "errors": []
+  },
+  {
+   "site": "records/country-names",
+   "tier": "rule",
+   "answered": 16,
+   "usable": 16,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00018459125,
+   "tierLatencyP50": 1,
+   "tierLatencyP95": 15,
+   "refLatencyP50": 1726,
+   "refLatencyP95": 2391,
+   "errors": []
+  },
+  {
+   "site": "records/country-names",
+   "tier": "memo",
+   "answered": 16,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00018459125000000004,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 1726,
+   "refLatencyP95": 2391,
+   "errors": [
+    [
+     "abstain",
+     16
+    ]
+   ]
+  },
+  {
+   "site": "records/country-names",
+   "tier": "mercury-3",
+   "answered": 16,
+   "usable": 16,
+   "usableRate": 1,
+   "agreement": 0.984375,
+   "disagreement": 0.015625,
+   "exactRate": 0.9375,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00018459125000000004,
+   "tierLatencyP50": 1214,
+   "tierLatencyP95": 1949,
+   "refLatencyP50": 1726,
+   "refLatencyP95": 2391,
+   "errors": []
+  },
+  {
+   "site": "records/date-order",
+   "tier": "rule",
+   "answered": 8,
+   "usable": 7,
+   "usableRate": 0.875,
+   "agreement": 0.9523809523809524,
+   "disagreement": 0.04761904761904756,
+   "exactRate": 0.8571428571428571,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00166584,
+   "tierLatencyP50": 1,
+   "tierLatencyP95": 12,
+   "refLatencyP50": 13812,
+   "refLatencyP95": 36345,
+   "errors": [
+    [
+     "abstain",
+     1
+    ]
+   ]
+  },
+  {
+   "site": "records/date-order",
+   "tier": "memo",
+   "answered": 8,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00166584,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 13812,
+   "refLatencyP95": 36345,
+   "errors": [
+    [
+     "abstain",
+     8
+    ]
+   ]
+  },
+  {
+   "site": "records/date-order",
+   "tier": "mercury-3",
+   "answered": 8,
+   "usable": 8,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.00166584,
+   "tierLatencyP50": 1325,
+   "tierLatencyP95": 4868,
+   "refLatencyP50": 13812,
+   "refLatencyP95": 36345,
+   "errors": []
+  },
+  {
+   "site": "records/rules",
+   "tier": "memo",
+   "answered": 8,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.037398325,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 8714,
+   "refLatencyP95": 10710,
+   "errors": [
+    [
+     "abstain",
+     8
+    ]
+   ]
+  },
+  {
+   "site": "records/rules",
+   "tier": "claude-haiku-5-5",
+   "answered": 8,
+   "usable": 8,
+   "usableRate": 1,
+   "agreement": 0.9559090909090909,
+   "disagreement": 0.04409090909090907,
+   "exactRate": 0.375,
+   "tierUsdPerDecision": 0.0015842031249999999,
+   "refUsdPerDecision": 0.037398325,
+   "tierLatencyP50": 11581,
+   "tierLatencyP95": 15757,
+   "refLatencyP50": 8714,
+   "refLatencyP95": 10710,
+   "errors": []
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "memo",
+   "answered": 7,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.02457897142857143,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 14672,
+   "refLatencyP95": 59093,
+   "errors": [
+    [
+     "abstain",
+     7
+    ]
+   ]
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "mercury-3",
+   "answered": 3,
+   "usable": 1,
+   "usableRate": 0.3333333333333333,
+   "agreement": 0.8636363636363636,
+   "disagreement": 0.13636363636363635,
+   "exactRate": 0,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0025336749999999996,
+   "tierLatencyP50": 17858,
+   "tierLatencyP95": 18183,
+   "refLatencyP50": 9934,
+   "refLatencyP95": 21362,
+   "errors": [
+    [
+     "MODEL_TRUNCATED",
+     2
+    ]
+   ]
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "claude-haiku-5-5",
+   "answered": 7,
+   "usable": 7,
+   "usableRate": 1,
+   "agreement": 0.9527538748895813,
+   "disagreement": 0.0472461251104187,
+   "exactRate": 0.2857142857142857,
+   "tierUsdPerDecision": 0.0035771707142857145,
+   "refUsdPerDecision": 0.02457897142857143,
+   "tierLatencyP50": 13456,
+   "tierLatencyP95": 21039,
+   "refLatencyP50": 14672,
+   "refLatencyP95": 59093,
+   "errors": []
+  },
+  {
+   "site": "records/vendex-entries",
+   "tier": "memo",
+   "answered": 15,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0023565143333333332,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 13072,
+   "refLatencyP95": 16367,
+   "errors": [
+    [
+     "abstain",
+     15
+    ]
+   ]
+  },
+  {
+   "site": "records/vendex-entries",
+   "tier": "mercury-3",
+   "answered": 15,
+   "usable": 15,
+   "usableRate": 1,
+   "agreement": 0.9958010886901048,
+   "disagreement": 0.004198911309895248,
+   "exactRate": 0.6666666666666666,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.0023565143333333332,
+   "tierLatencyP50": 9505,
+   "tierLatencyP95": 13787,
+   "refLatencyP50": 13072,
+   "refLatencyP95": 16367,
+   "errors": []
+  },
+  {
+   "site": "records/void-values",
+   "tier": "memo",
+   "answered": 8,
+   "usable": 0,
+   "usableRate": 0,
+   "agreement": null,
+   "disagreement": null,
+   "exactRate": null,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.002935415625,
+   "tierLatencyP50": 0,
+   "tierLatencyP95": 0,
+   "refLatencyP50": 24348,
+   "refLatencyP95": 40911,
+   "errors": [
+    [
+     "abstain",
+     8
+    ]
+   ]
+  },
+  {
+   "site": "records/void-values",
+   "tier": "mercury-3",
+   "answered": 8,
+   "usable": 8,
+   "usableRate": 1,
+   "agreement": 1,
+   "disagreement": 0,
+   "exactRate": 1,
+   "tierUsdPerDecision": 0,
+   "refUsdPerDecision": 0.002935415625,
+   "tierLatencyP50": 2273,
+   "tierLatencyP95": 2780,
+   "refLatencyP50": 24348,
+   "refLatencyP95": 40911,
+   "errors": []
+  }
+ ],
+ "inject": {
+  "B-all-haiku": {
+   "units": 25,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "flip": 6,
+    "same": 17,
+    "changed": 2
+   },
+   "passFail": 5,
+   "failPass": 1,
+   "deopts": 0,
+   "judgeUsd": 0.8830332399999999,
+   "refUsd": 2.2681115300000005,
+   "basePass": 19,
+   "pass": 15,
+   "latencyP50": 43746,
+   "latencyP95": 509650,
+   "refLatencyP50": 54357,
+   "refLatencyP95": 330009
+  },
+  "B-all-mercury": {
+   "units": 15,
+   "unmeasured": 0,
+   "incomplete": 14,
+   "outcomes": {
+    "changed": 2,
+    "same": 13
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.10122769000000001,
+   "refUsd": 0.16597849999999997,
+   "basePass": 9,
+   "pass": 9,
+   "latencyP50": 34614,
+   "latencyP95": 85723,
+   "refLatencyP50": 68059,
+   "refLatencyP95": 86925
+  },
+  "B-memo": {
+   "units": 37,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 37
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 2.41965399,
+   "refUsd": 2.41965399,
+   "basePass": 27,
+   "pass": 27,
+   "latencyP50": 66467,
+   "latencyP95": 251097,
+   "refLatencyP50": 66467,
+   "refLatencyP95": 251097
+  },
+  "B-ref": {
+   "units": 0,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {},
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0,
+   "refUsd": 0,
+   "basePass": 0,
+   "pass": 0,
+   "latencyP50": null,
+   "latencyP95": null,
+   "refLatencyP50": null,
+   "refLatencyP95": null
+  },
+  "B-screen": {
+   "units": 27,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 26,
+    "changed": 1
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.618204945,
+   "refUsd": 0.6835542000000001,
+   "basePass": 19,
+   "pass": 19,
+   "latencyP50": 37227,
+   "latencyP95": 84702,
+   "refLatencyP50": 51583,
+   "refLatencyP95": 86925
+  },
+  "B-sink": {
+   "units": 30,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "flip": 2,
+    "same": 26,
+    "changed": 2
+   },
+   "passFail": 2,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 1.3173358500000003,
+   "refUsd": 1.49322047,
+   "basePass": 21,
+   "pass": 19,
+   "latencyP50": 35800,
+   "latencyP95": 509650,
+   "refLatencyP50": 55688,
+   "refLatencyP95": 330009
+  },
+  "kinetics/extract:*@claude-haiku-5-5": {
+   "units": 3,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "flip": 2,
+    "same": 1
+   },
+   "passFail": 2,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.71100604,
+   "refUsd": 0.80966627,
+   "basePass": 2,
+   "pass": 0,
+   "latencyP50": 509650,
+   "latencyP95": 548914,
+   "refLatencyP50": 330009,
+   "refLatencyP95": 361867
+  },
+  "kinetics/extract:*@memo": {
+   "units": 3,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 3
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.80966627,
+   "refUsd": 0.80966627,
+   "basePass": 2,
+   "pass": 2,
+   "latencyP50": 330009,
+   "latencyP95": 361867,
+   "refLatencyP50": 330009,
+   "refLatencyP95": 361867
+  },
+  "kinetics/prose-events-a@claude-haiku-5-5": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 5
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.040677035,
+   "refUsd": 0.61202336,
+   "basePass": 5,
+   "pass": 5,
+   "latencyP50": 52620,
+   "latencyP95": 56079,
+   "refLatencyP50": 84932,
+   "refLatencyP95": 149835
+  },
+  "kinetics/prose-events-a@memo": {
+   "units": 5,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 5
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.61202336,
+   "refUsd": 0.61202336,
+   "basePass": 5,
+   "pass": 5,
+   "latencyP50": 84932,
+   "latencyP95": 149835,
+   "refLatencyP50": 84932,
+   "refLatencyP95": 149835
+  },
+  "kinetics/well-events@claude-haiku-5-5": {
+   "units": 2,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "changed": 1,
+    "flip": 1
+   },
+   "passFail": 1,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.032864005,
+   "refUsd": 0.31441016,
+   "basePass": 1,
+   "pass": 0,
+   "latencyP50": 89599,
+   "latencyP95": 89599,
+   "refLatencyP50": 63595,
+   "refLatencyP95": 63595
+  },
+  "kinetics/well-events@memo": {
+   "units": 2,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 2
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.31441016,
+   "refUsd": 0.31441016,
+   "basePass": 1,
+   "pass": 1,
+   "latencyP50": 63595,
+   "latencyP95": 63595,
+   "refLatencyP50": 63595,
+   "refLatencyP95": 63595
+  },
+  "records/countries@memo": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.342763515,
+   "refUsd": 0.342763515,
+   "basePass": 7,
+   "pass": 7,
+   "latencyP50": 40290,
+   "latencyP95": 54357,
+   "refLatencyP50": 40290,
+   "refLatencyP95": 54357
+  },
+  "records/countries@mercury-3": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.33919876000000004,
+   "refUsd": 0.342763515,
+   "basePass": 7,
+   "pass": 7,
+   "latencyP50": 39863,
+   "latencyP95": 52558,
+   "refLatencyP50": 40290,
+   "refLatencyP95": 54357
+  },
+  "records/countries@rule": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.33919876000000004,
+   "refUsd": 0.342763515,
+   "basePass": 7,
+   "pass": 7,
+   "latencyP50": 37227,
+   "latencyP95": 50492,
+   "refLatencyP50": 40290,
+   "refLatencyP95": 54357
+  },
+  "records/country-names@memo": {
+   "units": 16,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 16
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.32355870000000003,
+   "refUsd": 0.32355870000000003,
+   "basePass": 11,
+   "pass": 11,
+   "latencyP50": 74054,
+   "latencyP95": 86925,
+   "refLatencyP50": 74054,
+   "refLatencyP95": 86925
+  },
+  "records/country-names@mercury-3": {
+   "units": 16,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "changed": 2,
+    "same": 14
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.32060524,
+   "refUsd": 0.32355870000000003,
+   "basePass": 11,
+   "pass": 11,
+   "latencyP50": 73809,
+   "latencyP95": 85723,
+   "refLatencyP50": 74054,
+   "refLatencyP95": 86925
+  },
+  "records/country-names@rule": {
+   "units": 16,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 16
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.32060524,
+   "refUsd": 0.32355870000000003,
+   "basePass": 11,
+   "pass": 11,
+   "latencyP50": 72644,
+   "latencyP95": 84702,
+   "refLatencyP50": 74054,
+   "refLatencyP95": 86925
+  },
+  "records/date-order@memo": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.07125856,
+   "refUsd": 0.07125856,
+   "basePass": 5,
+   "pass": 5,
+   "latencyP50": 68059,
+   "latencyP95": 82542,
+   "refLatencyP50": 68059,
+   "refLatencyP95": 82542
+  },
+  "records/date-order@mercury-3": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.057931840000000005,
+   "refUsd": 0.07125856,
+   "basePass": 5,
+   "pass": 5,
+   "latencyP50": 51065,
+   "latencyP95": 64764,
+   "refLatencyP50": 68059,
+   "refLatencyP95": 82542
+  },
+  "records/date-order@rule": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 7,
+    "changed": 1
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.059383425000000004,
+   "refUsd": 0.07125856,
+   "basePass": 5,
+   "pass": 5,
+   "latencyP50": 46198,
+   "latencyP95": 74793,
+   "refLatencyP50": 68059,
+   "refLatencyP95": 82542
+  },
+  "records/rules@claude-haiku-5-5": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 6,
+    "changed": 1,
+    "flip": 1
+   },
+   "passFail": 1,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.056250539999999995,
+   "refUsd": 0.342763515,
+   "basePass": 7,
+   "pass": 6,
+   "latencyP50": 43746,
+   "latencyP95": 61029,
+   "refLatencyP50": 40290,
+   "refLatencyP95": 54357
+  },
+  "records/rules@memo": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.342763515,
+   "refUsd": 0.342763515,
+   "basePass": 7,
+   "pass": 7,
+   "latencyP50": 40290,
+   "latencyP95": 54357,
+   "refLatencyP50": 40290,
+   "refLatencyP95": 54357
+  },
+  "records/source-rules@claude-haiku-5-5": {
+   "units": 7,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 5,
+    "flip": 2
+   },
+   "passFail": 1,
+   "failPass": 1,
+   "deopts": 0,
+   "judgeUsd": 0.04223562,
+   "refUsd": 0.18924822500000002,
+   "basePass": 4,
+   "pass": 4,
+   "latencyP50": 28521,
+   "latencyP95": 38752,
+   "refLatencyP50": 27647,
+   "refLatencyP95": 76194
+  },
+  "records/source-rules@memo": {
+   "units": 7,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 7
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.18924822500000002,
+   "refUsd": 0.18924822500000002,
+   "basePass": 4,
+   "pass": 4,
+   "latencyP50": 27647,
+   "latencyP95": 76194,
+   "refLatencyP50": 27647,
+   "refLatencyP95": 76194
+  },
+  "records/source-rules@mercury-3": {
+   "units": 3,
+   "unmeasured": 0,
+   "incomplete": 4,
+   "outcomes": {
+    "same": 3
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.01443604,
+   "refUsd": 0.01443604,
+   "basePass": 1,
+   "pass": 1,
+   "latencyP50": 42603,
+   "latencyP95": 45505,
+   "refLatencyP50": 27647,
+   "refLatencyP95": 35408
+  },
+  "records/vendex-entries@memo": {
+   "units": 15,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 15
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.2605067850000001,
+   "refUsd": 0.2605067850000001,
+   "basePass": 9,
+   "pass": 9,
+   "latencyP50": 55688,
+   "latencyP95": 76194,
+   "refLatencyP50": 55688,
+   "refLatencyP95": 76194
+  },
+  "records/vendex-entries@mercury-3": {
+   "units": 15,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 14,
+    "changed": 1
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.22515907000000002,
+   "refUsd": 0.2605067850000001,
+   "basePass": 9,
+   "pass": 9,
+   "latencyP50": 54409,
+   "latencyP95": 73614,
+   "refLatencyP50": 55688,
+   "refLatencyP95": 76194
+  },
+  "records/void-values@memo": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.07125856,
+   "refUsd": 0.07125856,
+   "basePass": 5,
+   "pass": 5,
+   "latencyP50": 68059,
+   "latencyP95": 82542,
+   "refLatencyP50": 68059,
+   "refLatencyP95": 82542
+  },
+  "records/void-values@mercury-3": {
+   "units": 8,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 8
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.047775235,
+   "refUsd": 0.07125856,
+   "basePass": 5,
+   "pass": 5,
+   "latencyP50": 44184,
+   "latencyP95": 60467,
+   "refLatencyP50": 68059,
+   "refLatencyP95": 82542
+  },
+  "selected": {
+   "units": 32,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 29,
+    "flip": 2,
+    "changed": 1
+   },
+   "passFail": 1,
+   "failPass": 1,
+   "deopts": 0,
+   "judgeUsd": 0.498542655,
+   "refUsd": 1.29557756,
+   "basePass": 24,
+   "pass": 24,
+   "latencyP50": 33025,
+   "latencyP95": 81748,
+   "refLatencyP50": 66467,
+   "refLatencyP95": 100885
+  },
+  "provisional": {
+   "units": 32,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "outcomes": {
+    "same": 31,
+    "changed": 1
+   },
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsd": 0.64555526,
+   "refUsd": 1.29557756,
+   "basePass": 24,
+   "pass": 24,
+   "latencyP50": 35800,
+   "latencyP95": 81748,
+   "refLatencyP50": 66467,
+   "refLatencyP95": 100885
+  }
+ },
+ "primary": [
+  {
+   "site": "kinetics/prose-events-a",
+   "tier": "claude-haiku-5-5",
+   "class": "high",
+   "delta": 0.02,
+   "id": "kinetics/prose-events-a",
+   "holds": false,
+   "bound1": {
+    "flips": 0,
+    "units": 5,
+    "upper": 0.4507197283469414,
+    "delta": 0.02,
+    "holds": false
+   },
+   "bound2": {
+    "disagreement": 0.036081421329953955,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": 0.95,
+    "holds": true
+   },
+   "units": 5,
+   "passFail": 0,
+   "failPass": 0,
+   "verdict": "keep-reference"
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "claude-haiku-5-5",
+   "class": "mid",
+   "delta": 0.05,
+   "id": "records/source-rules",
+   "verdict": "not-tested",
+   "stoppedBy": "kinetics/prose-events-a"
+  },
+  {
+   "site": "records/void-values",
+   "tier": "mercury-3",
+   "class": "high",
+   "delta": 0.02,
+   "id": "records/void-values",
+   "verdict": "not-tested",
+   "stoppedBy": "kinetics/prose-events-a"
+  },
+  {
+   "site": "records/date-order",
+   "tier": "mercury-3",
+   "class": "high",
+   "delta": 0.02,
+   "id": "records/date-order",
+   "verdict": "not-tested",
+   "stoppedBy": "kinetics/prose-events-a"
+  },
+  {
+   "site": "records/vendex-entries",
+   "tier": "mercury-3",
+   "class": "low",
+   "delta": 0.1,
+   "id": "records/vendex-entries",
+   "verdict": "not-tested",
+   "stoppedBy": "kinetics/prose-events-a"
+  },
+  {
+   "site": "records/countries",
+   "tier": "rule",
+   "class": "low",
+   "delta": 0.1,
+   "id": "records/countries",
+   "verdict": "not-tested",
+   "stoppedBy": "kinetics/prose-events-a"
+  },
+  {
+   "site": "records/country-names",
+   "tier": "rule",
+   "class": "low",
+   "delta": 0.1,
+   "id": "records/country-names",
+   "verdict": "not-tested",
+   "stoppedBy": "kinetics/prose-events-a"
+  }
+ ],
+ "provisional": [
+  {
+   "site": "kinetics/prose-events-a",
+   "tier": "claude-haiku-5-5",
+   "class": "high",
+   "delta": 0.02,
+   "keep": true,
+   "units": 5,
+   "passFail": 0,
+   "failPass": 0,
+   "bound2": {
+    "disagreement": 0.036081421329953955,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": 0.95,
+    "holds": true
+   },
+   "bound1Upper": 0.4507197283469414
+  },
+  {
+   "site": "records/source-rules",
+   "tier": "claude-haiku-5-5",
+   "class": "mid",
+   "delta": 0.05,
+   "keep": false,
+   "units": 7,
+   "passFail": 1,
+   "failPass": 1,
+   "bound2": {
+    "disagreement": 0.0472461251104187,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": 0.95,
+    "holds": true
+   },
+   "bound1Upper": 0.5207029735913071
+  },
+  {
+   "site": "records/void-values",
+   "tier": "mercury-3",
+   "class": "high",
+   "delta": 0.02,
+   "keep": true,
+   "units": 8,
+   "passFail": 0,
+   "failPass": 0,
+   "bound2": {
+    "disagreement": 0,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": 0.95,
+    "holds": true
+   },
+   "bound1Upper": 0.3123439780663676
+  },
+  {
+   "site": "records/date-order",
+   "tier": "mercury-3",
+   "class": "high",
+   "delta": 0.02,
+   "keep": true,
+   "units": 8,
+   "passFail": 0,
+   "failPass": 0,
+   "bound2": {
+    "disagreement": 0,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": 0.95,
+    "holds": true
+   },
+   "bound1Upper": 0.3123439780663676
+  },
+  {
+   "site": "records/vendex-entries",
+   "tier": "mercury-3",
+   "class": "low",
+   "delta": 0.1,
+   "keep": true,
+   "units": 15,
+   "passFail": 0,
+   "failPass": 0,
+   "bound2": {
+    "disagreement": 0.004198911309895248,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": 0.95,
+    "holds": true
+   },
+   "bound1Upper": 0.18103627252208435
+  },
+  {
+   "site": "records/countries",
+   "tier": "rule",
+   "class": "low",
+   "delta": 0.1,
+   "keep": true,
+   "units": 8,
+   "passFail": 0,
+   "failPass": 0,
+   "bound2": {
+    "disagreement": 0,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": null,
+    "holds": true
+   },
+   "bound1Upper": 0.3123439780663676
+  },
+  {
+   "site": "records/country-names",
+   "tier": "rule",
+   "class": "low",
+   "delta": 0.1,
+   "keep": true,
+   "units": 16,
+   "passFail": 0,
+   "failPass": 0,
+   "bound2": {
+    "disagreement": 0,
+    "usableRate": 1,
+    "epsilon": 0.05,
+    "minUsable": null,
+    "holds": true
+   },
+   "bound1Upper": 0.1707497229824809
+  }
+ ],
+ "capability": [
+  {
+   "name": "B-all-haiku",
+   "units": 42,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "pass": 25,
+   "refPass": 29,
+   "accuracy": 0.5952380952380952,
+   "refAccuracy": 0.6904761904761905,
+   "passFail": 5,
+   "failPass": 1,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.03316485380952381,
+   "refUsdPerUnit": 0.06614290833333333,
+   "costSaved": 0.49858791146003967,
+   "ni": {
+    "b": 5,
+    "c": 1,
+    "n": 42,
+    "margin": 0.03,
+    "lossUpper": 0.23415651712012922,
+    "netLossUpper": 0.2103469933106054,
+    "mcnemarP": 0.2187500000000009,
+    "holds": false,
+    "diff": -0.09523809523809523
+   },
+   "latencyP50": 56079,
+   "latencyP95": 393337,
+   "refLatencyP50": 74325,
+   "refLatencyP95": 251097
+  },
+  {
+   "name": "B-all-mercury",
+   "units": 28,
+   "unmeasured": 0,
+   "incomplete": 14,
+   "pass": 18,
+   "refPass": 18,
+   "accuracy": 0.6428571428571429,
+   "refAccuracy": 0.6428571428571429,
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.06718805285714287,
+   "refUsdPerUnit": 0.06950058178571429,
+   "costSaved": 0.03327351900019282,
+   "ni": {
+    "b": 0,
+    "c": 0,
+    "n": 28,
+    "margin": 0.03,
+    "lossUpper": 0.10146573557272456,
+    "netLossUpper": 0.10146573557272456,
+    "mcnemarP": 1,
+    "holds": false,
+    "diff": 0
+   },
+   "latencyP50": 79452,
+   "latencyP95": 330009,
+   "refLatencyP50": 82542,
+   "refLatencyP95": 330009
+  },
+  {
+   "name": "B-memo",
+   "units": 42,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "pass": 29,
+   "refPass": 29,
+   "accuracy": 0.6904761904761905,
+   "refAccuracy": 0.6904761904761905,
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.06614290833333333,
+   "refUsdPerUnit": 0.06614290833333333,
+   "costSaved": 0,
+   "ni": {
+    "b": 0,
+    "c": 0,
+    "n": 42,
+    "margin": 0.03,
+    "lossUpper": 0.06884260784039506,
+    "netLossUpper": 0.06884260784039506,
+    "mcnemarP": 1,
+    "holds": false,
+    "diff": 0
+   },
+   "latencyP50": 74325,
+   "latencyP95": 251097,
+   "refLatencyP50": 74325,
+   "refLatencyP95": 251097
+  },
+  {
+   "name": "B-ref",
+   "units": 42,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "pass": 29,
+   "refPass": 29,
+   "accuracy": 0.6904761904761905,
+   "refAccuracy": 0.6904761904761905,
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.06614290833333333,
+   "refUsdPerUnit": 0.06614290833333333,
+   "costSaved": 0,
+   "ni": {
+    "b": 0,
+    "c": 0,
+    "n": 42,
+    "margin": 0.03,
+    "lossUpper": 0.06884260784039506,
+    "netLossUpper": 0.06884260784039506,
+    "mcnemarP": 1,
+    "holds": false,
+    "diff": 0
+   },
+   "latencyP50": 74325,
+   "latencyP95": 251097,
+   "refLatencyP50": 74325,
+   "refLatencyP95": 251097
+  },
+  {
+   "name": "B-screen",
+   "units": 42,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "pass": 29,
+   "refPass": 29,
+   "accuracy": 0.6904761904761905,
+   "refAccuracy": 0.6904761904761905,
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.0645869736904762,
+   "refUsdPerUnit": 0.06614290833333333,
+   "costSaved": 0.023523831686019236,
+   "ni": {
+    "b": 0,
+    "c": 0,
+    "n": 42,
+    "margin": 0.03,
+    "lossUpper": 0.06884260784039506,
+    "netLossUpper": 0.06884260784039506,
+    "mcnemarP": 1,
+    "holds": false,
+    "diff": 0
+   },
+   "latencyP50": 61968,
+   "latencyP95": 251097,
+   "refLatencyP50": 74325,
+   "refLatencyP95": 251097
+  },
+  {
+   "name": "B-sink",
+   "units": 42,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "pass": 27,
+   "refPass": 29,
+   "accuracy": 0.6428571428571429,
+   "refAccuracy": 0.6904761904761905,
+   "passFail": 2,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.06195517928571428,
+   "refUsdPerUnit": 0.06614290833333333,
+   "costSaved": 0.06331334912753761,
+   "ni": {
+    "b": 2,
+    "c": 0,
+    "n": 42,
+    "margin": 0.03,
+    "lossUpper": 0.14241447656314557,
+    "netLossUpper": 0.14241447656314557,
+    "mcnemarP": 0.5000000000000009,
+    "holds": false,
+    "diff": -0.047619047619047616
+   },
+   "latencyP50": 60812,
+   "latencyP95": 393337,
+   "refLatencyP50": 74325,
+   "refLatencyP95": 251097
+  },
+  {
+   "name": "selected",
+   "units": 42,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "pass": 29,
+   "refPass": 29,
+   "accuracy": 0.6904761904761905,
+   "refAccuracy": 0.6904761904761905,
+   "passFail": 1,
+   "failPass": 1,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.04716588678571428,
+   "refUsdPerUnit": 0.06614290833333333,
+   "costSaved": 0.2869093909808529,
+   "ni": {
+    "b": 1,
+    "c": 1,
+    "n": 42,
+    "margin": 0.03,
+    "lossUpper": 0.10803769616121209,
+    "netLossUpper": 0.08422817235168828,
+    "mcnemarP": 1,
+    "holds": false,
+    "diff": 0
+   },
+   "latencyP50": 38387,
+   "latencyP95": 251097,
+   "refLatencyP50": 74325,
+   "refLatencyP95": 251097
+  },
+  {
+   "name": "provisional",
+   "units": 42,
+   "unmeasured": 0,
+   "incomplete": 0,
+   "pass": 29,
+   "refPass": 29,
+   "accuracy": 0.6904761904761905,
+   "refAccuracy": 0.6904761904761905,
+   "passFail": 0,
+   "failPass": 0,
+   "deopts": 0,
+   "judgeUsdPerUnit": 0.05066618690476189,
+   "refUsdPerUnit": 0.06614290833333333,
+   "costSaved": 0.23398912776219427,
+   "ni": {
+    "b": 0,
+    "c": 0,
+    "n": 42,
+    "margin": 0.03,
+    "lossUpper": 0.06884260784039506,
+    "netLossUpper": 0.06884260784039506,
+    "mcnemarP": 1,
+    "holds": false,
+    "diff": 0
+   },
+   "latencyP50": 44762,
+   "latencyP95": 251097,
+   "refLatencyP50": 74325,
+   "refLatencyP95": 251097
+  }
+ ]
+}

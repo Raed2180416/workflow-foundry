@@ -1,0 +1,93 @@
+{
+ "evidence": "development; archived list-price spend",
+ "phases": {
+  "delivery": 6.458775480000001,
+  "check": 19.978285290000006,
+  "compile": 37.79984911
+ },
+ "tasksStreamed": 142,
+ "buildPerTask": 0.4068882704225352,
+ "rows": [
+  {
+   "name": "B-all-haiku",
+   "deliverySaved": 0.480567232462365,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.44124506435110666,
+   "fullSaved": 0.06719665813226805,
+   "fullUsdPerSuccess": 0.7412917081098592,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  },
+  {
+   "name": "B-all-mercury",
+   "deliverySaved": 0.03327351900019282,
+   "fullRefUsdPerUnit": 0.4763888522082495,
+   "fullArmUsdPerUnit": 0.4740763232796781,
+   "fullSaved": 0.004854288503712723,
+   "fullUsdPerSuccess": 0.7374520584350548,
+   "fullRefUsdPerSuccess": 0.741049325657277
+  },
+  {
+   "name": "B-memo",
+   "deliverySaved": 0,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.47303117875586853,
+   "fullSaved": 0,
+   "fullUsdPerSuccess": 0.6850796381981543,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  },
+  {
+   "name": "B-ref",
+   "deliverySaved": 0,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.47303117875586853,
+   "fullSaved": 0,
+   "fullUsdPerSuccess": 0.6850796381981543,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  },
+  {
+   "name": "B-screen",
+   "deliverySaved": 0.023523831686019236,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.4714752441130114,
+   "fullSaved": 0.0032892855962464163,
+   "fullUsdPerSuccess": 0.6828262156119476,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  },
+  {
+   "name": "B-sink",
+   "deliverySaved": 0.0633133491275375,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.4688434497082495,
+   "fullSaved": 0.008852966222297032,
+   "fullUsdPerSuccess": 0.7293120328794992,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  },
+  {
+   "name": "provisional",
+   "deliverySaved": 0.21596844876451948,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.4587463974463447,
+   "fullSaved": 0.030198392729829382,
+   "fullUsdPerSuccess": 0.6643913342326372,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  },
+  {
+   "name": "selected-tier",
+   "deliverySaved": 0.028321063394425194,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.4711579412558686,
+   "fullSaved": 0.003960071944785537,
+   "fullUsdPerSuccess": 0.6823666735429821,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  },
+  {
+   "name": "selected",
+   "deliverySaved": 0.2688887119831781,
+   "fullRefUsdPerUnit": 0.47303117875586853,
+   "fullArmUsdPerUnit": 0.45524609732729715,
+   "fullSaved": 0.037598116630173095,
+   "fullUsdPerSuccess": 0.6593219340602234,
+   "fullRefUsdPerSuccess": 0.6850796381981543
+  }
+ ]
+}

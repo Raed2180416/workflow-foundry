@@ -1,0 +1,1204 @@
+{
+ "tool": "experiments/tierdown/truth.mjs",
+ "modelCalls": 0,
+ "evidence": "development (archived dev runs, C and H; the rule tier was written from C, so its C rows are in-sample)",
+ "scores": {
+  "all": [
+   {
+    "site": "records/date-order",
+    "tier": "mercury-3",
+    "decisions": 18,
+    "leaves": 47,
+    "correct": 46,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s212"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 18,
+      "correct": 18
+     },
+     "ATLAS": {
+      "leaves": 11,
+      "correct": 10
+     },
+     "VENDEX": {
+      "leaves": 18,
+      "correct": 18
+     }
+    },
+    "accuracy": 0.9787234042553191
+   },
+   {
+    "site": "records/date-order",
+    "tier": "reference",
+    "decisions": 18,
+    "leaves": 47,
+    "correct": 45,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s212",
+     "records:dev:d4:s218"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 18,
+      "correct": 17
+     },
+     "ATLAS": {
+      "leaves": 11,
+      "correct": 10
+     },
+     "VENDEX": {
+      "leaves": 18,
+      "correct": 18
+     }
+    },
+    "accuracy": 0.9574468085106383
+   },
+   {
+    "site": "records/date-order",
+    "tier": "rule",
+    "decisions": 17,
+    "leaves": 44,
+    "correct": 43,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d4:s217"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 17,
+      "correct": 17
+     },
+     "ATLAS": {
+      "leaves": 10,
+      "correct": 9
+     },
+     "VENDEX": {
+      "leaves": 17,
+      "correct": 17
+     }
+    },
+    "accuracy": 0.9772727272727273
+   },
+   {
+    "site": "records/rules",
+    "tier": "claude-haiku-5-5",
+    "decisions": 19,
+    "leaves": 57,
+    "correct": 52,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s204",
+     "records:dev:d3:s208",
+     "records:dev:d3:s212",
+     "records:dev:d3:s214",
+     "records:dev:d4:s223"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 19,
+      "correct": 17
+     },
+     "ATLAS": {
+      "leaves": 19,
+      "correct": 16
+     },
+     "VENDEX": {
+      "leaves": 19,
+      "correct": 19
+     }
+    },
+    "accuracy": 0.9122807017543859
+   },
+   {
+    "site": "records/rules",
+    "tier": "mercury-3",
+    "decisions": 3,
+    "leaves": 9,
+    "correct": 8,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s208"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 3,
+      "correct": 2
+     },
+     "ATLAS": {
+      "leaves": 3,
+      "correct": 3
+     },
+     "VENDEX": {
+      "leaves": 3,
+      "correct": 3
+     }
+    },
+    "accuracy": 0.8888888888888888
+   },
+   {
+    "site": "records/rules",
+    "tier": "reference",
+    "decisions": 19,
+    "leaves": 57,
+    "correct": 57,
+    "unscorable": 0,
+    "wrongTasks": [],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 19,
+      "correct": 19
+     },
+     "ATLAS": {
+      "leaves": 19,
+      "correct": 19
+     },
+     "VENDEX": {
+      "leaves": 19,
+      "correct": 19
+     }
+    },
+    "accuracy": 1
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "claude-haiku-5-5",
+    "decisions": 17,
+    "leaves": 47,
+    "correct": 41,
+    "unscorable": 4,
+    "wrongTasks": [
+     "records:dev:d3:s204",
+     "records:dev:d3:s207",
+     "records:dev:d3:s208",
+     "records:dev:d3:s214",
+     "records:dev:d4:s218",
+     "records:dev:d4:s223"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 17,
+      "correct": 13
+     },
+     "ATLAS": {
+      "leaves": 15,
+      "correct": 13
+     },
+     "VENDEX": {
+      "leaves": 15,
+      "correct": 15
+     }
+    },
+    "accuracy": 0.8723404255319149
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "mercury-3",
+    "decisions": 4,
+    "leaves": 11,
+    "correct": 10,
+    "unscorable": 1,
+    "wrongTasks": [
+     "records:dev:d3:s208"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 4,
+      "correct": 3
+     },
+     "ATLAS": {
+      "leaves": 4,
+      "correct": 4
+     },
+     "VENDEX": {
+      "leaves": 3,
+      "correct": 3
+     }
+    },
+    "accuracy": 0.9090909090909091
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "reference",
+    "decisions": 17,
+    "leaves": 48,
+    "correct": 44,
+    "unscorable": 3,
+    "wrongTasks": [
+     "records:dev:d3:s208",
+     "records:dev:d3:s214",
+     "records:dev:d4:s218",
+     "records:dev:d4:s222"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 17,
+      "correct": 14
+     },
+     "ATLAS": {
+      "leaves": 16,
+      "correct": 15
+     },
+     "VENDEX": {
+      "leaves": 15,
+      "correct": 15
+     }
+    },
+    "accuracy": 0.9166666666666666
+   }
+  ],
+  "C": [
+   {
+    "site": "records/date-order",
+    "tier": "mercury-3",
+    "decisions": 10,
+    "leaves": 25,
+    "correct": 24,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s212"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 10,
+      "correct": 10
+     },
+     "ATLAS": {
+      "leaves": 5,
+      "correct": 4
+     },
+     "VENDEX": {
+      "leaves": 10,
+      "correct": 10
+     }
+    },
+    "accuracy": 0.96
+   },
+   {
+    "site": "records/date-order",
+    "tier": "reference",
+    "decisions": 10,
+    "leaves": 25,
+    "correct": 23,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s212",
+     "records:dev:d4:s218"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 10,
+      "correct": 9
+     },
+     "ATLAS": {
+      "leaves": 5,
+      "correct": 4
+     },
+     "VENDEX": {
+      "leaves": 10,
+      "correct": 10
+     }
+    },
+    "accuracy": 0.92
+   },
+   {
+    "site": "records/date-order",
+    "tier": "rule",
+    "decisions": 10,
+    "leaves": 25,
+    "correct": 25,
+    "unscorable": 0,
+    "wrongTasks": [],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 10,
+      "correct": 10
+     },
+     "ATLAS": {
+      "leaves": 5,
+      "correct": 5
+     },
+     "VENDEX": {
+      "leaves": 10,
+      "correct": 10
+     }
+    },
+    "accuracy": 1
+   },
+   {
+    "site": "records/rules",
+    "tier": "claude-haiku-5-5",
+    "decisions": 11,
+    "leaves": 33,
+    "correct": 30,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s204",
+     "records:dev:d3:s208",
+     "records:dev:d3:s212"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 11,
+      "correct": 10
+     },
+     "ATLAS": {
+      "leaves": 11,
+      "correct": 9
+     },
+     "VENDEX": {
+      "leaves": 11,
+      "correct": 11
+     }
+    },
+    "accuracy": 0.9090909090909091
+   },
+   {
+    "site": "records/rules",
+    "tier": "mercury-3",
+    "decisions": 3,
+    "leaves": 9,
+    "correct": 8,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s208"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 3,
+      "correct": 2
+     },
+     "ATLAS": {
+      "leaves": 3,
+      "correct": 3
+     },
+     "VENDEX": {
+      "leaves": 3,
+      "correct": 3
+     }
+    },
+    "accuracy": 0.8888888888888888
+   },
+   {
+    "site": "records/rules",
+    "tier": "reference",
+    "decisions": 11,
+    "leaves": 33,
+    "correct": 33,
+    "unscorable": 0,
+    "wrongTasks": [],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 11,
+      "correct": 11
+     },
+     "ATLAS": {
+      "leaves": 11,
+      "correct": 11
+     },
+     "VENDEX": {
+      "leaves": 11,
+      "correct": 11
+     }
+    },
+    "accuracy": 1
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "claude-haiku-5-5",
+    "decisions": 10,
+    "leaves": 26,
+    "correct": 22,
+    "unscorable": 4,
+    "wrongTasks": [
+     "records:dev:d3:s204",
+     "records:dev:d3:s207",
+     "records:dev:d3:s208",
+     "records:dev:d4:s218"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 10,
+      "correct": 7
+     },
+     "ATLAS": {
+      "leaves": 8,
+      "correct": 7
+     },
+     "VENDEX": {
+      "leaves": 8,
+      "correct": 8
+     }
+    },
+    "accuracy": 0.8461538461538461
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "mercury-3",
+    "decisions": 3,
+    "leaves": 8,
+    "correct": 7,
+    "unscorable": 1,
+    "wrongTasks": [
+     "records:dev:d3:s208"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 3,
+      "correct": 2
+     },
+     "ATLAS": {
+      "leaves": 3,
+      "correct": 3
+     },
+     "VENDEX": {
+      "leaves": 2,
+      "correct": 2
+     }
+    },
+    "accuracy": 0.875
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "reference",
+    "decisions": 10,
+    "leaves": 27,
+    "correct": 25,
+    "unscorable": 3,
+    "wrongTasks": [
+     "records:dev:d3:s208",
+     "records:dev:d4:s218"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 10,
+      "correct": 8
+     },
+     "ATLAS": {
+      "leaves": 9,
+      "correct": 9
+     },
+     "VENDEX": {
+      "leaves": 8,
+      "correct": 8
+     }
+    },
+    "accuracy": 0.9259259259259259
+   }
+  ],
+  "H": [
+   {
+    "site": "records/date-order",
+    "tier": "mercury-3",
+    "decisions": 8,
+    "leaves": 22,
+    "correct": 22,
+    "unscorable": 0,
+    "wrongTasks": [],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 8,
+      "correct": 8
+     },
+     "ATLAS": {
+      "leaves": 6,
+      "correct": 6
+     },
+     "VENDEX": {
+      "leaves": 8,
+      "correct": 8
+     }
+    },
+    "accuracy": 1
+   },
+   {
+    "site": "records/date-order",
+    "tier": "reference",
+    "decisions": 8,
+    "leaves": 22,
+    "correct": 22,
+    "unscorable": 0,
+    "wrongTasks": [],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 8,
+      "correct": 8
+     },
+     "ATLAS": {
+      "leaves": 6,
+      "correct": 6
+     },
+     "VENDEX": {
+      "leaves": 8,
+      "correct": 8
+     }
+    },
+    "accuracy": 1
+   },
+   {
+    "site": "records/date-order",
+    "tier": "rule",
+    "decisions": 7,
+    "leaves": 19,
+    "correct": 18,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d4:s217"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 7,
+      "correct": 7
+     },
+     "ATLAS": {
+      "leaves": 5,
+      "correct": 4
+     },
+     "VENDEX": {
+      "leaves": 7,
+      "correct": 7
+     }
+    },
+    "accuracy": 0.9473684210526315
+   },
+   {
+    "site": "records/rules",
+    "tier": "claude-haiku-5-5",
+    "decisions": 8,
+    "leaves": 24,
+    "correct": 22,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s214",
+     "records:dev:d4:s223"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 8,
+      "correct": 7
+     },
+     "ATLAS": {
+      "leaves": 8,
+      "correct": 7
+     },
+     "VENDEX": {
+      "leaves": 8,
+      "correct": 8
+     }
+    },
+    "accuracy": 0.9166666666666666
+   },
+   {
+    "site": "records/rules",
+    "tier": "reference",
+    "decisions": 8,
+    "leaves": 24,
+    "correct": 24,
+    "unscorable": 0,
+    "wrongTasks": [],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 8,
+      "correct": 8
+     },
+     "ATLAS": {
+      "leaves": 8,
+      "correct": 8
+     },
+     "VENDEX": {
+      "leaves": 8,
+      "correct": 8
+     }
+    },
+    "accuracy": 1
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "claude-haiku-5-5",
+    "decisions": 7,
+    "leaves": 21,
+    "correct": 19,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s214",
+     "records:dev:d4:s223"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 7,
+      "correct": 6
+     },
+     "ATLAS": {
+      "leaves": 7,
+      "correct": 6
+     },
+     "VENDEX": {
+      "leaves": 7,
+      "correct": 7
+     }
+    },
+    "accuracy": 0.9047619047619048
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "mercury-3",
+    "decisions": 1,
+    "leaves": 3,
+    "correct": 3,
+    "unscorable": 0,
+    "wrongTasks": [],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 1,
+      "correct": 1
+     },
+     "ATLAS": {
+      "leaves": 1,
+      "correct": 1
+     },
+     "VENDEX": {
+      "leaves": 1,
+      "correct": 1
+     }
+    },
+    "accuracy": 1
+   },
+   {
+    "site": "records/source-rules",
+    "tier": "reference",
+    "decisions": 7,
+    "leaves": 21,
+    "correct": 19,
+    "unscorable": 0,
+    "wrongTasks": [
+     "records:dev:d3:s214",
+     "records:dev:d4:s222"
+    ],
+    "bySystem": {
+     "BRIGHTDESK": {
+      "leaves": 7,
+      "correct": 6
+     },
+     "ATLAS": {
+      "leaves": 7,
+      "correct": 6
+     },
+     "VENDEX": {
+      "leaves": 7,
+      "correct": 7
+     }
+    },
+    "accuracy": 0.9047619047619048
+   }
+  ]
+ },
+ "cascade": {
+  "all": {
+   "decisions": 18,
+   "agree": 15,
+   "losses": 0,
+   "gains": 1,
+   "leafCorrect": 17,
+   "refLeafCorrect": 16,
+   "usd": 0.004723270000000001,
+   "refUsd": 0.03385152999999999,
+   "rows": [
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#6",
+     "taskKey": "records:dev:d3:s207",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00209845
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#7",
+     "taskKey": "records:dev:d3:s208",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0,
+     "refUsd": 0.002432415
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#8",
+     "taskKey": "records:dev:d3:s209",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.003093475
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#9",
+     "taskKey": "records:dev:d3:s210",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0020787649999999998
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#10",
+     "taskKey": "records:dev:d3:s211",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.001440825
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#11",
+     "taskKey": "records:dev:d3:s212",
+     "slice": "C",
+     "agree": false,
+     "served": "reference",
+     "leavesCorrect": false,
+     "refLeavesCorrect": false,
+     "basePass": false,
+     "pass": false,
+     "usd": 0.0012860500000000004,
+     "refUsd": 0.0012860500000000004
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#12",
+     "taskKey": "records:dev:d3:s213",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0014670100000000001
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#13",
+     "taskKey": "records:dev:d3:s214",
+     "slice": "H",
+     "agree": false,
+     "served": "reference",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0.0014515850000000002,
+     "refUsd": 0.0014515850000000002
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#14",
+     "taskKey": "records:dev:d3:s215",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0012506550000000003
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#15",
+     "taskKey": "records:dev:d3:s216",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0019372299999999999
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#16",
+     "taskKey": "records:dev:d4:s217",
+     "slice": "H",
+     "agree": false,
+     "served": "reference",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0.0019856350000000004,
+     "refUsd": 0.0019856350000000004
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#17",
+     "taskKey": "records:dev:d4:s218",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": false,
+     "basePass": false,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0018645350000000003
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#18",
+     "taskKey": "records:dev:d4:s219",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00169394
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#19",
+     "taskKey": "records:dev:d4:s220",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0017823549999999998
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#20",
+     "taskKey": "records:dev:d4:s221",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.002198455
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#21",
+     "taskKey": "records:dev:d4:s222",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00184988
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#22",
+     "taskKey": "records:dev:d4:s223",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0,
+     "refUsd": 0.0019439000000000001
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#23",
+     "taskKey": "records:dev:d4:s224",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00199637
+    }
+   ]
+  },
+  "C": {
+   "decisions": 10,
+   "agree": 9,
+   "losses": 0,
+   "gains": 1,
+   "leafCorrect": 9,
+   "refLeafCorrect": 8,
+   "usd": 0.0012860500000000004,
+   "refUsd": 0.02052481,
+   "rows": [
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#6",
+     "taskKey": "records:dev:d3:s207",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00209845
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#7",
+     "taskKey": "records:dev:d3:s208",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0,
+     "refUsd": 0.002432415
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#8",
+     "taskKey": "records:dev:d3:s209",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.003093475
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#9",
+     "taskKey": "records:dev:d3:s210",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0020787649999999998
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#11",
+     "taskKey": "records:dev:d3:s212",
+     "slice": "C",
+     "agree": false,
+     "served": "reference",
+     "leavesCorrect": false,
+     "refLeavesCorrect": false,
+     "basePass": false,
+     "pass": false,
+     "usd": 0.0012860500000000004,
+     "refUsd": 0.0012860500000000004
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#17",
+     "taskKey": "records:dev:d4:s218",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": false,
+     "basePass": false,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0018645350000000003
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#18",
+     "taskKey": "records:dev:d4:s219",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00169394
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#19",
+     "taskKey": "records:dev:d4:s220",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0017823549999999998
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#20",
+     "taskKey": "records:dev:d4:s221",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.002198455
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#23",
+     "taskKey": "records:dev:d4:s224",
+     "slice": "C",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00199637
+    }
+   ]
+  },
+  "H": {
+   "decisions": 8,
+   "agree": 6,
+   "losses": 0,
+   "gains": 0,
+   "leafCorrect": 8,
+   "refLeafCorrect": 8,
+   "usd": 0.0034372200000000004,
+   "refUsd": 0.01332672,
+   "rows": [
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#10",
+     "taskKey": "records:dev:d3:s211",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.001440825
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#12",
+     "taskKey": "records:dev:d3:s213",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0014670100000000001
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#13",
+     "taskKey": "records:dev:d3:s214",
+     "slice": "H",
+     "agree": false,
+     "served": "reference",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0.0014515850000000002,
+     "refUsd": 0.0014515850000000002
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#14",
+     "taskKey": "records:dev:d3:s215",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0012506550000000003
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#15",
+     "taskKey": "records:dev:d3:s216",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.0019372299999999999
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#16",
+     "taskKey": "records:dev:d4:s217",
+     "slice": "H",
+     "agree": false,
+     "served": "reference",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0.0019856350000000004,
+     "refUsd": 0.0019856350000000004
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#21",
+     "taskKey": "records:dev:d4:s222",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": true,
+     "pass": true,
+     "usd": 0,
+     "refUsd": 0.00184988
+    },
+    {
+     "row": "jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#22",
+     "taskKey": "records:dev:d4:s223",
+     "slice": "H",
+     "agree": true,
+     "served": "rule",
+     "leavesCorrect": true,
+     "refLeavesCorrect": true,
+     "basePass": false,
+     "pass": false,
+     "usd": 0,
+     "refUsd": 0.0019439000000000001
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,302 @@
+{
+ "kinetics/extract:*": {
+  "site": "kinetics/extract:*",
+  "slice": "C",
+  "rows": 2,
+  "measured": 80,
+  "unmeasured": 0,
+  "flips": 5,
+  "flipRate": 0.0625,
+  "ci": [
+   0.02060307230201,
+   0.139857075297639
+  ],
+  "class": "mid",
+  "delta": 0.05
+ },
+ "kinetics/prose-events-a": {
+  "site": "kinetics/prose-events-a",
+  "slice": "C",
+  "rows": 5,
+  "measured": 20,
+  "unmeasured": 0,
+  "flips": 5,
+  "flipRate": 0.25,
+  "ci": [
+   0.08657146910143446,
+   0.491045871707957
+  ],
+  "class": "high",
+  "delta": 0.02
+ },
+ "records/source-rules": {
+  "site": "records/source-rules",
+  "slice": "C",
+  "rows": 10,
+  "measured": 40,
+  "unmeasured": 0,
+  "flips": 3,
+  "flipRate": 0.075,
+  "ci": [
+   0.015742179851041566,
+   0.20386474873289875
+  ],
+  "class": "mid",
+  "delta": 0.05
+ },
+ "records/vendex-entries": {
+  "site": "records/vendex-entries",
+  "slice": "C",
+  "rows": 21,
+  "measured": 84,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.04296491962956547
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "records/country-names": {
+  "site": "records/country-names",
+  "slice": "C",
+  "rows": 19,
+  "measured": 66,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.05435884717012143
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "records/rulebook": {
+  "site": "records/rulebook",
+  "slice": "C",
+  "rows": 11,
+  "measured": 44,
+  "unmeasured": 0,
+  "flips": 12,
+  "flipRate": 0.2727272727272727,
+  "ci": [
+   0.1495768437653082,
+   0.42789641245550003
+  ],
+  "class": "high",
+  "delta": 0.02
+ },
+ "records/date-order": {
+  "site": "records/date-order",
+  "slice": "C",
+  "rows": 10,
+  "measured": 40,
+  "unmeasured": 0,
+  "flips": 13,
+  "flipRate": 0.325,
+  "ci": [
+   0.18572896676334985,
+   0.49129487547844786
+  ],
+  "class": "high",
+  "delta": 0.02
+ },
+ "records/void-values": {
+  "site": "records/void-values",
+  "slice": "C",
+  "rows": 10,
+  "measured": 40,
+  "unmeasured": 0,
+  "flips": 9,
+  "flipRate": 0.225,
+  "ci": [
+   0.10839663898407223,
+   0.3845116773034226
+  ],
+  "class": "high",
+  "delta": 0.02
+ },
+ "records/atlas-dates": {
+  "site": "records/atlas-dates",
+  "slice": "C",
+  "rows": 5,
+  "measured": 20,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.16843347098308523
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "records/rules": {
+  "site": "records/rules",
+  "slice": "C",
+  "rows": 11,
+  "measured": 39,
+  "unmeasured": 5,
+  "flips": 12,
+  "flipRate": 0.3076923076923077,
+  "ci": [
+   0.17019590296469414,
+   0.4756913915416848
+  ],
+  "class": "high",
+  "delta": 0.02
+ },
+ "records/countries": {
+  "site": "records/countries",
+  "slice": "C",
+  "rows": 11,
+  "measured": 44,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.08041993976357578
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "records/vendex-*": {
+  "site": "records/vendex-*",
+  "slice": "C",
+  "rows": 11,
+  "measured": 192,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.019029522168779595
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "kinetics/doc-units": {
+  "site": "kinetics/doc-units",
+  "slice": "C",
+  "rows": 3,
+  "measured": 61,
+  "unmeasured": 11,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.05868122393229194
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "kinetics/dilutions": {
+  "site": "kinetics/dilutions",
+  "slice": "C",
+  "rows": 3,
+  "measured": 12,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.2646484693970509
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "kinetics/well-events": {
+  "site": "kinetics/well-events",
+  "slice": "C",
+  "rows": 3,
+  "measured": 12,
+  "unmeasured": 0,
+  "flips": 5,
+  "flipRate": 0.4166666666666667,
+  "ci": [
+   0.15165222980843027,
+   0.7233303143178937
+  ],
+  "class": "high",
+  "delta": 0.02
+ },
+ "records/void-markers": {
+  "site": "records/void-markers",
+  "slice": "C",
+  "rows": 4,
+  "measured": 16,
+  "unmeasured": 0,
+  "flips": 2,
+  "flipRate": 0.125,
+  "ci": [
+   0.015513603815413918,
+   0.38347623684926313
+  ],
+  "class": "mid",
+  "delta": 0.05
+ },
+ "records/balance-signs": {
+  "site": "records/balance-signs",
+  "slice": "C",
+  "rows": 4,
+  "measured": 16,
+  "unmeasured": 0,
+  "flips": 1,
+  "flipRate": 0.0625,
+  "ci": [
+   0.0015811117227658988,
+   0.30232073843453156
+  ],
+  "class": "mid",
+  "delta": 0.05
+ },
+ "records/restamped-systems": {
+  "site": "records/restamped-systems",
+  "slice": "C",
+  "rows": 4,
+  "measured": 16,
+  "unmeasured": 0,
+  "flips": 1,
+  "flipRate": 0.0625,
+  "ci": [
+   0.0015811117227658988,
+   0.30232073843453156
+  ],
+  "class": "mid",
+  "delta": 0.05
+ },
+ "records/vendex-fields": {
+  "site": "records/vendex-fields",
+  "slice": "C",
+  "rows": 4,
+  "measured": 44,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.08041993976357578
+  ],
+  "class": "low",
+  "delta": 0.1
+ },
+ "records/date-orders": {
+  "site": "records/date-orders",
+  "slice": "C",
+  "rows": 4,
+  "measured": 16,
+  "unmeasured": 0,
+  "flips": 0,
+  "flipRate": 0,
+  "ci": [
+   0,
+   0.20590721420782263
+  ],
+  "class": "low",
+  "delta": 0.1
+ }
+}

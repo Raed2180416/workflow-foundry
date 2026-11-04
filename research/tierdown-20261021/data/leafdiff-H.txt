@@ -1,0 +1,170 @@
+
+kinetics/extract:*@claude-haiku-5-5 jit-dev-kinetics-1/jit-claude-haiku-5-5--claude-haiku-5-5#6 (kinetics:dev:d4:s207): flip pass->fail fellBack={"check-failed":3}
+  extract:D1 51f56627bbb9 agreement 0.952: 41 leaf differences
+    events[]: ref 9 | tier 6
+    events/3/samples[]: ref 0 | tier 1
+    events/4/samples[]: ref 1 | tier 2
+    events/6/samples[]: ref 0 | tier null
+    events/7/samples[]: ref 0 | tier null
+    events/8/samples[]: ref 2 | tier null
+    events/3/condition_id: ref "C3" | tier "C5"
+    events/3/kind: ref "dilution" | tier "bubble"
+  extract:D3 184bf8acc71c agreement 0.881: 18 leaf differences
+    events[]: ref 7 | tier 8
+    events/0/applies: ref true | tier false
+    events/0/condition_id: ref "C1" | tier "C4"
+    events/1/condition_id: ref "C2" | tier "C1"
+    events/2/condition_id: ref "C3" | tier "C2"
+    events/3/condition_id: ref "C4" | tier "C3"
+    events/3/value_text: ref "1:250" | tier "1:500"
+    events/4/condition_id: ref "C5" | tier "C4"
+  extract:D4 46bd8c6c6c00 agreement 0.650: 93 leaf differences
+    events[]: ref 16 | tier 19
+    events/2/samples[]: ref 0 | tier 1
+    events/3/samples[]: ref 0 | tier 1
+    events/5/samples[]: ref 2 | tier 0
+    events/10/samples[]: ref 0 | tier 1
+    events/12/samples[]: ref 1 | tier 0
+    events/0/condition_id: ref "C6" | tier "C2"
+    events/0/kind: ref "relabel" | tier "bubble"
+  extract:D5 84af56b41f43 agreement 0.300: 7 leaf differences
+    events[]: ref 0 | tier 1
+    events/0/kind: ref "(absent)" | tier "other"
+    events/0/reading: ref "(absent)" | tier "any"
+    events/0/timing: ref "(absent)" | tier "not_applicable"
+    events/0/applies: ref "(absent)" | tier false
+    events/0/condition_id: ref "(absent)" | tier null
+    events/0/value_text: ref "(absent)" | tier null
+  extract:D6 44949e6c3361 agreement 0.898: 196 leaf differences
+    events[]: ref 5 | tier 4
+    events/0/samples[]: ref 0 | tier 1
+    events/2/samples[]: ref 18 | tier 1
+    events/4/samples[]: ref 1 | tier null
+    records[]: ref 36 | tier 38
+    events/0/applies: ref false | tier true
+    events/0/kind: ref "other" | tier "pipetting"
+    events/0/reading: ref "any" | tier "first"
+  extract:D7 f3c7aa115ce8 agreement 0.955: 23 leaf differences
+    events[]: ref 2 | tier 5
+    events/1/condition_id: ref "C4" | tier "C2"
+    events/1/samples/0: ref "PX-0365" | tier "PX-0468"
+    events/2/kind: ref "(absent)" | tier "other"
+    events/2/samples/0: ref "(absent)" | tier "PX-0551"
+    events/2/reading: ref "(absent)" | tier "any"
+    events/2/timing: ref "(absent)" | tier "not_applicable"
+    events/2/applies: ref "(absent)" | tier true
+  extract:D9 c110ca89b872 agreement 0.659: 289 leaf differences
+    events[]: ref 38 | tier 5
+    events/4/samples[]: ref 1 | tier 0
+    events/5/samples[]: ref 1 | tier null
+    events/6/samples[]: ref 1 | tier null
+    events/7/samples[]: ref 1 | tier null
+    events/8/samples[]: ref 1 | tier null
+    events/9/samples[]: ref 1 | tier null
+    events/10/samples[]: ref 1 | tier null
+  extract:D10 fb6b76703a0f agreement 1.000: 0 leaf differences
+  extract:D12 6f28b6f14387 agreement 0.975: 13 leaf differences
+    events[]: ref 6 | tier 5
+    events/5/samples[]: ref 0 | tier null
+    events/1/reading: ref "any" | tier "first"
+    events/2/reading: ref "any" | tier "first"
+    events/2/timing: ref "not_applicable" | tier "unclear"
+    events/3/timing: ref "not_applicable" | tier "unclear"
+    events/4/reading: ref "any" | tier "first"
+    events/5/applies: ref true | tier "(absent)"
+  extract:D8 1dec954c89f7 agreement 0.644: 340 leaf differences
+    events[]: ref 8 | tier 50
+    events/2/samples[]: ref 0 | tier 1
+    events/3/samples[]: ref 0 | tier 1
+    events/4/samples[]: ref 0 | tier 1
+    events/6/samples[]: ref 0 | tier 1
+    events/7/samples[]: ref 0 | tier 1
+    events/0/reading: ref "any" | tier "first"
+    events/1/reading: ref "any" | tier "first"
+
+kinetics/extract:*@claude-haiku-5-5 jit-dev-kinetics-1/jit-claude-haiku-5-5--claude-haiku-5-5#9 (kinetics:dev:d4:s210): flip pass->fail fellBack={"check-failed":3}
+  extract:D2 5ee9a3e4d5f9 agreement 1.000: 0 leaf differences
+  extract:D6 d5f642e1941c agreement 0.981: 11 leaf differences
+    events[]: ref 5 | tier 4
+    events/4/samples[]: ref 1 | tier null
+    events/0/reading: ref "first" | tier "any"
+    events/1/reading: ref "first" | tier "any"
+    events/4/applies: ref true | tier "(absent)"
+    events/4/condition_id: ref "C2" | tier "(absent)"
+    events/4/kind: ref "other" | tier "(absent)"
+    events/4/reading: ref "first" | tier "(absent)"
+  extract:D7 6c3d1efb30c5 agreement 0.965: 53 leaf differences
+    records[]: ref 37 | tier 36
+    events/0/reading: ref "first" | tier "reread"
+    events/0/value_text: ref null | tier "0.1317"
+    events/1/reading: ref "any" | tier "first"
+    events/1/timing: ref "unclear" | tier "not_applicable"
+    records/25/reread: ref false | tier true
+    records/25/v_text: ref "2.069e-1" | tier "0.1317"
+    records/26/condition_id: ref "C4" | tier "C7"
+  extract:D3 a7c73af9ca77 agreement 0.962: 39 leaf differences
+    events[]: ref 6 | tier 5
+    events/2/samples[]: ref 0 | tier 2
+    events/5/samples[]: ref 2 | tier null
+    events/0/condition_id: ref null | tier "C1"
+    events/0/kind: ref "bubble" | tier "flag"
+    events/0/reading: ref "any" | tier "first"
+    events/0/samples/0: ref "HV-0261" | tier "HV-0434"
+    events/0/timing: ref "during_read" | tier "not_applicable"
+  extract:D4 9d339134cb99 agreement 0.686: 76 leaf differences
+    events[]: ref 17 | tier 21
+    events/0/samples[]: ref 0 | tier 1
+    events/1/samples[]: ref 0 | tier 1
+    events/2/samples[]: ref 0 | tier 1
+    events/4/samples[]: ref 1 | tier 0
+    events/5/samples[]: ref 2 | tier 0
+    events/6/samples[]: ref 2 | tier 1
+    events/7/samples[]: ref 1 | tier 2
+  extract:D8 fd0cf0af1bb1 agreement 1.000: 0 leaf differences
+  extract:D5 e26c997da6c8 agreement 1.000: 0 leaf differences
+  extract:D12 807fe4170dda agreement 1.000: 0 leaf differences
+  extract:D9 7b435eaa7a39 agreement 0.659: 199 leaf differences
+    events[]: ref 5 | tier 30
+    events/0/samples[]: ref 0 | tier 1
+    events/3/samples[]: ref 0 | tier 1
+    events/4/samples[]: ref 0 | tier 1
+    events/0/kind: ref "dilution" | tier "flag"
+    events/0/reading: ref "any" | tier "first"
+    events/0/value_text: ref "1:500" | tier "SAT"
+    events/1/kind: ref "flag" | tier "other"
+  extract:D11 67654fb5ea55 agreement 0.987: 8 leaf differences
+    events/0/applies: ref false | tier true
+    events/0/kind: ref "pipetting" | tier "bubble"
+    events/0/samples/0: ref "HV-0251" | tier "HV-0256"
+    events/0/timing: ref "not_applicable" | tier "during_read"
+    events/1/condition_id: ref "C1" | tier "C4"
+    events/1/kind: ref "bubble" | tier "pipetting"
+    events/1/samples/0: ref "HV-0255" | tier "HV-0232"
+    events/1/timing: ref "during_read" | tier "not_applicable"
+
+kinetics/well-events@claude-haiku-5-5 jit-r0-kinetics/jit-claude-opus-5-5--claude-haiku-5-5#8 (kinetics:dev:d4:s233): flip pass->fail fellBack={}
+  well-events 5f704050e454 agreement 0.500: 18 leaf differences
+    excluded[]: ref 9 | tier 8
+    relabels[]: ref 1 | tier 0
+    relabels/0/sample_ids[]: ref 9 | tier null
+    excluded/7/sample_id: ref "OB-0186" | tier "OB-0344"
+    excluded/8/criterion: ref "temperature" | tier "(absent)"
+    excluded/8/sample_id: ref "OB-0344" | tier "(absent)"
+    relabels/0/condition_id: ref "C6" | tier "(absent)"
+    relabels/0/sample_ids/0: ref "OB-0235" | tier "(absent)"
+
+records/rules@claude-haiku-5-5 jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5#22 (records:dev:d4:s223): flip pass->fail fellBack={}
+  rules 6ec40e88a8ad agreement 0.920: 2 leaf differences
+    date_order/ATLAS: ref "DMY" | tier "MDY"
+    date_order_switches/0/order_from: ref "MDY" | tier "DMY"
+
+records/source-rules@claude-haiku-5-5 jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#21 (records:dev:d4:s222): flip fail->pass fellBack={}
+  source-rules 143884d0bc98 agreement 0.903: 3 leaf differences
+    rules/atlas_numeric_dates/value: ref "DMY_then_MDY" | tier "MDY_then_DMY"
+    void_markers/1/marker: ref ":: ARCHIVE" | tier "ARCHIVE"
+    void_markers/2/marker: ref ":: DO NOT MIGRATE" | tier "DO NOT MIGRATE"
+
+records/source-rules@claude-haiku-5-5 jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#22 (records:dev:d4:s223): flip pass->fail fellBack={}
+  source-rules caaebc803539 agreement 0.931: 2 leaf differences
+    rules/atlas_numeric_dates/value: ref "DMY_then_MDY" | tier "MDY_then_DMY"
+    void_markers/1/marker: ref ":: DO NOT MIGRATE" | tier "DO NOT MIGRATE"

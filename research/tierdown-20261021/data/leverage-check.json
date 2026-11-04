@@ -1,0 +1,93 @@
+{
+ "rows": [
+  {
+   "site": "kinetics/well-events",
+   "screen": 0.4166666666666667,
+   "injectedMoved": 0.6,
+   "units": 5,
+   "moved": 3,
+   "flips": 3
+  },
+  {
+   "site": "records/date-order",
+   "screen": 0.325,
+   "injectedMoved": 0.08333333333333333,
+   "units": 36,
+   "moved": 3,
+   "flips": 3
+  },
+  {
+   "site": "records/rules",
+   "screen": 0.3076923076923077,
+   "injectedMoved": 0.16666666666666666,
+   "units": 24,
+   "moved": 4,
+   "flips": 2
+  },
+  {
+   "site": "kinetics/prose-events-a",
+   "screen": 0.25,
+   "injectedMoved": 0,
+   "units": 10,
+   "moved": 0,
+   "flips": 0
+  },
+  {
+   "site": "records/void-values",
+   "screen": 0.225,
+   "injectedMoved": 0,
+   "units": 18,
+   "moved": 0,
+   "flips": 0
+  },
+  {
+   "site": "records/source-rules",
+   "screen": 0.075,
+   "injectedMoved": 0.12,
+   "units": 25,
+   "moved": 3,
+   "flips": 2
+  },
+  {
+   "site": "kinetics/extract:*",
+   "screen": 0.0625,
+   "injectedMoved": 0.6,
+   "units": 5,
+   "moved": 3,
+   "flips": 3
+  },
+  {
+   "site": "records/countries",
+   "screen": 0,
+   "injectedMoved": 0,
+   "units": 31,
+   "moved": 0,
+   "flips": 0
+  },
+  {
+   "site": "records/country-names",
+   "screen": 0,
+   "injectedMoved": 0,
+   "units": 67,
+   "moved": 0,
+   "flips": 0
+  },
+  {
+   "site": "records/vendex-entries",
+   "screen": 0,
+   "injectedMoved": 0,
+   "units": 20,
+   "moved": 0,
+   "flips": 0
+  }
+ ],
+ "rho": 0.531974524211393,
+ "rhoInterval": {
+  "rho": 0.531974524211393,
+  "n": 10,
+  "level": 0.95,
+  "lower": -0.1960094422523196,
+  "upper": 0.8819258704233666
+ },
+ "keepScreen": true
+}
