@@ -147,3 +147,47 @@ sweep's `tools-meth/portfolio_sim.py`). Read-only reads of repository files (REG
 R0-RUNBOOK, executor and sandbox sources, `policy/models.json`) and of the three critiques' scratchpad scripts. The rev-2
 author's private claude.ai artifact of PLAN.md was not opened, updated, republished or deleted (PLAN §11 OD-0). Disk during
 writing: 2.8–3.7 GB free (`df -h /`), `/var/tmp/foundry-work` 3.7 GB (other tracks).
+## T1-1 WorkBench + shared facade (2026-10-21 23:14Z – 2026-10-22), adopted
+
+Rule: D16. Everything lives under `/var/tmp/foundry-work/benches/workbench/` (outside the repository); notes, gates and
+the paid commands are in [workbench/ACQUISITION.md](workbench/ACQUISITION.md). Nothing ran a post-install hook: the clone is
+inert source, and the venv holds wheels unpacked by `uv pip install --no-index --only-binary :all: --require-hashes --no-deps`.
+
+**Kept (adopted):**
+
+| What | Source | Bytes | sha256 | Licence | Date (UTC) |
+|---|---|---|---|---|---|
+| olly-styles/WorkBench @ `49c7dfd00c03d384ec59ea57374f50b766aa5613` (HEAD date 2026-08-18), shallow (depth 1) blobless fetch of that commit, no LFS or submodules | https://github.com/olly-styles/WorkBench | 67 MB on disk (`.git` 21 MB, `data/` 44 MB of which `data/results/` 39 MB) | LICENSE `e8bbcabb0cf6834062d9aec616ff9b52ee8c7ac2ff3e9f02a5a996e82717e26b`, uv.lock `ef9a825a3faafc891deb31576f3b75d3ae2739abe4d8b81a025e11a1c413b8db` | MIT (Copyright (c) 2024 Mindsdb) | 2026-10-21 23:14 |
+| numpy 1.26.4 (cp312 manylinux x86_64) | https://files.pythonhosted.org/packages/0f/50/de23fde84e45f5c4fda2488c759b69990fd4512387a8632860f3ac9cd225/numpy-1.26.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl | 17,950,613 | 675d61ffbfa78604709862923189bad94014bef562cc35cf61d3a07bba02a7ed | BSD-3-Clause | 2026-10-21 23:16 |
+| pandas 3.0.3 (cp312 manylinux x86_64) | https://files.pythonhosted.org/packages/65/b6/09b01cdbc15224e2850365192d17b7bdebb8bdbd8780ed221fcdf0d9a515/pandas-3.0.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl | 10,894,600 | 6dc0b3fd2169c9157deed50b4d519553a3655c8c6a96027136d654592be973a9 | BSD-3-Clause | 2026-10-21 23:16 |
+| python-dateutil 2.9.0.post0 | https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl | 229,892 | a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427 | Apache-2.0 or BSD-3-Clause (dual) | 2026-10-21 23:16 |
+| python-dotenv 1.2.2 | https://files.pythonhosted.org/packages/0b/d7/1959b9648791274998a9c3526f6d0ec8fd2233e4d4acce81bbae76b44b2a/python_dotenv-1.2.2-py3-none-any.whl | 22,101 | 1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a | BSD-3-Clause | 2026-10-21 23:16 |
+| six 1.17.0 | https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl | 11,050 | 4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 | MIT | 2026-10-21 23:16 |
+| tenacity 9.1.4 | https://files.pythonhosted.org/packages/d7/c1/eb8f9debc45d3b7918a32ab756658a0904732f75e555402972246b0b8e71/tenacity-9.1.4-py3-none-any.whl | 28,926 | 6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55 | Apache-2.0 | 2026-10-21 23:16 |
+| tqdm 4.67.3 | https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl | 78,374 | ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf | MPL-2.0 AND MIT | 2026-10-21 23:16 |
+| tzdata 2026.2 | https://files.pythonhosted.org/packages/ce/e4/dccd7f47c4b64213ac01ef921a1337ee6e30e8c6466046018326977efd95/tzdata-2026.2-py2.py3-none-any.whl | 349,321 | bbe9af844f658da81a5f95019480da3a89415801f6cc966806612cc7169bffe7 | Apache-2.0 | 2026-10-21 23:16 |
+
+Every wheel's sha256 equals the hash in WorkBench's `uv.lock` (`wheels-record.json` beside the venv). Licences are the
+wheels' own `METADATA` fields. Installed: venv 121 MB (CPython 3.12.3, uv 0.11.32), wheels kept 29 MB (offline rebuild by
+hash). **8 wheels, not the 9 of the earlier probe:** that probe installed pandas 2.3.3 + pytz, which is `uv.lock`'s branch for
+Python ≥ 3.14; for CPython 3.12 on Linux `uv.lock` resolves pandas 3.0.3 without pytz, and colorama is Windows-only.
+`uv.lock` marks tzdata as win32/emscripten-only for pandas 3.0.3; it is installed anyway so that time-zone data never comes
+from the host. Not installed (not imported by any code path used here): matplotlib, seaborn, openai and their dependencies.
+
+**Generated, host-only (never committed):** regenerated task sets (`host-only/regen/`, 2.8 MB: seeds 42 ×2, 8850 ×3), the
+sealed and companion manifests (`host-only/sealed/`, 0.5 MB; sha256 committed in `workbench/SPLIT.json`), per-row parity
+verdicts (`host-only/parity/`), raw offline init events (`host-only/init-probe/`).
+
+**Deleted:** every scripted run's live worlds and workdirs (`live/…`), after grading. The earlier probe's install
+(agentic-tool sweep, above) had been deleted before this re-acquisition.
+
+**Disk:** 223 MB for WorkBench in all (src 67, venv 121, wheels 29, host-only and work 6), against D16's 500 MB per item;
+breadth benches in total 416 MB (with `agentdojo/` 193 MB) against 1.5 GB. Free disk 2.9 GB at 02:52Z on 10-22 (`df -h /`).
+
+**Addendum 2026-10-28 and 2026-11-04 (T1-1 resume).** No new download, clone or install; the clone, venv and wheels
+above are unchanged (the pinned `uv.lock` and wheel hashes still match). Generated, host-only: regenerated stream
+candidates (`host-only/regen/seed886{0,1,2}-streams.jsonl`, 1.7 MB, 10-28; for the extras rule, not frozen), the full
+$0 gate run's per-row verdicts (`host-only/parity/`, 9 MB, 11-04). Deleted on 11-04: the live worlds of every scripted
+run after grading, superseded 10-22/10-28 intermediate parity inputs (about 0.6 MB) and a stale test task file. Disk on
+11-04: WorkBench 230 MB (src 67, venv 121, wheels 29, host-only 15); breadth benches 797 MB in all (with `agentdojo/`
+193 MB and another item's `appworld/` 374 MB) against 1.5 GB; free disk 2.0 GB at 12:23Z, 0.7 GB at 14:43Z (`df -h /`).

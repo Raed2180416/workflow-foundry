@@ -1,0 +1,97 @@
+{
+ "screen": "BG-9 T.10/T.7 outlier screen ($0): published per-task verdicts, run group revisited_2026, all tools",
+ "source": {
+  "file": "data/results/item_level_results.csv.gz",
+  "sha256": "6035fb112bbb4fb48cd56d643898cac43c42c2d11bc6d2bb0e595d8d31ea2216",
+  "models": 24,
+  "strongModels": [
+   "claude-fable-5",
+   "claude-opus-4.8",
+   "gemini-3.1-pro",
+   "gpt-5.5"
+  ]
+ },
+ "tasks": 690,
+ "unsolvedByAll": {
+  "dev": 0,
+  "heldOut": 1
+ },
+ "failedByAllStrong": {
+  "dev": 6,
+  "heldOut": 1
+ },
+ "dev": {
+  "unsolvedByAll": [],
+  "failedByAllStrong": [
+   {
+    "taskId": "analytics-090",
+    "template": "analytics/e52ef09c3d",
+    "solvedBy": 12,
+    "strongSolvedBy": 0,
+    "reading": {
+     "verdict": "unresolved (growth window)",
+     "note": "\"if total visits grew by more than engaged users since Saturday\": gold plots both; the strong models query through 2023-11-30 and decide not to plot; the growth definition (absolute or relative, end date) is not stated in the task [inf]"
+    }
+   },
+   {
+    "taskId": "project_management-056",
+    "template": "project_management/1632c68baa",
+    "solvedBy": 9,
+    "strongSolvedBy": 0,
+    "reading": {
+     "verdict": "ambiguous task text",
+     "note": "\"move everything they are actively working on to the backlog\": gold [] because Leila has no \"In Progress\" task; her task 00000113 is \"In Review\" [run: project_tasks.csv], and the strong models move it. \"Actively working on\" admits In Review [inf]"
+    }
+   },
+   {
+    "taskId": "project_management-058",
+    "template": "project_management/1632c68baa",
+    "solvedBy": 8,
+    "strongSolvedBy": 0,
+    "reading": {
+     "verdict": "ambiguous task text",
+     "note": "same template as project_management-056: Santiago's 00000116 is \"In Review\" [run], gold [] counts only \"In Progress\""
+    }
+   },
+   {
+    "taskId": "multi_domain-171",
+    "template": "multi_domain/f051f7eb48",
+    "solvedBy": 1,
+    "strongSolvedBy": 0,
+    "reading": {
+     "verdict": "unresolved (growth window)",
+     "note": "gold creates the task and the meeting; the strong models compute \"percent growth since Friday\" over windows ending 2023-11-29 or 2023-11-30 and mostly decide otherwise; which window the generator used is not checked here [inf]"
+    }
+   },
+   {
+    "taskId": "multi_domain-173",
+    "template": "multi_domain/f051f7eb48",
+    "solvedBy": 4,
+    "strongSolvedBy": 0,
+    "reading": {
+     "verdict": "ambiguous task text",
+     "note": "\"... if [growth] was more than engaged users make a backlog task ... Also schedule a half-hour meeting\": gold [] treats the meeting as conditional; the strong models read \"Also\" as unconditional and book it [inf]"
+    }
+   },
+   {
+    "taskId": "multi_domain-179",
+    "template": "multi_domain/f051f7eb48",
+    "solvedBy": 4,
+    "strongSolvedBy": 0,
+    "reading": {
+     "verdict": "ambiguous task text",
+     "note": "same template as multi_domain-173 (\"Also schedule ...\")"
+    }
+   }
+  ],
+  "failedByAllStrongPerTemplate": {
+   "analytics/e52ef09c3d": 1,
+   "project_management/1632c68baa": 2,
+   "multi_domain/f051f7eb48": 3
+  }
+ },
+ "heldOut": {
+  "note": "counts only; ids, templates and texts host-only (outliers-heldout.json)",
+  "failedByAllStrongTemplates": 1
+ }
+}
