@@ -196,3 +196,26 @@ certification, routed agent window, LD-H, WC-1, red team, sweep, +SH, m6, power,
 
 None of these numbers is a DUR-1 result: two lineages, two 24-order worlds with every change stacked, designer-written
 stand-ins for the sealed changes and scripted patchers.
+
+**Not re-run after the last fixes.** Defects 7-9 were fixed after this dry run. The disk then fell below the 1.2 GB
+stop line (838 MB, then 794 MB free at 14:2xZ, used by other runs; DUR-1's own temp use was under 5 MB and is deleted),
+so the dry run was not repeated. Coverage of those fixes: 7 by `loop.test.mjs` (the shielded reference passes, no
+refusal, with and without F); 9 by `analysis.test.mjs`; 8 by a scratch check only (two routed cases under F: 2 ticks,
+both routed, both failed by the do-nothing agent) and the WC-1 toy-pool change not at all. First thing in the Fix
+phase, with disk above 1.2 GB: `DUR1_WORK=/var/tmp/foundry-work/dur1-dry nice -n 15 node experiments/durability/run.mjs
+dry --light`, then delete `/var/tmp/foundry-work/dur1-dry`.
+
+## 8. Tests (run one file at a time: `nice -n 15 node --test --test-concurrency=1 <file>`)
+
+| File | Tests | What has teeth |
+|---|---|---|
+| `test/schedule.test.mjs` | 4 | schedule == prereg §4.1 (one-cell edits on either side fail); untouched seed ranges refused |
+| `test/units.test.mjs` | 6 | registry CAS / self-approval / tamper; complaint draws arm-independent; m6 null false alarms <= 0.10 and 4-vs-3; sealed hash; author bundle bounds; ledger rows, flow-down and meter; freeze change blocks; effort required |
+| `test/analysis.test.mjs` | 14 | TTD golden; sign-flip 1/512 and 2/512; Holm; two-way vs window-only bootstrap and the unit refusal; 3-point floor; certification partial-fix; zero-event bound; D-6 bands; R-maint/R-ceil timelines; model/report; HT unbiasedness; shield policy; power SD 0.0433 and D-3 size |
+| `test/world.test.mjs` | 11 | V-1/V-2/determinism; effectiveFrom golden (p >= eff); R1 == drift D1; stacked anchors; E1r; critical-at-first; monitor rules; no signal on a correct deployment; V-6 prefix identity and hidden randomness; twins; C-O certification accepts the analyst reading and rejects the stale one |
+| `test/loop.test.mjs` | 6 | V-7 import walk; raw error payload in FAILURES.md and hygiene refusals; red-team firewall; the gate accepts the API patch and rejects the notice-dropping one; V-10 routing identity; shield on the reference |
+| `test/cli.test.mjs` | 3 | paid stages refuse without --paid and without the freeze, writing no ledger row |
+| `test/stages.test.mjs` | 2 | WC-1 pass with resume; ADV-SET cross-run on all 12 t0 code arms; A-H red-team window on the metered ledger |
+
+46 tests pass (about 8 minutes in all on the shared machine). Also run once after the imports: Move 0's
+`experiments/lib/certify.test.mjs` 20/20 and `gauntlet.test.mjs` 46/46; the seed ledger test 6/6.
