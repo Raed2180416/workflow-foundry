@@ -1,0 +1,1323 @@
+{
+ "kind": "c23-errors",
+ "note": "post-hoc: AGENT-H misses with synthetic stored values and the oracle's SOP-scale scores; SCRATCH@L1 misses on the same items; every arm by history-pinned stratum",
+ "strata": {
+  "sizes": {
+   "gap": 57,
+   "pinned": 169,
+   "unable": 9
+  },
+  "gapBySource": {
+   "H5": 7,
+   "S2": 8,
+   "S0": 4,
+   "H2": 12,
+   "S1": 4,
+   "S4": 5,
+   "H3": 2,
+   "S5": 6,
+   "H4": 2,
+   "H1": 3,
+   "S6": 3,
+   "S3": 1
+  },
+  "byArm": {
+   "AGENT@k1": {
+    "pinned": "87/169",
+    "gap": "38/57",
+    "unable": "9/9"
+   },
+   "AGENT@k2": {
+    "pinned": "86/169",
+    "gap": "38/57",
+    "unable": "9/9"
+   },
+   "AGENT-H@k1": {
+    "pinned": "164/169",
+    "gap": "42/57",
+    "unable": "9/9"
+   },
+   "AGENT-H@k2": {
+    "pinned": "160/169",
+    "gap": "46/57",
+    "unable": "9/9"
+   },
+   "SCRATCH@L1": {
+    "pinned": "165/169",
+    "gap": "56/57",
+    "unable": "9/9"
+   },
+   "REUSE-b3@L1": {
+    "pinned": "140/169",
+    "gap": "51/57",
+    "unable": "9/9"
+   },
+   "REUSE-G0@L1": {
+    "pinned": "165/169",
+    "gap": "56/57",
+    "unable": "9/9"
+   },
+   "SCRATCH@L2": {
+    "pinned": "168/169",
+    "gap": "54/57",
+    "unable": "9/9"
+   },
+   "REUSE-b3@L2": {
+    "pinned": "142/169",
+    "gap": "50/57",
+    "unable": "9/9"
+   },
+   "REUSE-G0@L2": {
+    "pinned": "168/169",
+    "gap": "54/57",
+    "unable": "9/9"
+   }
+  }
+ },
+ "agentH": {
+  "wrong": 40,
+  "byKind": {
+   "S0:over": 1,
+   "S2:under": 4,
+   "S2:unable-for-class": 16,
+   "S3:under": 2,
+   "S4:under": 6,
+   "S5:under": 1,
+   "H2:under": 2,
+   "H3:unable-for-class": 2,
+   "H4:unable-for-class": 1,
+   "H4:under": 1,
+   "H5:over": 3,
+   "H1:over": 1
+  },
+  "byStratum": {
+   "k1:gap": 15,
+   "k1:pinned": 5,
+   "k2:gap": 11,
+   "k2:pinned": 9
+  },
+  "wrongInBothReps": 10,
+  "wrongInBothRepsIds": [
+   "P-38449",
+   "P-25397",
+   "P-29326",
+   "P-24175",
+   "P_51253",
+   "P_73044",
+   "P_66389",
+   "P_52352",
+   "P_96827",
+   "P_91005"
+  ],
+  "rows": [
+   {
+    "id": "P_35189",
+    "source": "S0",
+    "truth": "Hazard Class B",
+    "total": 10,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "over",
+    "stratum": "gap",
+    "stored": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 2,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 2,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-56901",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 18,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 3,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 3,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-38449",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 19,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-25397",
+    "source": "S2",
+    "truth": "Hazard Class A",
+    "total": 7,
+    "reason": "imputed",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-69582",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "gap",
+    "stored": {
+     "safety": 4,
+     "handling": 5,
+     "transportation": 4,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 4,
+     "handling": 5,
+     "transportation": 4,
+     "disposal": 4
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 1
+   },
+   {
+    "id": "P-29326",
+    "source": "S2",
+    "truth": "Hazard Class A",
+    "total": 6,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 2
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 1
+   },
+   {
+    "id": "P-71108",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 19,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 4,
+     "handling": 5,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 4,
+     "handling": 5,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-98550",
+    "source": "S2",
+    "truth": "Hazard Class B",
+    "total": 9,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 4
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-24175",
+    "source": "S2",
+    "truth": "Hazard Class C",
+    "total": 14,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 2
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P_51253",
+    "source": "S3",
+    "truth": "Hazard Class B",
+    "total": 9,
+    "reason": "complete",
+    "got": "Hazard Class A",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 3,
+     "handling": 1,
+     "transportation": 9,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 5,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_73044",
+    "source": "S4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 2,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_66389",
+    "source": "S4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 2,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_52352",
+    "source": "S4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 3,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 3,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_95077",
+    "source": "S5",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "imputed",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 0,
+     "transportation": 3,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 0,
+     "transportation": 3,
+     "disposal": 4
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_96827",
+    "source": "H2",
+    "truth": "Hazard Class C",
+    "total": 13,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 3,
+     "transportation": 5,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 3,
+     "transportation": 5,
+     "disposal": 4
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "p_86105",
+    "source": "H3",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "gap",
+    "stored": {
+     "safety": 4,
+     "handling": 4,
+     "transportation": 4,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 4,
+     "handling": 4,
+     "transportation": 4,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P_57181",
+    "source": "H4",
+    "truth": "Hazard Class A",
+    "total": 6,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 2,
+     "disposal": 0
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 3,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_65753",
+    "source": "H4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 4,
+     "handling": 3,
+     "transportation": 4,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 3
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_91005",
+    "source": "H5",
+    "truth": "Hazard Class A",
+    "total": 8,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "over",
+    "stratum": "gap",
+    "stored": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 3,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 3,
+     "disposal": 2
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_86114",
+    "source": "H5",
+    "truth": "Hazard Class A",
+    "total": 8,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "over",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 5,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 5,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 1,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-92576",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 18,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 3,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 3,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-32634",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 19,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-96811",
+    "source": "S2",
+    "truth": "Hazard Class C",
+    "total": 13,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 2,
+     "handling": 3,
+     "transportation": 4,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 3,
+     "transportation": 4,
+     "disposal": 4
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-55757",
+    "source": "S2",
+    "truth": "Hazard Class A",
+    "total": 4,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-22366",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 19,
+    "reason": "imputed",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 0
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 0
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-38449",
+    "source": "S2",
+    "truth": "Hazard Class D",
+    "total": 19,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-85295",
+    "source": "S2",
+    "truth": "Hazard Class A",
+    "total": 8,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 3,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 3,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-25397",
+    "source": "S2",
+    "truth": "Hazard Class A",
+    "total": 7,
+    "reason": "imputed",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P-31944",
+    "source": "S2",
+    "truth": "Hazard Class A",
+    "total": 6,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-84045",
+    "source": "S2",
+    "truth": "Hazard Class C",
+    "total": 13,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 2,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 4
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-29326",
+    "source": "S2",
+    "truth": "Hazard Class A",
+    "total": 6,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 2
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P-24175",
+    "source": "S2",
+    "truth": "Hazard Class C",
+    "total": 14,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 2
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P_51253",
+    "source": "S3",
+    "truth": "Hazard Class B",
+    "total": 9,
+    "reason": "complete",
+    "got": "Hazard Class A",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 3,
+     "handling": 1,
+     "transportation": 9,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 5,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_73044",
+    "source": "S4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 2,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_66389",
+    "source": "S4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 2,
+     "transportation": 5,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_52352",
+    "source": "S4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 3,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 3,
+     "disposal": 5
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_34528",
+    "source": "H1",
+    "truth": "Hazard Class A",
+    "total": 8,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "over",
+    "stratum": "gap",
+    "stored": {
+     "safety": 5,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "P_96827",
+    "source": "H2",
+    "truth": "Hazard Class C",
+    "total": 13,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 1,
+     "handling": 3,
+     "transportation": 5,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 3,
+     "transportation": 5,
+     "disposal": 4
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   },
+   {
+    "id": "p_91954",
+    "source": "H3",
+    "truth": "Hazard Class C",
+    "total": 16,
+    "reason": "complete",
+    "got": "Unable to Decide",
+    "kind": "unable-for-class",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 4,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 3
+    },
+    "sop": {
+     "safety": 4,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 3
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 1,
+    "steps": 0,
+    "toolCalls": 0
+   },
+   {
+    "id": "P_91005",
+    "source": "H5",
+    "truth": "Hazard Class A",
+    "total": 8,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "over",
+    "stratum": "gap",
+    "stored": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 3,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 3,
+     "disposal": 2
+    },
+    "edge": null,
+    "k": 2,
+    "turns": 2,
+    "steps": 1,
+    "toolCalls": 4
+   }
+  ]
+ },
+ "scratchL1": {
+  "wrong": 5,
+  "byKind": {
+   "H4:under": 3,
+   "H4:over": 2
+  },
+  "byStratum": {
+   "pinned": 4,
+   "gap": 1
+  },
+  "rows": [
+   {
+    "id": "P_29611",
+    "source": "H4",
+    "truth": "Hazard Class C",
+    "total": 14,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "under",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 4,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 2
+    },
+    "edge": null
+   },
+   {
+    "id": "P_34129",
+    "source": "H4",
+    "truth": "Hazard Class D",
+    "total": 19,
+    "reason": "imputed",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 4,
+     "handling": 3,
+     "transportation": null,
+     "disposal": 4
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": null,
+     "disposal": 5
+    },
+    "edge": null
+   },
+   {
+    "id": "P_57181",
+    "source": "H4",
+    "truth": "Hazard Class A",
+    "total": 6,
+    "reason": "complete",
+    "got": "Hazard Class B",
+    "kind": "over",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 2,
+     "disposal": 0
+    },
+    "sop": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 3,
+     "disposal": 1
+    },
+    "edge": null
+   },
+   {
+    "id": "P_65753",
+    "source": "H4",
+    "truth": "Hazard Class D",
+    "total": 17,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "under",
+    "stratum": "gap",
+    "stored": {
+     "safety": 4,
+     "handling": 3,
+     "transportation": 4,
+     "disposal": 2
+    },
+    "sop": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 3
+    },
+    "edge": null
+   },
+   {
+    "id": "P_24595",
+    "source": "H4",
+    "truth": "Hazard Class A",
+    "total": 7,
+    "reason": "complete",
+    "got": "Hazard Class C",
+    "kind": "over",
+    "stratum": "pinned",
+    "stored": {
+     "safety": 3,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "sop": {
+     "safety": 4,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "edge": null
+   }
+  ]
+ }
+}
