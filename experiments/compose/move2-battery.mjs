@@ -50,6 +50,10 @@ export function plan(which = 'all') {
       out.push({ label, spec: specOf(base), runtime: 2, faults: R1_FAULTS, patches });
     }
   }
+  if (which === 'readback') {
+    // the read-back variant (runtime2 option reconcile): fault-free (must equal plain runtime 2) and crash (M4b)
+    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['none', 'crash'], envelopeOptions: { reconcile: true } });
+  }
   if (which === 'mutants' || which === 'all') {
     for (const base of ['cht-e8-1', 'b1lh-e8-1']) {
       for (const runtime of [1, 2]) out.push({ label: `${base}+mut-splitrefund`, spec: specOf(base), runtime, faults: ['none', 'downstream'], mutant: 'splitrefund' });
@@ -70,9 +74,9 @@ export async function battery({ which = 'all', only = null, outDir, worlds = DEF
     if (only && !only.includes(job.label)) continue;
     const file = path.join(outDir, `${job.label}.r${job.runtime}.json`);
     const doc = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
-    const subject = subjectOf2(job.spec, { runtime: job.runtime, patches: job.patches ?? [], mutant: job.mutant ?? null, label: job.label });
+    const subject = subjectOf2(job.spec, { runtime: job.runtime, patches: job.patches ?? [], mutant: job.mutant ?? null, label: job.label, envelopeOptions: job.envelopeOptions ?? {} });
     const out = doc ?? { subject: job.label, spec: job.spec, kind: subject.kind, runtime: job.runtime, runtimeLabel: job.runtime === 2 ? 'runtime2 (compose-runtime/2)' : 'runtime1 (frozen compose-runtime/1)',
-      envelope: subject.envelope, mutant: subject.mutant, patches: job.patches ?? [], gate: subject.gate,
+      envelope: subject.envelope, envelopeOptions: job.envelopeOptions ?? {}, mutant: subject.mutant, patches: job.patches ?? [], gate: subject.gate,
       evidence: 'development (dev worlds 1161/1162/1164), $0, runtime2 outside the PREREG-COMP1 freeze (D28(3)); not a re-run of the prereg',
       harness, sourceDigest: createHash('sha256').update(subject.source).digest('hex'), results: [] };
     if (doc && JSON.stringify(doc.harness) !== JSON.stringify(harness)) { out.harnessChanged = [...new Set([...(doc.harnessChanged ?? []), new Date().toISOString()])]; }

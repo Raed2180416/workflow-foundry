@@ -31,6 +31,16 @@ test('probe: write routes only, most of them probed, cards carry the stored name
     // Asana's due_on is stored as dueDate; Slack's username as bot_name
     assert.deepEqual(card('asana.tasks_create').effect.verbatim.due_on, ['dueDate']);
     assert.ok(card('slack.chat_post_message').effect.verbatim.username.includes('bot_name'));
+    // hand review (MOVE2-COMP.md §5.2): an update is a change inside one record matched by id, not a remove plus an add
+    const hs = card('helpscout.conversations_update').effect.collections['helpscout.conversations'];
+    assert.deepEqual(hs, { add: 0, remove: 0, change: 1 });
+    assert.ok(cards.filter(c => c.ok && Object.values(c.effect.collections).some(v => v.add > 0 && v.remove > 0)).length <= 5);
+    // a synthetic value outside a Literal fails pydantic validation; the probe drops that field and keeps the others,
+    // so the card maps the arguments instead of recording an empty body (Freshdesk stores `type` as ticket_type)
+    const fd = card('freshdesk.tickets_create');
+    assert.deepEqual(fd.effect.verbatim.subject, ['subject']);
+    assert.deepEqual(fd.effect.verbatim.type, ['ticket_type']);
+    assert.deepEqual(card('mailchimp.members_create').effect.verbatim.first_name, ['FNAME']);
     // nothing from the task registry or the rubric was imported
     assert.ok(!/rubric|domains/.test(JSON.stringify(cards.map(c => c.impl))));
   } finally { rmSync(out, { recursive: true, force: true }); }

@@ -35,6 +35,12 @@ test('pairwise: crashes are their own verdict, identical candidates never disagr
   assert.equal(p['a|b'].disagree, 0);
   assert.equal(p['a|c'].disagree, 1);
   assert.deepEqual(p['b|c'].ids, ['i5']);
+  // two crashes of different kinds disagree, two of one kind agree, and a crash never equals a missing verdict
+  const q = pairwise(ids, { c: { ...fixed, i5: { crash: 'TypeError: y' } }, d: { ...fixed, i5: { crash: 'KeyError: z' } },
+    e: { ...fixed, i5: { crash: 'TypeError: other message' } }, f: { ...fixed, i5: { verdict: undefined } } });
+  assert.equal(q['c|d'].disagree, 1);
+  assert.equal(q['c|e'].disagree, 0);
+  assert.equal(q['c|f'].disagree, 1);
 });
 
 test('ddmin finds a 1-minimal failing subset and refuses an input that does not fail', async () => {

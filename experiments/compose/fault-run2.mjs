@@ -49,7 +49,7 @@ export function patchSources(prog, patches = []) {
  * arm-boundary mutant (mutants2.mjs, which plays the program and so must sit inside the envelope), gets it host-side.
  * `envelope: 'host'` forces the host-side gateway for a composed program too (the two sites must agree).
  */
-export function subjectOf2(spec, { mode = 'strict', runtime = 2, patches = [], registry = E8_REGISTRY, label = null, mutant = null, envelope = null } = {}) {
+export function subjectOf2(spec, { mode = 'strict', runtime = 2, patches = [], registry = E8_REGISTRY, label = null, mutant = null, envelope = null, envelopeOptions = {} } = {}) {
   if (![1, 2].includes(runtime)) throw new Error(`runtime must be 1 or 2: ${runtime}`);
   if (mutant !== null && !MUTANTS[mutant]) throw new Error(`unknown mutant ${mutant} (${Object.keys(MUTANTS).join(', ')})`);
   const site = runtime === 1 ? null : envelope ?? (spec.startsWith('program:') && !mutant ? 'bundle' : 'host');
@@ -57,14 +57,14 @@ export function subjectOf2(spec, { mode = 'strict', runtime = 2, patches = [], r
     let prog = readProgram(spec.slice(8));
     if (prog.problems.length) throw new Error(`program problems: ${prog.problems.join('; ')}`);
     if (patches.length) prog = patchSources(prog, patches);
-    const b = site === 'bundle' ? bundle2({ ...prog, mode }, { item: e8, registry }) : bundle({ ...prog, mode }, { item: e8 });
+    const b = site === 'bundle' ? bundle2({ ...prog, mode }, { item: e8, registry, envelopeOptions }) : bundle({ ...prog, mode }, { item: e8 });
     if (b.problems.length) throw new Error(`program problems: ${b.problems.join('; ')}`);
     const gate = site ? singleWriterMessages(prog.manifest, registry) : null;
-    return { label: label ?? spec, runtime, kind: 'composed', manifest: prog.manifest, source: b.source, envelope: site, mutant, registry, gate, patches: patches.length };
+    return { label: label ?? spec, runtime, kind: 'composed', manifest: prog.manifest, source: b.source, envelope: site, envelopeOptions, mutant, registry, gate, patches: patches.length };
   }
   if (spec.startsWith('solver:')) {
     if (patches.length) throw new Error('patches apply to composed programs only');
-    return { label: label ?? spec, runtime, kind: 'monolith', manifest: null, source: readFileSync(spec.slice(7), 'utf8'), envelope: site, mutant, registry, gate: null, patches: 0 };
+    return { label: label ?? spec, runtime, kind: 'monolith', manifest: null, source: readFileSync(spec.slice(7), 'utf8'), envelope: site, envelopeOptions, mutant, registry, gate: null, patches: 0 };
   }
   throw new Error(`unknown subject ${spec} (program:<dir> or solver:<file>)`);
 }
@@ -76,7 +76,7 @@ export async function runUnder2(subject, W, fault) {
   const make = () => {
     let a = sandboxArm({ id: subject.label.slice(0, 60), solverSource: subject.source, timeoutMs: 20_000 });
     if (subject.mutant) a = MUTANTS[subject.mutant](a, { counter });
-    return subject.envelope === 'host' ? withEnvelope(a, { registry: subject.registry, id: `${a.id}+env2` }) : a;
+    return subject.envelope === 'host' ? withEnvelope(a, { registry: subject.registry, id: `${a.id}+env2`, ...(subject.envelopeOptions ?? {}) }) : a;
   };
   const arm = fault === 'restart' ? withRestart(make(), make) : fault === 'crash' ? withCrash(make(), make) : make();
   try {

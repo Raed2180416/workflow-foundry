@@ -186,6 +186,14 @@ def n_groups(pattern: str) -> int:
 # ---------------------------------------------------------------------------------------------------------------------
 # World diff
 
+def by_id(xs):
+    """{id: record} when every item is a dict with a unique scalar `id`, else None."""
+    if not xs or not all(isinstance(x, dict) and isinstance(x.get("id"), (str, int)) and not isinstance(x.get("id"), bool) for x in xs):
+        return None if xs else {}
+    m = {x["id"]: x for x in xs}
+    return m if len(m) == len(xs) else None
+
+
 def diff(a, b, path=(), out=None, depth=0):
     if out is None:
         out = []
@@ -201,6 +209,16 @@ def diff(a, b, path=(), out=None, depth=0):
                 diff(a[k], b[k], path + (k,), out, depth + 1)
         return out
     if isinstance(a, list) and isinstance(b, list) and depth < 6:
+        ia, ib = by_id(a), by_id(b)
+        if ia is not None and ib is not None:
+            # records with ids are matched by id, so an update is a change inside one record, not a remove plus an add
+            for k in [k for k in ib if k not in ia]:
+                out.append(("add-item", path, ib[k]))
+            for k in [k for k in ia if k not in ib]:
+                out.append(("remove-item", path, ia[k]))
+            for k in [k for k in ib if k in ia]:
+                diff(ia[k], ib[k], path + (f"#{k}",), out, depth + 1)
+            return out
         ka = {canon(x) for x in a}
         kb = {canon(x) for x in b}
         for x in b:
@@ -230,9 +248,16 @@ def summarise(before, after, args):
     d = [x for x in d if x[1][:1] != ("meta",)]
     apps = sorted({x[1][0] for x in d if x[1]})
     colls = {}
+    changed_records = set()
     for op, p, v in d:
         key = ".".join(str(s) for s in p[:2]) if len(p) >= 2 else ".".join(str(s) for s in p)
         c = colls.setdefault(key, {"add": 0, "remove": 0, "change": 0})
+        rec = next((i for i, s in enumerate(p) if isinstance(s, str) and s.startswith("#")), None)
+        if rec is not None:                              # a field inside a matched record: one change per record
+            if p[:rec + 1] not in changed_records:
+                changed_records.add(p[:rec + 1])
+                c["change"] += 1
+            continue
         c["add" if op in ("add", "add-item") else "remove" if op in ("remove", "remove-item") else "change"] += 1
     # action keys recorded (apps with action-based state: <app>.actions.<action_key>)
     actions = []
@@ -287,6 +312,15 @@ def repair(body, err):
     that carries the content ("... in 'raw' ...", added with a synthetic value)."""
     if not err:
         return None
+    if "validation error" in err:
+        # pydantic: one line per failing field location ("priority", "items.0.name"), each followed by an indented reason;
+        # drop those fields (a synthetic value outside a Literal or enum) and keep the rest of the arguments
+        lines = err.splitlines()
+        locs = {lines[i].strip().split(".")[0] for i in range(1, len(lines) - 1)
+                if lines[i] and not lines[i].startswith(" ") and lines[i + 1].startswith("  ")}
+        b = {k: v for k, v in body.items() if k not in locs}
+        if b != body:
+            return b
     if not err.startswith("TypeError"):
         b = dict(body)
         for name in re.findall(r"Unknown name '(\w+)'", err):
@@ -315,7 +349,7 @@ def call(entry, world, path, body):
         resp = entry["router"](world, entry["method"], path, {}, body)
         return (resp if isinstance(resp, str) else json.dumps(resp, default=str)), None
     except Exception as e:  # noqa: BLE001 - a probe records every failure
-        return None, f"{type(e).__name__}: {str(e)[:240]}"
+        return None, f"{type(e).__name__}: {str(e)[:4000]}"
 
 
 def candidate_ids(state: dict):
@@ -358,7 +392,7 @@ def probe(entry, base_world, ids_by_app):
     for ids in pools:
         for body0 in bodies:
             body = body0
-            for _ in range(4):
+            for _ in range(8):
                 w = base_world.model_copy(deep=True)
                 before = dump(w)
                 path = fill_path(entry["pattern"], ids)
@@ -366,7 +400,7 @@ def probe(entry, base_world, ids_by_app):
                 err, why = (True, exc) if exc else is_error(resp)
                 after = dump(w)
                 s = summarise(before, after, {**body, **({f"path[{i}]": v for i, v in enumerate(ids)} if ids else {})})
-                last = {"path": path, "ids": ids, "body": body, "error": why if err else None, "effect": s, "response": (resp or "")[:300]}
+                last = {"path": path, "ids": ids, "body": body, "error": (why or "")[:240] if err else None, "effect": s, "response": (resp or "")[:300]}
                 if not err and s["changes"]:
                     return {**last, "ok": True, "world": w}
                 fixed = repair(body, exc or (why if err else None))

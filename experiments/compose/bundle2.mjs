@@ -24,7 +24,7 @@ export const E8_REGISTRY = JSON.parse(readFileSync(REGISTRY_PATH, 'utf8'));
  * bundle2({ manifest, sources, mode }, { item, registry, gate }) → { source, digest, programDigest, problems, gate }:
  * the solver.mjs text (runtime + loader + runtime2 + program) that sandbox-arm.mjs runs.
  */
-export function bundle2({ manifest, sources, mode = 'strict' }, { item = null, registry = E8_REGISTRY, gate = 'report' } = {}) {
+export function bundle2({ manifest, sources, mode = 'strict' }, { item = null, registry = E8_REGISTRY, gate = 'report', envelopeOptions = {} } = {}) {
   if (!['report', 'enforce'].includes(gate)) throw new Error(`gate must be report or enforce: ${gate}`);
   const regProblems = envRegistryProblems(registry);
   if (regProblems.length) throw new Error(`registry: ${regProblems.join('; ')}`);
@@ -38,6 +38,7 @@ const MANIFEST = ${JSON.stringify(manifest)};
 const SOURCES = ${JSON.stringify(used)};
 const MODE = ${JSON.stringify(mode)};
 const REGISTRY = ${JSON.stringify(registry)};
+const ENVELOPE_OPTIONS = ${JSON.stringify(envelopeOptions)};
 // ---- runtime.mjs ----
 ${stripExports(RUNTIME_SOURCE)}
 // ---- loader.mjs ----
@@ -52,7 +53,7 @@ export function createSolver() {
     return { id: 'composed', tick() { throw new Error('the composed program does not load: ' + why); } };
   }
   const solver = createComposedSolver({ manifest: MANIFEST, parent: prog.parent, modules: prog.modules, kindsOf: kindsOfE8, mode: MODE, realm: prog.realm });
-  return withEnvelope({ id: 'composed', tick: (input, ctx) => solver.tick(input, ctx) }, { registry: REGISTRY, id: 'composed+env2' });
+  return withEnvelope({ id: 'composed', tick: (input, ctx) => solver.tick(input, ctx) }, { registry: REGISTRY, id: 'composed+env2', ...ENVELOPE_OPTIONS });
 }
 `;
   return { source, digest: sha(source), programDigest: sha(JSON.stringify({ manifest, sources: used })), problems, gate: gateProblems };

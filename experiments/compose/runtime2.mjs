@@ -19,6 +19,11 @@
 //      after the platform applied the tick's effects; the solver's re-emission is then answered by the host's
 //      deduplicated result, so it still sees exactly one result per emission it remembers. Timer and human-task events
 //      are never filtered: after a crash the solver's state rolled back with the envelope's, so it must see them again.
+//      Option `reconcile` (read-back, off by default): the host remembers committed keys only, so a re-emission after a
+//      crash re-attempts an effect whose first attempt FAILED (a declined charge is tried twice). With `reconcile`, an
+//      orphaned result of a single write is parked in the carry; when the solver re-emits that identity (within three
+//      ticks, with no `after` dependant), the envelope sends a read of the identity key's status instead and answers the
+//      re-emission with the parked result: the outcome of the attempt the platform already made, failures included.
 //   3. A static single-writer gate (singleWriterProblems): a manifest in which two owners (parent or modules) declare
 //      overlapping write kinds is reported (bundle2.mjs refuses it in `enforce` mode). At run time a second caller key
 //      for one identity inside an instance is logged (`shared-identity`) and its write is a no-op at the host.
@@ -175,8 +180,13 @@ export const singleWriterMessages = (manifest, registry) => singleWriterProblems
 //   x = { v: 2, r: { <outbound key>: { d: <args digest | null>, c: <0|1 committed seen>, i: <1 identity key | 0>,
 //                                       e: [[<caller key | null>, <emitted>, <delivered>], ...] } },
 //         o: [<outbound key>, ...] (first-seen order, for eviction) }
+//   and only with option `reconcile`: p: { <outbound key>: { payload, t } } (parked orphan results), q: { <read key>:
+//   { nk, legacy, payload, t } } (read-backs in flight), t: <ticks seen>. Without the option the state, and so the
+//   carry and the journal, is byte-identical to the envelope before the option existed.
 
 const envFresh = () => ({ v: 2, r: {}, o: [] });
+const R2_PARK_TICKS = 3;
+const R2_READBACK_TICKS = 20;
 
 /** Unwrap an enveloped carry: { inner, x }. A carry the envelope did not write is the solver's own. */
 export function envUnwrap(carry) {
@@ -217,10 +227,26 @@ function envSettle(rec, status) {
 }
 
 /** Translate one inbound event for the solver; null drops it. */
-function envInbound(ev, x, findings) {
+function envInbound(ev, x, findings, { reconcile = false } = {}) {
   if (!r2IsObj(ev) || ev.type !== 'effect.result' || !r2IsObj(ev.payload)) return ev;
   const slots = envSlots(ev.payload);
   if (!slots.length) return ev;                             // a key-less result: nothing to route or count
+  // the read-back of a parked identity: answer the solver's re-emission with the parked result
+  if (reconcile && slots.length === 1 && !slots[0].item && r2Own(x.q, slots[0].key)) {
+    const q = x.q[slots[0].key];
+    delete x.q[slots[0].key];
+    const entry = x.r[q.nk]?.e.find(z => z[0] === q.legacy && z[2] < z[1]);
+    if (entry) { entry[2] += 1; envSettle(x.r[q.nk], q.payload.status); }
+    const read = ev.payload.result?.status ?? null;
+    findings.push({ code: 'reconciled', key: q.nk, emitter: q.legacy, parked: q.payload.status, read, ...(q.payload.status === 'ok' && read !== 'committed' ? { mismatch: true } : {}) });
+    return { ...r2Copy(ev), payload: { ...r2Copy(q.payload), key: q.legacy } };
+  }
+  // park an orphaned result of a single write (a read-back's own late result, '=?', is never parked: nothing re-emits it)
+  if (reconcile && slots.length === 1 && !slots[0].item && slots[0].key.startsWith('=') && !slots[0].key.startsWith('=?') && !x.r[slots[0].key]) {
+    x.p[slots[0].key] = { payload: r2Copy(ev.payload), t: x.t };
+    findings.push({ code: 'orphan-parked', key: slots[0].key, event: ev.id ?? null });
+    return null;
+  }
   const plan = slots.map(s => {
     const rec = x.r[s.key];
     if (!rec) return { s, rec: null, entry: null, why: s.key.startsWith('=') ? 'orphan' : 'foreign' };
@@ -257,11 +283,13 @@ function envInbound(ev, x, findings) {
 }
 
 /** Before the solver's tick: unwrap the carry, translate and filter the events, wrap ctx.status. */
-export function envBefore(input, ctx) {
+export function envBefore(input, ctx, opts = {}) {
   const { inner, x } = envUnwrap(input?.carry);
+  // read-back state exists only with the option, so the default carry is byte-identical to the envelope without it
+  if (opts.reconcile) { x.p ??= {}; x.q ??= {}; x.t ??= 0; }
   const findings = [];
   const events = [];
-  for (const ev of Array.isArray(input?.events) ? input.events : []) { const t = envInbound(ev, x, findings); if (t !== null) events.push(t); }
+  for (const ev of Array.isArray(input?.events) ? input.events : []) { const t = envInbound(ev, x, findings, opts); if (t !== null) events.push(t); }
   const status0 = ctx?.status;
   const ctx2 = ctx && typeof ctx === 'object' ? { ...ctx } : ctx;
   if (ctx2 && typeof status0 === 'function') {
@@ -288,13 +316,15 @@ function envEvict(x, budget, maxEntries, findings) {
 }
 
 /** After the solver's tick: re-key its effects by identity, record emissions, wrap the carry, attach findings. */
-export function envAfter(out, pre, registry, { maxEnvelopeBytes = 24 * 1024, maxEntries = 400, carryLimit = R2_CARRY_LIMIT } = {}) {
+export function envAfter(out, pre, registry, { maxEnvelopeBytes = 24 * 1024, maxEntries = 400, carryLimit = R2_CARRY_LIMIT, reconcile = false } = {}) {
   if (!r2IsObj(out)) return out;
   const { x, findings } = pre;
   const res = { ...out };
+  if (reconcile) x.t = (x.t ?? 0) + 1;
   if (Array.isArray(out.effects)) {
     const local = new Map();                                // caller key -> outbound key, within this output (for `after`)
     const legacyMap = envLegacyMap(x);
+    const afterTargets = new Set(out.effects.filter(r2IsObj).map(e => e.after).filter(a => typeof a === 'string'));
     res.effects = out.effects.map(e0 => {
       if (!r2IsObj(e0)) return e0;
       const e = r2Copy(e0);
@@ -327,6 +357,15 @@ export function envAfter(out, pre, registry, { maxEnvelopeBytes = 24 * 1024, max
         if (!legacy) findings.push({ code: 'key-assigned', op, key: nk });
         else local.set(legacy, nk);
         e.key = nk;
+        // read-back: the platform already made this attempt (its result is parked); ask for its status instead of a
+        // second attempt, unless a dependant follows this effect's outcome or the system has no status read
+        if (reconcile && r2Own(x.p, nk) && !(legacy && afterTargets.has(legacy)) && registry?.ops?.[`${e.system}.status`]?.read === true) {
+          const rk = envKey(`readback:${ids.identity}`).replace(/^=/, '=?');
+          x.q[rk] = { nk, legacy, payload: x.p[nk].payload, t: x.t };
+          delete x.p[nk];
+          findings.push({ code: 'readback', key: nk, emitter: legacy });
+          return { key: rk, system: e.system, op: 'status', args: { key: nk } };
+        }
         return e;
       }
       if (ids) findings.push({ code: 'identity-unresolved', op, key: legacy });
@@ -338,6 +377,10 @@ export function envAfter(out, pre, registry, { maxEnvelopeBytes = 24 * 1024, max
       if (typeof e.after === 'string' && local.has(e.after)) e.after = local.get(e.after);
       if (typeof e.compensates === 'string') e.compensates = local.get(e.compensates) ?? legacyMap.get(e.compensates) ?? e.compensates;
     }
+  }
+  if (reconcile) {
+    for (const [k, v] of Object.entries(x.p)) if (x.t - v.t > R2_PARK_TICKS) { delete x.p[k]; findings.push({ code: 'park-expired', key: k }); }
+    for (const [k, v] of Object.entries(x.q)) if (x.t - v.t > R2_READBACK_TICKS) { delete x.q[k]; findings.push({ code: 'readback-expired', key: v.nk }); }
   }
   const inner = r2Own(out, 'carry') ? out.carry ?? null : null;
   const budget = Math.max(0, Math.min(maxEnvelopeBytes, carryLimit - r2Bytes(inner) - 256));
@@ -356,7 +399,7 @@ export function withEnvelope(solver, { registry, id = null, ...opts } = {}) {
     id: id ?? `${solver?.id ?? 'solver'}+env2`,
     runtime2: R2_VERSION,
     tick(input, ctx) {
-      const pre = envBefore(input, ctx);
+      const pre = envBefore(input, ctx, opts);
       const r = solver.tick(pre.input, pre.ctx);
       if (r && typeof r.then === 'function') return r.then(out => envAfter(out, pre, registry, opts));
       return envAfter(r, pre, registry, opts);

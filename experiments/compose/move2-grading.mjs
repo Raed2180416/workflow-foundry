@@ -6,6 +6,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
 import { subjectOf2, runUnder2, measure } from './fault-run2.mjs';
 
@@ -23,6 +24,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const doc = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : { evidence: 'development (COMP-1 grading worlds), $0, runtime1 vs runtime2 fault-free', rows: [] };
   const only = arg('--only', null)?.split(',') ?? null;
   const poolsCache = new Map();
+  // the harness each new row ran under (rows written before this field existed ran under runtime2.mjs 1c4a6398…, the
+  // version committed with the battery; the read-back option added later leaves the default carry byte-identical)
+  const harness = Object.fromEntries(['experiments/compose/runtime2.mjs', 'experiments/compose/effects.registry.json', 'experiments/compose/bundle2.mjs', 'experiments/compose/fault-run2.mjs']
+    .map(p => [p, createHash('sha256').update(readFileSync(path.join(ROOT, p))).digest('hex').slice(0, 16)]));
   for (const w of GRADING) {
     const W = e8.generateWorld({ seed: w.seed, difficulty: w.d, mix: 'tail' });
     for (const label of COMPOSED) {
@@ -34,7 +39,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
         const r = await runUnder2(subject, W, 'none');
         const m = await measure({ subject, r, fault: 'none', poolsCache });
         doc.rows.push({ label, runtime, seed: w.seed, d: w.d, ms: Date.now() - t, passed: m.oracle.passed, completed: m.oracle.completed, critical: m.oracle.critical,
-          digest: m.digest, passing: m.passing, envelope: m.envelope.byCode, hostDeduped: m.hostDeduped, armErrors: m.armErrors, carryBytes: m.carryBytes });
+          harness, digest: m.digest, passing: m.passing, envelope: m.envelope.byCode, hostDeduped: m.hostDeduped, armErrors: m.armErrors, carryBytes: m.carryBytes });
         writeFileSync(`${file}.tmp`, JSON.stringify(doc)); renameSync(`${file}.tmp`, file);
         console.log(`${label} r${runtime} ${w.seed} d${w.d}: oracle ${m.oracle.passed}/${m.oracle.completed} | env ${JSON.stringify(m.envelope.byCode)} | arm errors ${m.armErrors} | ${Date.now() - t} ms`);
       }

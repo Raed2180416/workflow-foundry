@@ -187,6 +187,55 @@ test('inbox under a crash: the rolled-back carry drops the lost emission\'s resu
   // without the envelope's carry the same events would reach the solver twice: that is the D3 hazard (teeth below)
 });
 
+test('read-back (reconcile): a crash-orphaned failure answers the re-emission; no second attempt reaches the system', () => {
+  const opts = { reconcile: true };
+  const rtick = ({ carry = null, events = [], out: o }) => {
+    const seen = {};
+    const solver = { id: 's', tick: (input, c) => { seen.input = input; return typeof o === 'function' ? o(input, c) : o; } };
+    const res = withEnvelope(solver, { registry: REG, ...opts }).tick({ kind: 'case', instance: 'i-1', now: '2026-03-10T08:00:00Z', events, carry }, { status: () => 'not-found' });
+    return { seen, res };
+  };
+  const t0 = rtick({ out: out([]) });
+  // the crashed tick charged (declined); its carry is lost; the decline arrives with the redelivered events
+  const declined = result('=charge:F-1', 'error', { error: { code: 402, reason: 'card-declined' } });
+  const t1 = rtick({ carry: t0.res.carry, events: [declined], out: out([charge('fulfil/O-1/charge')]) });
+  assert.deepEqual(t1.seen.input.events, []);                              // parked, not shown out of context
+  assert.deepEqual(t1.res.effects, [{ key: '=?readback:charge:F-1', system: 'billing', op: 'status', args: { key: '=charge:F-1' } }]);
+  assert.deepEqual(t1.res.decisions.envelope.findings.map(f => f.code), ['orphan-parked', 'readback']);
+  // the read's result is answered with the parked outcome, under the caller's key
+  const read = { id: 'r', type: 'effect.result', payload: { key: '=?readback:charge:F-1', system: 'billing', op: 'status', status: 'ok', result: { key: '=charge:F-1', status: 'not-found' } } };
+  const t2 = rtick({ carry: t1.res.carry, events: [read], out: out([]) });
+  assert.equal(t2.seen.input.events.length, 1);
+  assert.deepEqual(t2.seen.input.events[0].payload, { key: 'fulfil/O-1/charge', system: 'billing', op: 'charge', status: 'error', error: { code: 402, reason: 'card-declined' } });
+  assert.equal(t2.res.decisions.envelope.findings[0].code, 'reconciled');
+  // a read-back's own result arriving again (its entry rolled back by a crash) is dropped as an orphan, never parked
+  const again = rtick({ carry: t2.res.carry, events: [read], out: out([]) });
+  assert.deepEqual(again.seen.input.events, []);
+  assert.deepEqual(again.res.decisions.envelope.findings.map(f => f.code), ['orphan']);
+  assert.deepEqual(again.res.carry.x.p, {});
+  // a further result for the identity is surplus; a corrected emission later goes to the system as usual
+  const t3 = rtick({ carry: t2.res.carry, events: [], out: out([charge('fulfil/O-1/charge', 'F-1', 99)]) });
+  assert.equal(t3.res.effects[0].op, 'charge');
+  // without the option the orphan is dropped and the re-emission is a second attempt (the default runtime2)
+  const d0 = tick({ out: out([]) });
+  const d1 = tick({ carry: d0.res.carry, events: [declined], out: out([charge('fulfil/O-1/charge')]) });
+  assert.equal(d1.res.effects[0].op, 'charge');
+  assert.deepEqual(d1.res.decisions.envelope.findings.map(f => f.code), ['orphan']);
+  // and the default state carries no read-back fields, so its carry (and the journal) is byte-identical to the
+  // envelope's before the option existed (the stored battery rows were made without it)
+  assert.deepEqual(Object.keys(d1.res.carry.x).sort(), ['o', 'r', 'v']);
+  assert.deepEqual(Object.keys(t1.res.carry.x).sort(), ['o', 'p', 'q', 'r', 't', 'v']);
+  // a dependant on the outcome, or a system with no status read, keeps the real emission
+  const dep = rtick({ carry: t0.res.carry, events: [declined], out: out([charge('c1'), { key: 'ship', system: 'carrier', op: 'create', args: { orderId: 'O-1', fulfilmentId: 'F-1' }, after: 'c1' }]) });
+  assert.equal(dep.res.effects[0].op, 'charge');
+  // parks expire after three ticks without a re-emission
+  let c = t0.res.carry;
+  c = rtick({ carry: c, events: [declined], out: out([]) }).res.carry;
+  for (let i = 0; i < 4; i++) c = rtick({ carry: c, out: out([]) }).res.carry;
+  const late = rtick({ carry: c, out: out([charge('fulfil/O-1/charge')]) });
+  assert.equal(late.res.effects[0].op, 'charge');
+});
+
 test('inbox: timer and human-task events and key-less results are never filtered', () => {
   const evs = [{ id: 't', type: 'timer.fired', payload: { obligationId: 'w' } }, { id: 'h', type: 'humanTask.answered', payload: { taskId: 'x' } },
     { id: 'r', type: 'effect.result', payload: { key: null, system: 'fraud', op: 'check', status: 'ok' } }];

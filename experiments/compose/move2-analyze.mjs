@@ -124,6 +124,23 @@ export function analyse(docs) {
     if (c) { const cb = (res.carry[s] ??= { total: 0, envelope: 0 }); cb.r1Total = Math.max(cb.r1Total ?? 0, c.carryBytes.total); }
   }
   res.identityConflictsFaultFree = sum(subjects.flatMap(s => SEEDS.map(seed => cell(docs, s, 2, seed, 'none')?.envelope.byCode['identity-conflict'] ?? 0)));
+  // 11. the read-back variant (runtime2 option reconcile): fault-free equal to plain runtime 2; crash losses against both
+  res.readback = {};
+  for (const s of subjects) {
+    const rb = `${s}+readback`;
+    if (!docs[`${rb}.r2`]) continue;
+    const row = { noneEqual: [], crash: [] };
+    for (const seed of SEEDS) {
+      const a = cell(docs, s, 2, seed, 'none'), b = cell(docs, rb, 2, seed, 'none');
+      if (a && b) row.noneEqual.push(a.digest.logical === b.digest.logical && a.digest.sorTables === b.digest.sorTables);
+      const c = cell(docs, rb, 2, seed, 'crash');
+      if (c && b) row.crash.push({ seed, r1: loss(docs, s, 1, seed, 'crash'), r2: loss(docs, s, 2, seed, 'crash'), r2rb: b.oracle.passed - c.oracle.passed,
+        critical: [cell(docs, s, 1, seed, 'crash')?.oracle.critical, cell(docs, s, 2, seed, 'crash')?.oracle.critical, c.oracle.critical],
+        outsideAllowed: [1, 2].map(rt => cell(docs, s, rt, seed, 'crash')?.oracle.codes?.['L2:outside-allowed'] ?? 0).concat([c.oracle.codes?.['L2:outside-allowed'] ?? 0]),
+        env: c.envelope.byCode });
+    }
+    res.readback[s] = row;
+  }
   return res;
 }
 
@@ -142,6 +159,9 @@ export function verdicts(res) {
     'X1 universal M4d loss on 1161 unchanged (D4 not claimed)': { d4: res.d4[1161]?.universal.length, composedR2Loss1161: COMPOSED.map(s => res.band['dup-same:1161']?.composed[`${s}.r2`]) },
     'Move 2 COMP M4b/M4d within the monolith band': Object.fromEntries(Object.entries(res.band).map(([k, v]) => [k, { monolith: v.monolith, r1Inside: `${v.r1Inside}/${v.n}`, r2Inside: `${v.r2Inside}/${v.n}` }])),
     'M4a restart journal identical under runtime 2': { identical: res.restart.filter(r => r.sameJournal).length, of: res.restart.length },
+    'Read-back variant (reconcile): fault-free unchanged, crash losses r1 / r2 / r2+read-back summed over the three worlds': Object.fromEntries(Object.entries(res.readback ?? {}).map(([s, v]) => [s, {
+      noneEqual: `${v.noneEqual.filter(Boolean).length}/${v.noneEqual.length}`, crashLoss: [sum(v.crash.map(c => c.r1)), sum(v.crash.map(c => c.r2)), sum(v.crash.map(c => c.r2rb))],
+      outsideAllowed: [0, 1, 2].map(i => sum(v.crash.map(c => c.outsideAllowed[i]))) }])),
   };
 }
 
