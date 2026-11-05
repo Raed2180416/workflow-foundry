@@ -69,12 +69,12 @@ Evidence and numbers are in IDEAS-AND-STATUS.md and WHY-NOT-HIGHER.md.
 | 49 | Represent any and all workflows (~94%); a mini harness, not a harness | [23] | ✅ | Coverage; reject rather than flatten |
 | 50 | Parallel workflows working together in AMP later | [23] | ⬜ | COMP-1 composition inconclusive |
 | 51 | Measure whether a task needs a workflow, across the complexity spectrum, with a sensitivity slider | [23] | ◐ | ROUTER-1: code router ❌, Haiku direct 5/132; slider ✅ |
-| 52 | Haiku constructs from templates; tell it everything it needs | [23] | ◐ | BUILDER-1 18/21; skill pack built |
+| 52 | Haiku constructs from templates; tell it everything it needs | [23] | ◐ | BUILDER-1 18/21 on its own 7 cards; the product path was card-bound (corrected 11-05): free-form front door being built (#138) |
 | 53 | Rust port? | [23] | 💬 | No |
 | 54 | Missing workflow constructs; deep worst-case analysis | [23] | ✅ | Worst-case catalogue; chaos suite |
 | 55 | A workflow inside a workflow inside a workflow; iterative flows | [23] | ✅ | Nesting depth 6; loops |
 | 56 | Node visualisation: breathing dots, state colours, live update, click to expand the chat | [23] | ◐ | Owner's UI (D33); the run-graph data routes are built |
-| 57 | Swarms (Kimi), Claude Code dynamic workflows: in scope? | [23] | ❌ (dev) | Swarm lead delegated 0 of 8; tied a single agent |
+| 57 | Swarms (Kimi), Claude Code dynamic workflows: in scope? | [23] | ◐ (dev) | Rung 1 inconclusive after review: the Haiku lead started 0 workers in 8 of 8 sessions (treatment not delivered); research/swarm-20261021/RESULT-R1.md |
 | 58 | Subagent spawning inside nodes | [23] | ◐ | Agent nodes; SW-1; nodecap |
 | 59 | A shared message board, shared state, private notes | [23][75] | ◐ | Memory study: small gain; state slots exist |
 | 60 | Auditability and efficiency as first-class | [23] | ✅ | Journal, hash chain, verify-run |
@@ -105,11 +105,11 @@ Evidence and numbers are in IDEAS-AND-STATUS.md and WHY-NOT-HIGHER.md.
 | 85 | Haiku with world feedback | [71] | ✅ | Practice loop |
 | 86 | Give the builder templates and the hardest enterprise patterns | [72] | ✅ | CI-1 retrieval |
 | 87 | How long to build cheaply and accurately? | [72] | ◐ | Per bed (E8 builds $0.39) |
-| 88 | A tracker of the user's conditions, checked against the build | [72] | ✅ ⏳ | Held-out: 37–40 bad builds caught, against 2 without it; merging |
+| 88 | A tracker of the user's conditions, checked against the build | [72] | ◐ | Corrected re-measure (11-04): +4/+12/+4 model-built catches over no tracker, the only checker with useful precision; the earlier 37–40 gave the tracker an answer key. Product integration in progress (#138) |
 | 89 | Builder compares robustness against enterprise patterns | [72] | ◐ | — |
 | 90 | Enterprise workflows (payments, Jira, employees) built correctly | [72] | ◐ | E8, E7, OT-0 |
 | 91 | Realistic mocks with a real model working inside, to find complex flaws | [75] | ✅ | — |
-| 92 | An agent inside a node realises it needs a sub-workflow and creates it | [75] | ◐ | Node-decided 6/32, no gain; parent-decided 27–32/32 |
+| 92 | An agent inside a node realises it needs a sub-workflow and creates it | [75] | ◐ | Node-decided 6/32, no gain; parent-decided 27–32/32 (RESULT-SW-1). The 11-05 refinement is #135 |
 | 93 | Don't dumb down the model's efficiency | [75] | ◐ | — |
 | 94 | Route tasks to agents and models automatically, with user control per node | [75] | ◐ | Class routing and per-role models; UI is the owner's |
 | 95 | A fine line between autonomy and control | [75] | 💬 | Principle |
@@ -137,7 +137,7 @@ Evidence and numbers are in IDEAS-AND-STATUS.md and WHY-NOT-HIGHER.md.
 | 117 | The smoothest onboarding for orgs and solo developers; build the site | [105] | ✅ | Built; no real users yet |
 | 118 | Build breadth | [108] | ◐ | Adapters merged; paid runs ⬜ |
 | 119 | Root-cause every failure; re-read every ask | [112] | ✅ | Anatomies |
-| 120 | Is the built workflow good in the worst case, and does it adapt while doing real, changing work? | [117] | ◐ ⏳ | DUR-1 |
+| 120 | Is the built workflow good in the worst case, and does it adapt while doing real, changing work? | [117] | ◐ | DUR-1 built, frozen, merged; its paid chain stopped at Stage Z on its own fail-closed gates ($1.49, no arm ran; RESULT-DUR-1: void, root-caused, amendment written) |
 | 121 | Why do 30 of 60 fail? | [119] | ✅ | Anatomy and the look-2 audit |
 | 122 | A skill pack, information-efficient, built from all our curation | [126] | 🔧 | Built; SKILLPACK-1 ⬜ |
 | 123 | Use ZCode's visuals | [126] | ➖ | Superseded by [127] |
@@ -146,9 +146,14 @@ Evidence and numbers are in IDEAS-AND-STATUS.md and WHY-NOT-HIGHER.md.
 | 126 | The core engine must be flawless; the owner does the visualisation | [127] | ✅ | Suite 1,480 of 1,499, 0 fail |
 | 127 | Fan-out proportionate to the model's capacity and the task | [128] | 🔧 | Sizing planner |
 | 128 | Prove it creatively and cheaply, with frontier-style workflows for different tasks, against every competitor | [130] | ◐ ⏳ | Conformance; edge track running; showcases ⬜ |
-| 129 | Production-grade integrations through MCP, skills and connectors everywhere | [today] | ◐ ⏳ | Mechanism built; per-system layer ⬜; integrations track running |
-| 130 | Foundry as its own mini harness; Harness² and Prime Agent ideas for healing and growing | [today] | 📐 ⏳ | Code read; proposers only, our gate promotes |
-| 131 | Org-wide workflows with sections for control; beat hand-curated workflows | [today] | ◐ ⏳ | Primitives built; org layer designed; org track running |
-| 132 | Blow every competitor out of the water | [today] | ◐ ⏳ | Edge track |
+| 129 | Production-grade integrations through MCP, skills and connectors everywhere | [today] | ◐ | Mechanism built (node capabilities); per-system layer ⬜; the design track was stopped by the usage limit |
+| 130 | Foundry as its own mini harness; Harness² and Prime Agent ideas for healing and growing | [today] | 📐 | Code read; proposers only, our gate promotes; research/selfimprove-20261104/SELFIMPROVE-DESIGN.md (unchecked); promotion experiment #105 ⬜ |
+| 131 | Org-wide workflows with sections for control; beat hand-curated workflows | [today] | ◐ | Primitives built; org layer designed; the org design track did not run (usage limit) |
+| 132 | Blow every competitor out of the water | [today] | ◐ | Edge track did not run (usage limit) |
 | 133 | Friction for users and agents using it through a harness | [today] | ✅ | Analysed |
-| 134 | Every gap's solution must generalise; is our test slice realistic or easy? | [today] | ⏳ | Generalisation workflow running; slice: realistic and hard, but narrow |
+| 134 | Every gap's solution must generalise; is our test slice realistic or easy? | [today] | ◐ | Ten generalising mechanisms listed in STATUS.md; the research workflow did not run (usage limit). Slice: realistic and hard, but narrow |
+| 135 | Recursive approval: the meta harness builds the workflow; every sub-node is asked whether it needs a sub-workflow (or something else); before creating anything at any depth it asks the workflow's main agent, which approves only what serves the goal, without interrupting the person; depth set by the person or encoded by the meta agent | [11-05] | 📐 | research/status-20261105/RECURSIVE-APPROVAL-AND-LOOPS.md; engine pieces exist (children, depth and loop caps, principals); the propose→approve hook is not built |
+| 136 | Loops of every kind: a node's sub-agent talking to another node's sub-agent, local to local across nodes, other crazy topologies | [11-05] | 📐 | Same document: declared typed channels only, journaled, authority never widens |
+| 137 | No more workflows; at most one subagent | [11-05] | ✅ | Kept |
+| 138 | Save everything to GitHub with a clean entry point; polish it so another agent can continue; the demonstrable vision cleanly integrated | [11-05] | ◐ | STATUS.md at the repo root; node-graph and durability merged; tracker + free-form front door being integrated by one agent |
+

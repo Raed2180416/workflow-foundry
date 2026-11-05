@@ -3,6 +3,9 @@
 Start here. This README is the single entry point for humans and agents.
 Everything else is linked from it.
 
+**Exactly where the project stands (placement against the vision, every idea with its status, what runs, the next
+agent's queue): [STATUS.md](STATUS.md).**
+
 ## What this is
 
 Foundry lets agents **construct small, bounded, typed workflows for a specific task**
@@ -44,6 +47,8 @@ else below is still development and diagnostic evidence.*
 [WHY-NOT-HIGHER](research/status-20261104/WHY-NOT-HIGHER.md).*
 
 **Where we are.**
+- **2026-11-05.** The node-graph run data and human-task channels and the durability program (DUR-1) are merged;
+  the need-router stale tests are fixed. The full picture and the next agent's queue are in [STATUS.md](STATUS.md).
 - **2026-11-04.** Everything that was waiting on branches is merged into this branch, with every suite green:
   - A1-C v2;
   - the six gap-closure items (need router, FH-1 heal, C2 reuse, SW-1 sub-workflows, game QA, memory);
