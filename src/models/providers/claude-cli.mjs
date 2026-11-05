@@ -1,6 +1,6 @@
 // Hosted Claude models through the headless `claude -p` CLI (DESIGN §2). One structured
 // judgment per call: no tools, no MCP, no session, an empty throwaway cwd, a per-call USD cap.
-// The CLI authenticates with its own managed login, so the environment is inherited (minus
+// The CLI authenticates with its own managed login, so the environment is inherited (minus account identity, see IDENTITY_ENV,
 // repository credentials and the CLI's decoding variables) and is never logged; the journal
 // records only the closed-list and cache-tier variables the child saw (childEnvRecord).
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -53,6 +53,23 @@ const CACHE_TIER_ENV = /^(DISABLE_PROMPT_CACHING(_[A-Z]+)?|ENABLE_PROMPT_CACHING
 
 export function claudeEnv(env = process.env) {
   return Object.fromEntries(Object.entries(env).filter(([k, v]) => typeof v === 'string' && !SCRUBBED.test(k) && !DECODING_ENV.test(k)));
+}
+
+// Account identity (research/tracker-20261021/RESULT-TRACKER.md §11; compromise register C7). Observed in the claude 2.1.318 binary
+// and by the canary experiments/tracker-v2/identity-canary.mjs: the CLI builds a user-context block "The user's email address is ..."
+// from the account it keeps in its global config (oauthAccount.emailAddress, written there from CLAUDE_CODE_USER_EMAIL,
+// CLAUDE_CODE_ACCOUNT_UUID and CLAUDE_CODE_ORGANIZATION_UUID at login) or from CLAUDE_CODE_USER_EMAIL, and --system-prompt does not
+// remove it. A model then took the host's address for the person's own (held-out B0-H: a hard-coded recipient, a "Bcc the user" in a
+// capture). So each child gets its own empty config directory (beside its throwaway cwd) and none of these variables: the canary saw
+// no address on 2 of 2 calls (it saw it on 6 of 6 without the directory, with or without the variables), and the calls authenticated
+// as before. identity: 'inherit' restores the old behaviour, for an A/B measurement only.
+export const IDENTITY_ENV = /^CLAUDE_CODE_(USER_EMAIL|ACCOUNT_UUID|ORGANIZATION_UUID|ACCOUNT_TAGGED_ID)$/;
+export const IDENTITY_MODES = Object.freeze(['isolated', 'inherit']);
+/** The child environment with no account identity: identity variables removed, CLAUDE_CONFIG_DIR set to the given empty directory. */
+export function isolatedEnv(childProcessEnv, configDir) {
+  const out = Object.fromEntries(Object.entries(childProcessEnv).filter(([k]) => !IDENTITY_ENV.test(k)));
+  out.CLAUDE_CONFIG_DIR = configDir;
+  return out;
 }
 
 // Child-process tuning that applies when the policy's provider config has no `childEnv` block (research/review-20261007/
@@ -120,10 +137,14 @@ export class ClaudeCliProvider {
   // policy block applies, and absent there the DEFAULT_CHILD_ENV. An explicit null is not "absent": it is refused like any non-object.
   // cliLock (compromise C2, src/cli-pin.mjs): a lock file that pins the CLI by bytes; every call then runs the verified pinned binary by its
   // absolute path, never the configured name on PATH. Default: FOUNDRY_CLI_LOCK in `env`; absent, the configured binary runs unpinned.
+  // identity (research/tracker-20261021/RESULT-TRACKER.md §11): 'isolated' (default) gives each call an empty throwaway CLI config
+  // directory and no account-identity variables; 'inherit' is for an A/B measurement only.
   constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024, childEnv,
-    cliLock = env?.FOUNDRY_CLI_LOCK || null, cliRoot = env?.FOUNDRY_CLI_ROOT || undefined } = {}) {
+    cliLock = env?.FOUNDRY_CLI_LOCK || null, cliRoot = env?.FOUNDRY_CLI_ROOT || undefined, identity = 'isolated' } = {}) {
     const config = policy?.providers?.[providerName];
     if (!config || config.kind !== 'claude-cli') throw new FoundryError('MODEL_POLICY_INVALID', `Policy has no claude-cli provider named ${providerName}`);
+    if (!IDENTITY_MODES.includes(identity)) throw new FoundryError('MODEL_REQUEST', `identity must be one of ${IDENTITY_MODES.join(', ')}`);
+    this.identity = identity;
     if (config.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) throw new FoundryError('MODEL_POLICY_INVALID', '--fallback-model is never passed');
     if (typeof maxBudgetUsd !== 'number' || !(maxBudgetUsd > 0 && maxBudgetUsd <= 25)) throw new FoundryError('MODEL_REQUEST', 'maxBudgetUsd must be in (0, 25]');
     // Only an absent block means "the default": an explicit null in a policy object that bypassed validatePolicy is refused, not defaulted.
@@ -168,17 +189,23 @@ export class ClaudeCliProvider {
       throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`);
     }
     const args = this.args({ modelEntry, system, schema, decoding }), applied = claudeCliDecoding(decoding);
-    const childProcessEnv = claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens);
+    const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
+    // The child's own config directory sits beside its cwd (the cwd stays empty) and goes with it after the call.
+    const configDir = this.identity === 'isolated' ? mkdtempSync(path.join(tmpdir(), 'foundry-claude-config-')) : null;
+    let childProcessEnv = claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens);
+    if (configDir) childProcessEnv = isolatedEnv(childProcessEnv, configDir);
     const request = { binary: path.basename(binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
       maxTokens: applied.maxTokens, effort: applied.effort, thinkingTokens: applied.thinkingTokens, maxBudgetUsd: this.maxBudgetUsd,
-      env: childEnvRecord(childProcessEnv, this.childEnv) };
-    const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
+      env: childEnvRecord(childProcessEnv, this.childEnv), identity: this.identity };
     let processResult, launchError;
     try {
       processResult = await runProcess(binary, args, { cwd, env: childProcessEnv, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
     } catch (error) {
       launchError = error; processResult = error.processResult;
-    } finally { rmSync(cwd, { recursive: true, force: true }); }
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+      if (configDir) rmSync(configDir, { recursive: true, force: true });
+    }
     const stderr = processResult?.stderr?.slice(-4000) ?? '';
     // A CLI that ran but returned no result object (killed on timeout or cancellation, over its output budget, crashed)
     // may already have been billed: its spend is unknown, never an exact $0. The per-call cap bounds it (DESIGN §2).

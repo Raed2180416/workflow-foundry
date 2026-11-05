@@ -1,0 +1,524 @@
+{
+ "arm": "B0-H2+repair-none",
+ "case": "HO1",
+ "expected": "oncall-digest",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00445481,
+  "tokens": 4564,
+  "inputTokens": 2,
+  "outputTokens": 4562,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00445481,
+   "inputTokens": 2,
+   "outputTokens": 4562
+  }
+ ],
+ "builderWallMs": 18904,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "oncall-alert-digest",
+  "version": 1,
+  "title": "Morning unresolved-alert digest to #oncall with critical-unacknowledged escalation",
+  "goal": "Each morning, post a digest of all unresolved alerts (with severity and service) to the oncall channel. If any critical alert is still unacknowledged after one hour, email jordan@corestackit.com directly.",
+  "domain": "operations",
+  "envelope": {
+   "assumptions": [
+    "The 8:00 morning schedule is provided by the external runner that starts this flow once per day with input.now.",
+    "The Slack stand-in channel is named oncall.",
+    "An alert is unresolved when resolved is false.",
+    "Critical alert age is measured from its at timestamp to input.now in whole hours.",
+    "The alerts sheet stores acknowledged and resolved as real booleans."
+   ],
+   "risks": [
+    "chat.post and outbox.send ask a person before each live dispatch.",
+    "Alerts with missing or malformed at values will fail the age step.",
+    "If acknowledged or resolved are stored as text instead of booleans, the filters will match no rows and the escalation will silently not fire."
+   ],
+   "successCriteria": [
+    "Digest is posted to oncall and its hash is verified by chat.audit.",
+    "Every unresolved critical alert unacknowledged for at least 1 hour is listed in the escalation email, and the email is delivered and verified.",
+    "No email is sent when no such alert exists."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_alerts",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all alert rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unresolved",
+    "kind": "task",
+    "needs": [
+     "read_alerts"
+    ],
+    "description": "Keep alerts that are not resolved.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_alerts.rows"
+     },
+     "where": [
+      {
+       "field": "resolved",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest_lines",
+    "kind": "task",
+    "needs": [
+     "unresolved"
+    ],
+    "description": "Render one line per unresolved alert with severity and service.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.unresolved.rows"
+     },
+     "line": "- [{{severity}}] {{service}}: {{message}} (id {{id}}, since {{at}}, acknowledged: {{acknowledged}})",
+     "empty": "No unresolved alerts."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest_text",
+    "kind": "task",
+    "needs": [
+     "digest_lines",
+     "unresolved"
+    ],
+    "description": "Build the digest message.",
+    "tool": "core.template",
+    "args": {
+     "text": "Unresolved alerts digest for {{now}} ({{count}} total):\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.unresolved.count"
+      },
+      "lines": {
+       "$ref": "nodes.digest_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post_digest",
+    "kind": "task",
+    "needs": [
+     "digest_text"
+    ],
+    "description": "Post the digest to the oncall channel.",
+    "tool": "chat.post",
+    "args": {
+     "channel": "oncall",
+     "text": {
+      "$ref": "nodes.digest_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "digest_check",
+    "kind": "verify",
+    "needs": [
+     "post_digest"
+    ],
+    "description": "Independently confirm the digest post exists with its recorded hash.",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "oncall",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post_digest"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "critical_unacked",
+    "kind": "task",
+    "needs": [
+     "unresolved"
+    ],
+    "description": "Keep unresolved critical alerts that are not acknowledged.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.unresolved.rows"
+     },
+     "where": [
+      {
+       "field": "severity",
+       "op": "eq",
+       "value": "critical"
+      },
+      {
+       "field": "acknowledged",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "critical_unacked"
+    ],
+    "description": "Compute hours each critical alert has been open.",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.critical_unacked.rows"
+     },
+     "field": "at",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "hours",
+     "as": "hours_open"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "overdue",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Keep critical unacknowledged alerts open for at least 1 hour.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "hours_open",
+       "op": "gte",
+       "value": 1
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "overdue_lines",
+    "kind": "task",
+    "needs": [
+     "overdue"
+    ],
+    "description": "Render escalation lines.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.overdue.rows"
+     },
+     "line": "- {{service}}: {{message}} (id {{id}}, open {{hours_open}}h since {{at}})",
+     "empty": "None."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "email_text",
+    "kind": "task",
+    "needs": [
+     "overdue_lines",
+     "overdue"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.overdue.count"
+     },
+     "right": 0
+    },
+    "description": "Build the escalation email body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Critical alerts not acknowledged within one hour (as of {{now}}):\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "lines": {
+       "$ref": "nodes.overdue_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_overdue_email",
+    "kind": "task",
+    "needs": [
+     "email_text"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.overdue.count"
+     },
+     "right": 0
+    },
+    "description": "Email Jordan about unacknowledged critical alerts.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "jordan@corestackit.com",
+     "subject": "Unacknowledged critical alerts (over 1 hour)",
+     "body": {
+      "$ref": "nodes.email_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "email_check",
+    "kind": "verify",
+    "needs": [
+     "send_overdue_email"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.overdue.count"
+     },
+     "right": 0
+    },
+    "description": "Independently confirm the escalation email was delivered.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "jordan@corestackit.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_overdue_email"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.digest_check.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.overdue.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.email_check.pass"
+      },
+      "right": true
+     }
+    ]
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "uncertain",
+  "verdict": "uncertain",
+  "passed": false,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "jordan@corestackit.com",
+     "subject": "Unacknowledged critical alerts (over 1 hour)",
+     "body": "Critical alerts not acknowledged within one hour (as of 2026-10-28T08:00:00Z):\n- api: Error rate 12% (id K-1, open 2h since 2026-10-28T05:30:00Z)"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair2-none/foundry-live-878lxq",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Digest is posted to oncall and its hash is verified by chat.audit.",
+    "exact": "the pass of “Independently confirm the digest post exists with its recorded hash.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every unresolved critical alert unacknowledged for at least 1 hour is listed in the escalation email, and the email is delivered and verified.",
+    "exact": "the count of “Keep critical unacknowledged alerts open for at least 1 hour.” equals 0 or the pass of “Independently confirm the escalation email was delivered.” equals true",
+    "passed": null
+   },
+   {
+    "id": "verify.digest_check",
+    "plain": "Independently confirm the digest post exists with its recorded hash.",
+    "exact": "chat.audit (independent execution check)",
+    "passed": null
+   },
+   {
+    "id": "verify.email_check",
+    "plain": "Independently confirm the escalation email was delivered.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Post the digest to the oncall channel."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended uncertain (verdict uncertain)",
+   "chat #oncall: missing an expected item containing \"Error rate 12%\", \"Replica lag 90s\", \"Slow page loads\", \"Cache purge done\", \"Queue stuck\", \"Token refresh slow\", \"critical\", \"warning\", \"auth\", \"cdn\" without Old outage"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 4,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h2/HO1",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

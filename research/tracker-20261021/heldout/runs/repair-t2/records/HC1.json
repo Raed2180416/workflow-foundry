@@ -1,0 +1,379 @@
+{
+ "arm": "B0-H+repair-t2",
+ "case": "HC1",
+ "expected": "contact-sync",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t2",
+     "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"send it to me, nadia@yogaflowstudio.com\": no email effect matches\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.0039337,
+  "tokens": 3585,
+  "inputTokens": 2,
+  "outputTokens": 3583,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.0039337,
+   "inputTokens": 2,
+   "outputTokens": 3583
+  }
+ ],
+ "builderWallMs": 15497,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "newsletter-crm-diff",
+  "version": 2,
+  "title": "Diff CRM contacts missing from newsletter list (report and send to Nadia)",
+  "goal": "Read the CRM sheet and the newsletter list, skip CRM contacts marked unsubscribed, report which remaining CRM contacts are not in the newsletter list, save the diff as an artifact, and send the diff by email to nadia@yogaflowstudio.com. Make no changes to any sheet and append no rows.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "The crm sheet is the Mindbody contact export with email, name, company, tags, unsubscribed.",
+    "The newsletter sheet stands in for the Mailchimp audience.",
+    "Emails are matched ignoring case and spaces, as rows.reconcile does.",
+    "Unsubscribed CRM contacts are left out of the diff entirely.",
+    "The diff is sent to nadia@yogaflowstudio.com as the requested recipient; outbox.send asks a person before dispatch when run live."
+   ],
+   "risks": [
+    "Sheet exports may contain duplicate or malformed emails that are reported as-is.",
+    "The emailed diff contains customer contact details sent to a third-party address.",
+    "The report is a snapshot; it does not make any change to either list."
+   ],
+   "successCriteria": [
+    "Every reported contact is in crm, has unsubscribed not true, and is absent from the newsletter sheet.",
+    "No rows are appended to any sheet.",
+    "A diff artifact is written for review.",
+    "The diff is delivered to nadia@yogaflowstudio.com and the delivered message is re-read and verified."
+   ]
+  },
+  "budget": {
+   "maxSteps": 10,
+   "maxConcurrency": 2,
+   "maxDurationMs": 120000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read-crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all CRM contacts.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read-newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the current newsletter list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "eligible",
+    "kind": "task",
+    "needs": [
+     "read-crm"
+    ],
+    "description": "Keep CRM contacts that are not unsubscribed.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read-crm.rows"
+     },
+     "where": [
+      {
+       "field": "unsubscribed",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "diff",
+    "kind": "task",
+    "needs": [
+     "eligible",
+     "read-newsletter"
+    ],
+    "description": "Find eligible CRM contacts whose email is not in the newsletter list.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.eligible.rows"
+     },
+     "right": {
+      "$ref": "nodes.read-newsletter.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "report",
+    "kind": "task",
+    "needs": [
+     "diff"
+    ],
+    "description": "Render the missing contacts as one line each.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.diff.missing"
+     },
+     "line": "{{email}} | {{name}} | {{company}}",
+     "empty": "No eligible CRM contacts are missing from the newsletter list."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "artifact",
+    "kind": "task",
+    "needs": [
+     "report"
+    ],
+    "description": "Save the diff report as a run artifact for review.",
+    "tool": "core.artifact",
+    "args": {
+     "name": "newsletter-diff.txt",
+     "content": {
+      "$ref": "nodes.report.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "artifact"
+    ],
+    "description": "Email the diff report to nadia@yogaflowstudio.com.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "nadia@yogaflowstudio.com",
+     "subject": "Newsletter diff: CRM contacts missing from Mailchimp list",
+     "body": {
+      "$ref": "nodes.report.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify-send",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Re-read the delivered message and confirm it went to nadia@yogaflowstudio.com with the saved hash.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "nadia@yogaflowstudio.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "gte",
+    "left": {
+     "$ref": "nodes.report.count"
+    },
+    "right": 0
+   },
+   {
+    "op": "exists",
+    "value": {
+     "$ref": "nodes.artifact.sha256"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify-send.pass"
+    },
+    "right": true
+   }
+  ],
+  "oracle": {
+   "mode": "none",
+   "reason": "No capability independently re-checks a reconcile diff of two sheets; a person should spot-check a few reported emails against the crm and newsletter sheets before acting on the list."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "unverified",
+  "passed": false,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "nadia@yogaflowstudio.com",
+     "subject": "Newsletter diff: CRM contacts missing from Mailchimp list",
+     "body": "ben.k@quickpost.example | Ben Kole | \ndevi@inbox.example | Devi Rao | "
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-t2/foundry-live-ftZeMA",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every reported contact is in crm, has unsubscribed not true, and is absent from the newsletter sheet.",
+    "exact": "the count of “Render the missing contacts as one line each.” is at least 0",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No rows are appended to any sheet.",
+    "exact": "the sha256 of “Save the diff report as a run artifact for review.” exists",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "A diff artifact is written for review.",
+    "exact": "the delivered of “Email the diff report to nadia@yogaflowstudio.com.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "The diff is delivered to nadia@yogaflowstudio.com and the delivered message is re-read and verified.",
+    "exact": "the pass of “Re-read the delivered message and confirm it went to nadia@yogaflowstudio.com with the saved hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify-send",
+    "plain": "Re-read the delivered message and confirm it went to nadia@yogaflowstudio.com with the saved hash.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": true,
+  "runPassed": false,
+  "reasons": [
+   "the run ended succeeded (verdict unverified)"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 2,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HC1",
+  "verifiedBefore": false,
+  "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"send it to me, nadia@yogaflowstudio.com\": no email effect matches\nFix the workflow so it meets them."
+ }
+}

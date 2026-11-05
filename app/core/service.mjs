@@ -22,6 +22,8 @@ import { runInWorld } from './practice.mjs';
 import { describeWorkflow, explainRun, failureText, reword } from './failure-words.mjs';
 import { Ledger, HUMAN_CHANNELS } from './ledger.mjs';
 import { machinePolicy } from './machine-policy.mjs';
+import { Tracker } from './tracker/index.mjs';
+import * as tracked from './tracker/service-hooks.mjs';
 
 // The digest that binds a planned outside action to its full content: sha256 of the canonical {tool, args} (batch approval matches on it).
 export const effectDigest = (tool, args) => digest({ tool, args });
@@ -58,7 +60,7 @@ const plainFailure = data => failureText(data);
 const problem = (error, extra = {}) => ({ ok: false, problem: { ...(plainFailure(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
 
 export class FoundryApp {
-  constructor({ workspace, now = Date.now, builder = stubBuilder } = {}) {
+  constructor({ workspace, now = Date.now, builder = stubBuilder, trackerPort = null, trackerModel = 'claude-haiku-5-5' } = {}) {
     if (typeof workspace !== 'string' || !workspace.trim()) throw new FoundryError('APP_WORKSPACE', 'A workspace directory is required');
     if (!builder || typeof builder.build !== 'function' || typeof builder.id !== 'string') throw new FoundryError('APP_BUILDER', 'A builder with an id and build() is required');
     this.root = path.resolve(workspace); this.builder = builder;
@@ -71,8 +73,10 @@ export class FoundryApp {
     this.registry = appRegistry({ mode: 'live', outboxDir: this.outboxDir, worldDir: this.worldDir });
     this.foundry = new Foundry(this.liveDir, { registry: this.registry });
     this.ledger = new Ledger(path.join(this.root, 'app-ledger.sqlite'), { now });
+    // The condition tracker (task #60): without a model port it logs the person's words as conditions ($0 rule) and binds no check.
+    this.tracker = new Tracker({ file: path.join(this.root, 'conditions.sqlite'), port: trackerPort, model: trackerModel, now });
   }
-  async close() { await this.foundry.close(); this.ledger.close(); }
+  async close() { await this.foundry.close(); this.ledger.close(); this.tracker.close(); }
   get storeFile() { return path.join(this.foundry.store.directory, 'foundry.sqlite'); }
 
   #head(flowId) { try { return this.foundry.store.workflow(flowId); } catch (error) { if (error.code === 'NOT_FOUND') return null; throw error; } }
@@ -112,7 +116,8 @@ export class FoundryApp {
     const designRequest = this.foundry.store.createAgentDesignRequest({ task, workflowId: head ? head.workflow.id : null, expectedHash: head?.hash ?? null });
     const proposal = this.foundry.propose({ requestId: designRequest.id, workflow: built.workflow,
       rationale: `Built by ${built.builder} from template ${built.template}. Understood: ${JSON.stringify(built.understood)}` });
-    return { ok: true, status: 'proposed', builder: built.builder, template: built.template, ...(report ? { build: report } : {}), proposalId: proposal.id, requestId: designRequest.id, flowId: built.workflow.id,
+    const conditions = await tracked.trackProposal(this, { flowId: built.workflow.id, request, answers });
+    return { ok: true, status: 'proposed', builder: built.builder, template: built.template, ...(report ? { build: report } : {}), conditions, proposalId: proposal.id, requestId: designRequest.id, flowId: built.workflow.id,
       version: built.workflow.version, workflowHash: proposal.workflowHash, basedOn: head ? { version: head.workflow.version, hash: head.hash } : null,
       changes: proposal.impact, understood: built.understood, willDo: built.willDo, willNotDo: built.willNotDo,
       summary: describeWorkflow(built.workflow, this.registry), lintWarnings: validation.warnings.map(w => w.code),
@@ -277,7 +282,7 @@ export class FoundryApp {
     try { created = this.foundry.createRun(flowId, input ?? {}); } catch (error) { return problem(error); }
     if (created.workflowHash !== head.hash) { await this.foundry.cancel(created.id, { graceMs: 0 }); return problem(new FoundryError('STALE_APPROVAL', 'The flow changed while starting')); }
     await this.foundry.startRun(created.id).catch(() => {});
-    return this.status({ runId: created.id });
+    return tracked.afterRun(this, this.status({ runId: created.id }));
   }
 
   /** Practice-only mode (<workspace>/settings.json mode: 'practice-only', set by the person in the site's Settings): no live run starts. */
@@ -333,6 +338,15 @@ export class FoundryApp {
     try { this.onDecision?.({ kind: fromList ? 'list-item' : 'action', decision: approved ? 'approved' : 'rejected', channel, principal: this.principal?.() ?? 'local-user', runId, flowId, approvalId,
       ...(fromList ? { batchId: fromList.batchId, item: fromList.n, digest: fromList.digest, appliedBy: 'Foundry, from your one approval of the list' } : {}) }); } catch { /* a record, never a gate */ }
     if (approved) await this.foundry.startRun(runId).catch(() => {});
-    return this.status({ runId });
+    return tracked.afterRun(this, this.status({ runId }));
   }
+
+  // The condition tracker's surface (./tracker/service-hooks.mjs): what the person asked for, checked on practice data.
+  conditions(args) { return tracked.conditions(this, args); }
+  checkConditions(args) { return tracked.checkConditions(this, args); }
+  proposeConditionEdit(args) { return tracked.proposeConditionEdit(this, args); }
+  decideCondition(args) { return tracked.decideCondition(this, args); }
+  checkRun(args) { return tracked.checkRun(this, args); }
+  /** A run's status answer with the live condition check attached when the run has ended (human-tasks.mjs resumes call it too). */
+  withConditions(answer) { return tracked.afterRun(this, answer); }
 }

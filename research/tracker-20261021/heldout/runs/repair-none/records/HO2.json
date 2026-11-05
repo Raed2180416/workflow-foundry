@@ -1,0 +1,504 @@
+{
+ "arm": "B0-H+repair-none",
+ "case": "HO2",
+ "expected": "oncall-digest",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004332685,
+  "tokens": 4289,
+  "inputTokens": 2,
+  "outputTokens": 4287,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.004332685,
+   "inputTokens": 2,
+   "outputTokens": 4287
+  }
+ ],
+ "builderWallMs": 17473,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "it-oncall-alert-digest",
+  "version": 1,
+  "title": "Unresolved alert digest to #it-oncall with critical escalation email",
+  "goal": "Read the alerts sheet, post a summary of unresolved warnings and criticals to #it-oncall, and if any critical alert is unresolved and unacknowledged, email requester@example.test with those critical alerts. Warnings never trigger an email.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The alerts sheet has columns id, at, service, severity, message, acknowledged, resolved.",
+    "Unresolved means resolved is false; unacknowledged means acknowledged is false.",
+    "The 9am schedule is set by how the run is started; this flow runs once per start with input.now."
+   ],
+   "risks": [
+    "chat.post and outbox.send ask a person before each live dispatch.",
+    "If resolved or acknowledged is missing on a row, that row is left out of the filter."
+   ],
+   "successCriteria": [
+    "Summary posted to #it-oncall lists every unresolved warning and critical alert.",
+    "An email to requester@example.test is sent only when at least one unresolved critical alert is unacknowledged, and lists those alerts.",
+    "No email is sent for warnings alone."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_alerts",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all alert rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_alerts",
+    "kind": "task",
+    "needs": [
+     "read_alerts"
+    ],
+    "description": "Keep unresolved warning and critical alerts.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_alerts.rows"
+     },
+     "where": [
+      {
+       "field": "resolved",
+       "op": "eq",
+       "value": false
+      },
+      {
+       "field": "severity",
+       "op": "in",
+       "value": [
+        "warning",
+        "critical"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "critical_unacked",
+    "kind": "task",
+    "needs": [
+     "open_alerts"
+    ],
+    "description": "Keep unresolved critical alerts nobody has acknowledged.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_alerts.rows"
+     },
+     "where": [
+      {
+       "field": "severity",
+       "op": "eq",
+       "value": "critical"
+      },
+      {
+       "field": "acknowledged",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "summary_lines",
+    "kind": "task",
+    "needs": [
+     "open_alerts"
+    ],
+    "description": "Render one line per unresolved alert.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_alerts.rows"
+     },
+     "line": "{{severity}} | {{service}} | {{message}} | acknowledged: {{acknowledged}}",
+     "empty": "No unresolved warnings or criticals."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post_text",
+    "kind": "task",
+    "needs": [
+     "open_alerts",
+     "summary_lines"
+    ],
+    "description": "Build the channel summary text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Unresolved warnings and criticals as of {{now}}: {{count}}\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.open_alerts.count"
+      },
+      "lines": {
+       "$ref": "nodes.summary_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post_summary",
+    "kind": "task",
+    "needs": [
+     "post_text"
+    ],
+    "description": "Post the summary to #it-oncall.",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#it-oncall",
+     "text": {
+      "$ref": "nodes.post_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_post",
+    "kind": "verify",
+    "needs": [
+     "post_summary"
+    ],
+    "description": "Re-read #it-oncall and confirm the summary post is there.",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#it-oncall",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post_summary"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "critical_lines",
+    "kind": "task",
+    "needs": [
+     "critical_unacked"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.critical_unacked.count"
+     },
+     "right": 0
+    },
+    "description": "Render one line per unacknowledged critical alert.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.critical_unacked.rows"
+     },
+     "line": "{{id}} | {{at}} | {{service}} | {{message}}",
+     "empty": "None."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "email_text",
+    "kind": "task",
+    "needs": [
+     "critical_unacked",
+     "critical_lines"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.critical_unacked.count"
+     },
+     "right": 0
+    },
+    "description": "Build the escalation email body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Unacknowledged critical alerts as of {{now}}: {{count}}\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.critical_unacked.count"
+      },
+      "lines": {
+       "$ref": "nodes.critical_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_email",
+    "kind": "task",
+    "needs": [
+     "email_text"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.critical_unacked.count"
+     },
+     "right": 0
+    },
+    "description": "Email the user the unacknowledged critical alerts.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "requester@example.test",
+     "subject": "Unacknowledged critical alerts",
+     "body": {
+      "$ref": "nodes.email_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_email",
+    "kind": "verify",
+    "needs": [
+     "send_email"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.critical_unacked.count"
+     },
+     "right": 0
+    },
+    "description": "Re-read the outbox and confirm the escalation email was delivered to the user.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "requester@example.test"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_email"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_post.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.critical_unacked.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.verify_email.pass",
+       "default": false
+      },
+      "right": true
+     }
+    ]
+   }
+  ],
+  "metadata": {
+   "rationale": "Warnings alone never trigger email. The email is gated on the count of unacknowledged unresolved criticals and verified by re-reading the outbox. The verify_email pass reference defaults to false so the acceptance check evaluates when the email step is skipped.",
+   "tags": [
+    "alerts",
+    "on-call",
+    "digest"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "requester@example.test",
+     "subject": "Unacknowledged critical alerts",
+     "body": "Unacknowledged critical alerts as of 2026-10-28T09:00:00Z: 2\nM-1 | 2026-10-28T07:10:00Z | ehr | EHR login failures\nM-4 | 2026-10-27T03:00:00Z | lab | Lab interface down"
+    }
+   ],
+   "chat": {
+    "#it-oncall": [
+     "Unresolved warnings and criticals as of 2026-10-28T09:00:00Z: 4\ncritical | ehr | EHR login failures | acknowledged: false\nwarning | pacs | PACS disk 88% | acknowledged: false\ncritical | lab | Lab interface down | acknowledged: false\ncritical | pharmacy | Dispense queue slow | acknowledged: true"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-none/foundry-live-upc7xv",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Summary posted to #it-oncall lists every unresolved warning and critical alert.",
+    "exact": "the pass of “Re-read #it-oncall and confirm the summary post is there.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "An email to requester@example.test is sent only when at least one unresolved critical alert is unacknowledged, and lists those alerts.",
+    "exact": "the count of “Keep unresolved critical alerts nobody has acknowledged.” equals 0 or {\"$ref\":\"nodes.verify_email.pass\",\"default\":false} equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_post",
+    "plain": "Re-read #it-oncall and confirm the summary post is there.",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_email",
+    "plain": "Re-read the outbox and confirm the escalation email was delivered to the user.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to n.okafor@stmaryshospital.org containing \"EHR login failures\"",
+   "outbox : missing a message to n.okafor@stmaryshospital.org containing \"Lab interface down\"",
+   "outbox : unexpected or wrong message to requester@example.test (\"Unacknowledged critical alerts\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 4,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HO2",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

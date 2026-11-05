@@ -1,0 +1,501 @@
+{
+ "arm": "B0-H+repair-t2",
+ "case": "HS2",
+ "expected": "support-deflection",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t2",
+     "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"all other tickets also go to mike in a single daily digest\": 2 email effect(s) name it; want atMost 1\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00430331,
+  "tokens": 4174,
+  "inputTokens": 2,
+  "outputTokens": 4172,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00430331,
+   "inputTokens": 2,
+   "outputTokens": 4172
+  }
+ ],
+ "builderWallMs": 17773,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "ticket-shipping-triage",
+  "version": 2,
+  "title": "Shipping FAQ replies and single Mike email (urgent + daily digest)",
+  "goal": "For open tickets whose subject or body mentions 'shipping', send the shipping FAQ answer to the customer. Send Mike exactly one email per run containing the urgent open tickets and the daily digest of all other open tickets.",
+  "domain": "support",
+  "envelope": {
+   "assumptions": [
+    "Only tickets with status 'open' are handled.",
+    "'Mentions shipping' means the word appears in the subject or body, ignoring case.",
+    "Urgent means priority 'urgent'.",
+    "The single email to Mike has an urgent section first, then a digest section listing every open non-urgent ticket, including shipping tickets that were auto-answered.",
+    "Each run sends exactly one email to mike@fitzone.com."
+   ],
+   "risks": [
+    "Customers receive an automatic reply from the outbox for every shipping ticket, so a false keyword match sends an unneeded reply.",
+    "Mike receives one email on every run, including runs with no open tickets.",
+    "Urgent tickets are delivered with the scheduled run rather than immediately.",
+    "If the audit fails after sends, some emails may already have been delivered and cannot be recalled."
+   ],
+   "successCriteria": [
+    "Every open shipping ticket has one FAQ reply sent to its customer address.",
+    "Exactly one email to mike@fitzone.com per run contains the urgent tickets and the daily digest of all other open tickets.",
+    "The outbox audit confirms the recipients and message hashes match this run."
+   ]
+  },
+  "budget": {
+   "maxSteps": 1000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_tickets",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all ticket rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tickets"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_tickets",
+    "kind": "task",
+    "needs": [
+     "read_tickets"
+    ],
+    "description": "Keep open tickets.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tickets.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "shipping_tickets",
+    "kind": "task",
+    "needs": [
+     "open_tickets"
+    ],
+    "description": "Open tickets whose subject or body mentions shipping.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_tickets.rows"
+     },
+     "where": [
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "shipping"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "urgent_tickets",
+    "kind": "task",
+    "needs": [
+     "open_tickets"
+    ],
+    "description": "Open tickets with urgent priority.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_tickets.rows"
+     },
+     "where": [
+      {
+       "field": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "other_tickets",
+    "kind": "task",
+    "needs": [
+     "open_tickets"
+    ],
+    "description": "Open tickets that are not urgent.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_tickets.rows"
+     },
+     "where": [
+      {
+       "field": "priority",
+       "op": "ne",
+       "value": "urgent"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "shipping_senders",
+    "kind": "task",
+    "needs": [
+     "shipping_tickets"
+    ],
+    "description": "Customer addresses of shipping tickets, for the audit.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.shipping_tickets.rows"
+     },
+     "field": "from"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "auto_reply",
+    "kind": "map",
+    "needs": [
+     "shipping_tickets"
+    ],
+    "description": "Send the shipping FAQ answer to each shipping ticket's customer.",
+    "items": {
+     "$ref": "nodes.shipping_tickets.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "reply",
+       "kind": "task",
+       "needs": [],
+       "description": "Send the shipping FAQ answer to the ticket's customer.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.from"
+        },
+        "subject": "Re: your support ticket",
+        "body": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email."
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "exists",
+       "value": {
+        "$ref": "nodes.reply.delivered"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "urgent_lines",
+    "kind": "task",
+    "needs": [
+     "urgent_tickets"
+    ],
+    "description": "One line per urgent ticket.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.urgent_tickets.rows"
+     },
+     "line": "Ticket {{id}} from {{from}}: {{subject}}",
+     "empty": "No urgent tickets open."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest_lines",
+    "kind": "task",
+    "needs": [
+     "other_tickets"
+    ],
+    "description": "One line per non-urgent open ticket.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.other_tickets.rows"
+     },
+     "line": "{{id}} | {{from}} | {{priority}} | {{subject}}",
+     "empty": "No other open tickets today."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "mike_body",
+    "kind": "task",
+    "needs": [
+     "urgent_lines",
+     "digest_lines"
+    ],
+    "description": "Combine urgent tickets and the daily digest into one email body.",
+    "tool": "core.template",
+    "args": {
+     "text": "URGENT TICKETS\n{{urgent}}\n\nDAILY DIGEST\n{{digest}}",
+     "variables": {
+      "urgent": {
+       "$ref": "nodes.urgent_lines.text"
+      },
+      "digest": {
+       "$ref": "nodes.digest_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "mike_send",
+    "kind": "task",
+    "needs": [
+     "mike_body"
+    ],
+    "description": "Send the single combined email to Mike.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "mike@fitzone.com",
+     "subject": "Support tickets: urgent and daily digest",
+     "body": {
+      "$ref": "nodes.mike_body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "check_sends",
+    "kind": "verify",
+    "needs": [
+     "shipping_senders",
+     "auto_reply",
+     "mike_send"
+    ],
+    "description": "Re-read this run's outbox messages and confirm recipients and hashes.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.shipping_senders.items"
+      },
+      "mike@fitzone.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.auto_reply"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.check_sends.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.mike_send.delivered"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 4,
+   "approved": 4,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "ed@gymowner.example",
+     "subject": "Re: your support ticket",
+     "body": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email."
+    },
+    {
+     "to": "bo@lifter.example",
+     "subject": "Re: your support ticket",
+     "body": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email."
+    },
+    {
+     "to": "ann@runner.example",
+     "subject": "Re: your support ticket",
+     "body": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email."
+    },
+    {
+     "to": "mike@fitzone.com",
+     "subject": "Support tickets: urgent and daily digest",
+     "body": "URGENT TICKETS\nTicket FZ-2 from bo@lifter.example: Treadmill arrived damaged\n\nDAILY DIGEST\nFZ-1 | ann@runner.example | normal | Shipping time?\nFZ-3 | cy@yogi.example | normal | Warranty question\nFZ-4 | di@cyclist.example | normal | Assembly help\nFZ-5 | ed@gymowner.example | normal | Shipping to Canada?"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-t2/foundry-live-ulrsHN",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open shipping ticket has one FAQ reply sent to its customer address.",
+    "exact": "the pass of “Re-read this run's outbox messages and confirm recipients and hashes.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Exactly one email to mike@fitzone.com per run contains the urgent tickets and the daily digest of all other open tickets.",
+    "exact": "the delivered of “Send the single combined email to Mike.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.check_sends",
+    "plain": "Re-read this run's outbox messages and confirm recipients and hashes.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to mike@fitzone.com containing one of [FZ-2 | Treadmill arrived damaged], one of [FZ-3 | Warranty question], one of [FZ-4 | Assembly help] without FZ-1, FZ-5",
+   "outbox : unexpected or wrong message to bo@lifter.example (\"Re: your support ticket\")",
+   "outbox : unexpected or wrong message to mike@fitzone.com (\"Support tickets: urgent and daily digest\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HS2",
+  "verifiedBefore": false,
+  "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"all other tickets also go to mike in a single daily digest\": 2 email effect(s) name it; want atMost 1\nFix the workflow so it meets them."
+ }
+}

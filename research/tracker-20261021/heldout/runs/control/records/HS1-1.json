@@ -1,0 +1,625 @@
+{
+ "arm": "CONTROL",
+ "case": "HS1",
+ "expected": "support-deflection",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "support-deflection",
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 0,
+  "unknown": 0
+ },
+ "callLog": [],
+ "builderWallMs": 0,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "support-deflection",
+ "slots": {
+  "answers": [
+   {
+    "keyword": "refund",
+    "reply": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away."
+   }
+  ],
+  "escalateTo": "support@widgetly.app",
+  "signature": "The support team"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "support-deflection",
+  "version": 1,
+  "title": "Support ticket answers and escalation",
+  "goal": "Each run, answer the open, non-urgent tickets that mention a known keyword with the person's reply for it, and send every other open ticket to support@widgetly.app in one digest, after a person approves each e-mail.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The tickets sheet holds one row per ticket with id, from, subject, body, priority and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "An urgent or unusual ticket answered by a canned reply",
+    "A ticket that nobody sees"
+   ],
+   "successCriteria": [
+    "Every open ticket was either answered with a matching reply or sent to the person",
+    "No urgent ticket was answered automatically",
+    "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Closing tickets",
+    "Writing new answers",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the tickets sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tickets"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the open tickets",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "routed",
+    "kind": "task",
+    "needs": [
+     "open"
+    ],
+    "description": "Decide for each ticket: a known answer, or a person (urgent tickets always go to a person)",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open.rows"
+     },
+     "rules": [
+      {
+       "field": "priority",
+       "op": "eq",
+       "value": "urgent",
+       "set": {
+        "route": "person",
+        "answer": ""
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "refund",
+       "set": {
+        "route": "auto",
+        "answer": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away."
+       }
+      }
+     ],
+     "otherwise": {
+      "route": "person",
+      "answer": ""
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "auto",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "The tickets with a known answer",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "where": [
+      {
+       "field": "route",
+       "op": "eq",
+       "value": "auto"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "person",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "The tickets a person must handle",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "where": [
+      {
+       "field": "route",
+       "op": "eq",
+       "value": "person"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "urgentAuto",
+    "kind": "task",
+    "needs": [
+     "auto"
+    ],
+    "description": "Urgent tickets among the automatic answers (used by a check: must be none)",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.auto.rows"
+     },
+     "where": [
+      {
+       "field": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "reply",
+    "kind": "map",
+    "needs": [
+     "auto"
+    ],
+    "description": "Send each known answer",
+    "items": {
+     "$ref": "nodes.auto.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the reply",
+       "tool": "core.template",
+       "args": {
+        "text": "Hi,\n\nThanks for getting in touch about \"{{subject}}\".\n\n{{answer}}\n\nIf this does not answer your question, just reply to this e-mail and a person will pick it up.\n\nThe support team",
+        "variables": {
+         "subject": {
+          "$ref": "item.subject",
+          "default": "your message"
+         },
+         "answer": {
+          "$ref": "item.answer"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject line",
+       "tool": "core.template",
+       "args": {
+        "text": "Re: {{subject}} [ticket {{id}}]",
+        "variables": {
+         "subject": {
+          "$ref": "item.subject",
+          "default": "your message"
+         },
+         "id": {
+          "$ref": "item.id"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the answer to the customer (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.from"
+        },
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "personLines",
+    "kind": "task",
+    "needs": [
+     "person"
+    ],
+    "description": "List the tickets for a person",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.person.rows"
+     },
+     "line": "- ticket {{id}} [{{priority}}] {{subject}} (from {{from}})\n  {{body}}",
+     "empty": "- none today"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "personLines",
+     "auto"
+    ],
+    "description": "Write the digest for the person",
+    "tool": "core.template",
+    "args": {
+     "text": "Tickets that need a person ({{count}}):\n{{lines}}\n\nAnswered automatically with your replies: {{auto}}.",
+     "variables": {
+      "count": {
+       "$ref": "nodes.personLines.count"
+      },
+      "lines": {
+       "$ref": "nodes.personLines.text"
+      },
+      "auto": {
+       "$ref": "nodes.auto.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digestSubject",
+    "kind": "task",
+    "needs": [
+     "personLines"
+    ],
+    "description": "Write the digest subject",
+    "tool": "core.template",
+    "args": {
+     "text": "Support: {{count}} ticket(s) need a person",
+     "variables": {
+      "count": {
+       "$ref": "nodes.personLines.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sendDigest",
+    "kind": "task",
+    "needs": [
+     "digest",
+     "digestSubject",
+     "reply"
+    ],
+    "description": "E-mail the digest to support@widgetly.app (asks you first)",
+    "tool": "outbox.send",
+    "args": {
+     "to": "support@widgetly.app",
+     "subject": {
+      "$ref": "nodes.digestSubject.text"
+     },
+     "body": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "expected",
+    "kind": "task",
+    "needs": [
+     "auto"
+    ],
+    "description": "Which customers should have received an answer",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.auto.rows"
+     },
+     "field": "from"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "expected",
+     "sendDigest"
+    ],
+    "description": "Re-read the outbox: one answer per matched ticket plus one digest, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.expected.items"
+      },
+      "support@widgetly.app"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.reply"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.reply.count"
+    },
+    "right": {
+     "$ref": "nodes.auto.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.urgentAuto.count"
+    },
+    "right": 0
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sendDigest.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P09 judge -> confidence gate -> review queue (escalate, never guess)",
+    "small-business ticket deflection pattern (escalate urgent and unmatched tickets to a person)",
+    "app/core/templates/support-deflection.json sha256 7e88accdc703f34dcbaefe750df6f1c7a0c0d2a719ab29bef9a3528c259188ac"
+   ],
+   "tags": [
+    "template:support-deflection",
+    "builder:control 1: guessed escalation address",
+    "slots:{\"answers\":[{\"keyword\":\"refund\",\"reply\":\"Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.\"}],\"escalateTo\":\"support@widgetly.app\",\"signature\":\"The support team\"}"
+   ],
+   "rationale": "Frontier-written template \"support-deflection\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by control 1: guessed escalation address; every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "support@widgetly.app",
+     "subject": "Support: 3 ticket(s) need a person",
+     "body": "Tickets that need a person (3):\n- ticket WT-2 [urgent] Charged twice!! (from max@shopper.example)\n  you billed me twice, I need a refund NOW\n- ticket WT-3 [normal] Where is my order? (from liv@shopper.example)\n  ordered 9 days ago, nothing yet\n- ticket WT-4 [normal] Bulk discount? (from buyer@bigstore.example)\n  we want 500 units\n\nAnswered automatically with your replies: 1."
+    },
+    {
+     "to": "jo@shopper.example",
+     "subject": "Re: Refund please [ticket WT-1]",
+     "body": "Hi,\n\nThanks for getting in touch about \"Refund please\".\n\nRefunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.\n\nIf this does not answer your question, just reply to this e-mail and a person will pick it up.\n\nThe support team"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/control/foundry-live-Kyhk9L",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open ticket was either answered with a matching reply or sent to the person",
+    "exact": "the count of “Send each known answer” equals the count of “The tickets with a known answer”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No urgent ticket was answered automatically",
+    "exact": "the count of “Urgent tickets among the automatic answers (used by a check: must be none)” equals 0",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)",
+    "exact": "the delivered of “E-mail the digest to support@widgetly.app (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "the pass of “Re-read the outbox: one answer per matched ticket plus one digest, each intact” equals true",
+    "exact": "the pass of “Re-read the outbox: one answer per matched ticket plus one digest, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: one answer per matched ticket plus one digest, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to zara@widgetly.app containing one of [WT-2 | Charged twice], one of [WT-3 | Where is my order], one of [WT-4 | Bulk discount] without WT-1, WT-5",
+   "outbox : unexpected or wrong message to support@widgetly.app (\"Support: 3 ticket(s) need a person\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ }
+}

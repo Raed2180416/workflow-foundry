@@ -1,0 +1,1328 @@
+{
+ "method": "rule",
+ "prompt": null,
+ "model": null,
+ "cases": {
+  "HC1": [
+   {
+    "id": "C-001",
+    "quote": "Hey can u sync my newsletter list with my customer sheet?",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 57
+    },
+    "summary": "Hey can u sync my newsletter list with my customer sheet?",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "We use Mindbody for crm.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 58,
+     "end": 82
+    },
+    "summary": "We use Mindbody for crm.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "I wanna see who's missing from Mailchimp before adding anyone.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 83,
+     "end": 145
+    },
+    "summary": "I wanna see who's missing from Mailchimp before adding anyone.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "don't change anything yet just tell me the diff.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 146,
+     "end": 194
+    },
+    "summary": "don't change anything yet just tell me the diff.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "if someone unsubscribed leave em alone.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 195,
+     "end": 234
+    },
+    "summary": "if someone unsubscribed leave em alone.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "send it to me, nadia@yogaflowstudio.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 39
+    },
+    "summary": "send it to me, nadia@yogaflowstudio.com",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HC2": [
+   {
+    "id": "C-001",
+    "quote": "Our mailing list is always behind our google sheet of customers.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 64
+    },
+    "summary": "Our mailing list is always behind our google sheet of customers.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "add anyone on the sheet that isn't on the list",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 65,
+     "end": 111
+    },
+    "summary": "add anyone on the sheet that isn't on the list",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "and send me a report of who got added.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 113,
+     "end": 151
+    },
+    "summary": "and send me a report of who got added.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "skip anybody who's unsubscribed in the sheet.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 152,
+     "end": 197
+    },
+    "summary": "skip anybody who's unsubscribed in the sheet.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "my email is janet@happytailsbakery.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 198,
+     "end": 236
+    },
+    "summary": "my email is janet@happytailsbakery.com",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HE1": [
+   {
+    "id": "C-001",
+    "quote": "Auto approve any expense claim under $50 if there's a receipt",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 61
+    },
+    "summary": "Auto approve any expense claim under $50 if there's a receipt",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "log it as approved.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 63,
+     "end": 82
+    },
+    "summary": "log it as approved.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "anything $50 or more goes to dana@brightleafmarketing.com.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 83,
+     "end": 141
+    },
+    "summary": "anything $50 or more goes to dana@brightleafmarketing.com.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "if there's no receipt it should go to dana too.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 142,
+     "end": 189
+    },
+    "summary": "if there's no receipt it should go to dana too.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "can you do that?",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 190,
+     "end": 206
+    },
+    "summary": "can you do that?",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HE2": [
+   {
+    "id": "C-001",
+    "quote": "for our expensify file: claims under 100 bucks get approved automatically when they have a photo.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 97
+    },
+    "summary": "for our expensify file: claims under 100 bucks get approved automatically when they have a photo.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "over that send to Owen.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 98,
+     "end": 121
+    },
+    "summary": "over that send to Owen.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "also if no receipt send to owen.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 122,
+     "end": 154
+    },
+    "summary": "also if no receipt send to owen.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "keep a record of what u did.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 155,
+     "end": 183
+    },
+    "summary": "keep a record of what u did.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "Owen is owen@evergreenlandscaping.co",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 36
+    },
+    "summary": "Owen is owen@evergreenlandscaping.co",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HI1": [
+   {
+    "id": "C-001",
+    "quote": "Our invoice spreadsheet has clients who are late.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 49
+    },
+    "summary": "Our invoice spreadsheet has clients who are late.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "send a polite reminder at 30 days past due",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 50,
+     "end": 92
+    },
+    "summary": "send a polite reminder at 30 days past due",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "a firmer one at 60",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 94,
+     "end": 112
+    },
+    "summary": "a firmer one at 60",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "and a final one at 90.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 114,
+     "end": 136
+    },
+    "summary": "and a final one at 90.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "also email me a summary every monday of who still owes.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 137,
+     "end": 192
+    },
+    "summary": "also email me a summary every monday of who still owes.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "don't send anything to clients who disputed.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 193,
+     "end": 237
+    },
+    "summary": "don't send anything to clients who disputed.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-007",
+    "quote": "maria@pixelandpixel.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 23
+    },
+    "summary": "maria@pixelandpixel.com",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HI2": [
+   {
+    "id": "C-001",
+    "quote": "chase any open invoice that's overdue from our sheet.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 53
+    },
+    "summary": "chase any open invoice that's overdue from our sheet.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "start 3 days after due date",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 54,
+     "end": 81
+    },
+    "summary": "start 3 days after due date",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "remind again after 10",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 83,
+     "end": 104
+    },
+    "summary": "remind again after 10",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "then 17.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 106,
+     "end": 114
+    },
+    "summary": "then 17.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "bcc me on the 2nd one.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 115,
+     "end": 137
+    },
+    "summary": "bcc me on the 2nd one.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "use the emails in the sheet.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 138,
+     "end": 166
+    },
+    "summary": "use the emails in the sheet.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-007",
+    "quote": "dave@midwestpipesupply.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 26
+    },
+    "summary": "dave@midwestpipesupply.com",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HL1": [
+   {
+    "id": "C-001",
+    "quote": "new leads come in on our website form.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 38
+    },
+    "summary": "new leads come in on our website form.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "if they're in california send to Marcus else send to priya.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 39,
+     "end": 98
+    },
+    "summary": "if they're in california send to Marcus else send to priya.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "actually if company size is over 200 people also send to priya.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 99,
+     "end": 162
+    },
+    "summary": "actually if company size is over 200 people also send to priya.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "log who got what.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 163,
+     "end": 180
+    },
+    "summary": "log who got what.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "Marcus is marcus@sunrisesolar.energy and Priya is priya@sunrisesolar.energy",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 75
+    },
+    "summary": "Marcus is marcus@sunrisesolar.energy and Priya is priya@sunrisesolar.energy",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "everything else goes to Priya, priya@sunrisesolar.energy",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 56
+    },
+    "summary": "everything else goes to Priya, priya@sunrisesolar.energy",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HL2": [
+   {
+    "id": "C-001",
+    "quote": "route leads: west coast to ellen",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 32
+    },
+    "summary": "route leads: west coast to ellen",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "east coast to rajesh",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 34,
+     "end": 54
+    },
+    "summary": "east coast to rajesh",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "everyone else to sarah.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 56,
+     "end": 79
+    },
+    "summary": "everyone else to sarah.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "if budget is above 25k also cc me.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 80,
+     "end": 114
+    },
+    "summary": "if budget is above 25k also cc me.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "keep a log.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 115,
+     "end": 126
+    },
+    "summary": "keep a log.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "ellen@nimbusconsulting.io, rajesh@nimbusconsulting.io, sarah@nimbusconsulting.io",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 80
+    },
+    "summary": "ellen@nimbusconsulting.io, rajesh@nimbusconsulting.io, sarah@nimbusconsulting.io",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-007",
+    "quote": "and me: tom@nimbusconsulting.io",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 82,
+     "end": 113
+    },
+    "summary": "and me: tom@nimbusconsulting.io",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-008",
+    "quote": "sarah@nimbusconsulting.io",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 25
+    },
+    "summary": "sarah@nimbusconsulting.io",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HO1": [
+   {
+    "id": "C-001",
+    "quote": "every morning at 8 post a digest of all unresolved alerts to our #oncall slack channel.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 87
+    },
+    "summary": "every morning at 8 post a digest of all unresolved alerts to our #oncall slack channel.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "include severity and service.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 88,
+     "end": 117
+    },
+    "summary": "include severity and service.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "if any critical alert isnt acknowledged within an hour email me directly.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 118,
+     "end": 191
+    },
+    "summary": "if any critical alert isnt acknowledged within an hour email me directly.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "jordan@corestackit.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 22
+    },
+    "summary": "jordan@corestackit.com",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HO2": [
+   {
+    "id": "C-001",
+    "quote": "at 9am put up a summary of unresolved warnings and criticals in our teams channel.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 82
+    },
+    "summary": "at 9am put up a summary of unresolved warnings and criticals in our teams channel.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "for critical alerts nobody has acknowledged",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 83,
+     "end": 126
+    },
+    "summary": "for critical alerts nobody has acknowledged",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "send me an email.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 128,
+     "end": 145
+    },
+    "summary": "send me an email.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "don't email for warnings. thanks",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 146,
+     "end": 178
+    },
+    "summary": "don't email for warnings. thanks",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "#it-oncall",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 10
+    },
+    "summary": "#it-oncall",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "n.okafor@stmaryshospital.org",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 28
+    },
+    "summary": "n.okafor@stmaryshospital.org",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HS1": [
+   {
+    "id": "C-001",
+    "quote": "tickets that mention 'refund' get our standard refund reply (I'll paste the text below).",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 88
+    },
+    "summary": "tickets that mention 'refund' get our standard refund reply (I'll paste the text below).",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "urgent tickets go to zara@widgetly.app.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 89,
+     "end": 128
+    },
+    "summary": "urgent tickets go to zara@widgetly.app.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "everything else also goes to zara in one digest each morning.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 129,
+     "end": 190
+    },
+    "summary": "everything else also goes to zara in one digest each morning.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "Here it is: \"Refunds are processed within 5 business days of approval.",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 70
+    },
+    "summary": "Here it is: \"Refunds are processed within 5 business days of approval.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "Reply with your order number and we'll start it right away.\"",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 71,
+     "end": 131
+    },
+    "summary": "Reply with your order number and we'll start it right away.\"",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HS2": [
+   {
+    "id": "C-001",
+    "quote": "if a ticket mentions 'shipping' answer with our shipping faq answer.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 68
+    },
+    "summary": "if a ticket mentions 'shipping' answer with our shipping faq answer.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "anything urgent goes to mike at mike@fitzone.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 69,
+     "end": 117
+    },
+    "summary": "anything urgent goes to mike at mike@fitzone.com",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "and all other tickets also go to mike in a single daily digest.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 119,
+     "end": 182
+    },
+    "summary": "and all other tickets also go to mike in a single daily digest.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "Our shipping FAQ answer: \"Orders ship within 2 business days and arrive in 3-5 days.",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 84
+    },
+    "summary": "Our shipping FAQ answer: \"Orders ship within 2 business days and arrive in 3-5 days.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "You'll get a tracking number by email.\"",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 85,
+     "end": 124
+    },
+    "summary": "You'll get a tracking number by email.\"",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HW1": [
+   {
+    "id": "C-001",
+    "quote": "every friday at 4 email me a report of what got done this week from the tracker export",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 86
+    },
+    "summary": "every friday at 4 email me a report of what got done this week from the tracker export",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "plus what's open and blocked.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 88,
+     "end": 117
+    },
+    "summary": "plus what's open and blocked.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "send it to rick@summitconstruction.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 118,
+     "end": 156
+    },
+    "summary": "send it to rick@summitconstruction.com",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "HW2": [
+   {
+    "id": "C-001",
+    "quote": "monday mornings email me just the tasks marked done last week.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 62
+    },
+    "summary": "monday mornings email me just the tasks marked done last week.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "no open or blocked needed.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 63,
+     "end": 89
+    },
+    "summary": "no open or blocked needed.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "short list is fine.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 90,
+     "end": 109
+    },
+    "summary": "short list is fine.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "liz@beaconcontent.co",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 20
+    },
+    "summary": "liz@beaconcontent.co",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ]
+ },
+ "costUsd": 0
+}

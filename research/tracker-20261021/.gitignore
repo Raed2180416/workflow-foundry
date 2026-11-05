@@ -1,0 +1,4 @@
+# Model-call journals (SQLite) stay local, as everywhere under research/; the JSON outputs carry each call's cost and tokens.
+*/journal/
+# Nested run directories (heldout/h2/journal, heldout/h2/own-words/journal) too.
+**/journal/

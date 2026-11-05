@@ -1,0 +1,583 @@
+{
+ "schema": "builder1-cases/1",
+ "frozen": null,
+ "author": "Requests: mercury-3 (experiments/tracker-v2/heldout/author.mjs, prompt tracker-h-author/1, research/tracker-20261021/heldout/requests-mercury-3.json, kept verbatim). Answer key, hidden worlds, oracles, reference slots and controls: Claude Opus 5.5 (the tracker's analyst) in worktree wf_6d3b90c9-c30-6, 2026-10-28, written before any build, capture, bind or tracker status on these requests.",
+ "note": "Held-out set for PREREG-TRACKER-H. Same schema and oracle as BUILDER-1 (experiments/surface/oracle.mjs). Where the words state something no template can do (HL2 'also cc me', HO1 'within an hour'), the oracle still requires it: a flow that does not do what the person asked is defective, whoever is to blame. Where the words are ambiguous, the hidden world avoids the ambiguous item (noted per case).",
+ "personFallback": "I don't mind - use whatever you think is sensible.",
+ "cases": [
+  {
+   "id": "HC1",
+   "template": "contact-sync",
+   "requestSource": "requests-mercury-3.json #0 (YogaFlow Studio)",
+   "request": "Hey can u sync my newsletter list with my customer sheet? We use Mindbody for crm. I wanna see who's missing from Mailchimp before adding anyone. don't change anything yet just tell me the diff. if someone unsubscribed leave em alone.",
+   "questions": [
+    {
+     "id": "reportTo",
+     "slot": "reportTo",
+     "match": ["(e-?mail|address)\\b.*\\b(report|send|diff|you|your)", "(who|whom|where)\\b.*\\b(report|send|diff|get)", "\\b(you|your)\\b.*\\b(e-?mail|address)"],
+     "answer": "send it to me, nadia@yogaflowstudio.com"
+    }
+   ],
+   "slotChecks": { "addMissing": false, "reportTo": "nadia@yogaflowstudio.com" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-27T07:00:00Z",
+    "sheets": {
+     "crm": [
+      { "email": "amara@lotusmail.example", "name": "Amara Lin", "company": "", "tags": "member", "unsubscribed": false },
+      { "email": "ben.k@quickpost.example", "name": "Ben Kole", "company": "", "tags": "member; drop-in", "unsubscribed": false },
+      { "email": "carla@sunmail.example", "name": "Carla Diaz", "company": "", "tags": "member", "unsubscribed": true },
+      { "email": "devi@inbox.example", "name": "Devi Rao", "company": "", "tags": "trial", "unsubscribed": false },
+      { "email": "eli@corepost.example", "name": "Eli Moss", "company": "", "tags": "member", "unsubscribed": false }
+     ],
+     "newsletter": [
+      { "email": "amara@lotusmail.example", "name": "Amara Lin", "source": "mailchimp", "addedAt": "2026-03-02" },
+      { "email": "eli@corepost.example", "name": "Elijah Moss", "source": "mailchimp", "addedAt": "2026-05-19" },
+      { "email": "old@former.example", "name": "Old Friend", "source": "event", "addedAt": "2025-11-01" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [ { "to": "nadia@yogaflowstudio.com", "contains": ["ben.k@quickpost.example", "devi@inbox.example"], "notContains": ["carla@sunmail.example"] } ]
+   },
+   "reference": { "onlyTag": "", "addMissing": false, "reportTo": "nadia@yogaflowstudio.com" },
+   "controls": [
+    { "why": "adds the missing contacts although the person said not to change anything yet", "slots": { "addMissing": true } },
+    { "why": "guessed report address", "slots": { "reportTo": "hello@yogaflowstudio.com" } },
+    { "why": "only contacts tagged member: the trial contact Devi is left out of the diff", "slots": { "onlyTag": "member" } }
+   ]
+  },
+  {
+   "id": "HC2",
+   "template": "contact-sync",
+   "requestSource": "requests-mercury-3.json #1 (Happy Tails Bakery)",
+   "request": "Our mailing list is always behind our google sheet of customers. add anyone on the sheet that isn't on the list, and send me a report of who got added. skip anybody who's unsubscribed in the sheet. my email is janet@happytailsbakery.com",
+   "questions": [],
+   "slotChecks": { "addMissing": true, "reportTo": "janet@happytailsbakery.com" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-26T08:00:00Z",
+    "sheets": {
+     "crm": [
+      { "email": "pip@barkmail.example", "name": "Pip Tran", "company": "", "tags": "customer", "unsubscribed": false },
+      { "email": "rosa@woofpost.example", "name": "Rosa Vega", "company": "Rosa's Grooming", "tags": "wholesale", "unsubscribed": false },
+      { "email": "sam@kibble.example", "name": "Sam Ortiz", "company": "", "tags": "customer", "unsubscribed": true },
+      { "email": "tia@pawsome.example", "name": "Tia Grant", "company": "", "tags": "customer", "unsubscribed": false },
+      { "email": "uma@treatbox.example", "name": "Uma Shah", "company": "", "tags": "customer; birthday cakes", "unsubscribed": false }
+     ],
+     "newsletter": [
+      { "email": "tia@pawsome.example", "name": "Tia Grant", "source": "website", "addedAt": "2026-01-10" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [ { "to": "janet@happytailsbakery.com", "contains": ["pip@barkmail.example", "rosa@woofpost.example", "uma@treatbox.example"], "notContains": ["sam@kibble.example"] } ],
+    "appended": { "newsletter": [ { "email": "pip@barkmail.example" }, { "email": "rosa@woofpost.example" }, { "email": "uma@treatbox.example" } ] }
+   },
+   "reference": { "onlyTag": "", "addMissing": true, "reportTo": "janet@happytailsbakery.com" },
+   "controls": [
+    { "why": "only contacts tagged customer: the wholesale customer Rosa is not added", "slots": { "onlyTag": "customer" } },
+    { "why": "report only: nobody is added", "slots": { "addMissing": false } },
+    { "why": "report to a guessed address", "slots": { "reportTo": "hello@happytailsbakery.com" } }
+   ]
+  },
+  {
+   "id": "HE1",
+   "template": "expense-approval",
+   "requestSource": "requests-mercury-3.json #2 (Bright Leaf Marketing)",
+   "request": "Auto approve any expense claim under $50 if there's a receipt, log it as approved. anything $50 or more goes to dana@brightleafmarketing.com. if there's no receipt it should go to dana too. can you do that?",
+   "questions": [],
+   "slotChecks": { "approver": "dana@brightleafmarketing.com", "requireReceipt": true },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-27T12:00:00Z",
+    "sheets": {
+     "expenses": [
+      { "id": "BL-1", "employee": "Kai Brooks", "email": "kai@brightleafmarketing.com", "amount": 12.4, "category": "meals", "description": "Coffee with a client", "receipt": true, "status": "submitted" },
+      { "id": "BL-2", "employee": "Lina Haas", "email": "lina@brightleafmarketing.com", "amount": 49.5, "category": "office", "description": "Printer toner", "receipt": true, "status": "submitted" },
+      { "id": "BL-3", "employee": "Mo Reyes", "email": "mo@brightleafmarketing.com", "amount": 50, "category": "software", "description": "Stock photo pack", "receipt": true, "status": "submitted" },
+      { "id": "BL-4", "employee": "Nell Park", "email": "nell@brightleafmarketing.com", "amount": 22, "category": "travel", "description": "Taxi to a shoot", "receipt": false, "status": "submitted" },
+      { "id": "BL-5", "employee": "Kai Brooks", "email": "kai@brightleafmarketing.com", "amount": 310, "category": "travel", "description": "Train to Chicago", "receipt": true, "status": "submitted" },
+      { "id": "BL-6", "employee": "Lina Haas", "email": "lina@brightleafmarketing.com", "amount": 15, "category": "meals", "description": "Team snacks", "receipt": true, "status": "approved" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [ { "to": "dana@brightleafmarketing.com", "contains": ["BL-3", "BL-4", "BL-5"], "notContains": [] } ],
+    "appended": { "expense-decisions": [ { "id": "BL-1", "decision": "approved" }, { "id": "BL-2", "decision": "approved" }, { "id": "BL-3", "decision": { "not": "approved" } }, { "id": "BL-4", "decision": { "not": "approved" } }, { "id": "BL-5", "decision": { "not": "approved" } } ] }
+   },
+   "reference": { "autoApproveUpTo": 49.99, "approver": "dana@brightleafmarketing.com", "requireReceipt": true, "notifyEmployees": false },
+   "controls": [
+    { "why": "limit 50 approves the $50.00 claim the person sends to Dana", "slots": { "autoApproveUpTo": 50 } },
+    { "why": "no receipt rule: the taxi without a receipt is approved", "slots": { "requireReceipt": false } },
+    { "why": "guessed limit of 25: the toner is sent to Dana", "slots": { "autoApproveUpTo": 25 } }
+   ]
+  },
+  {
+   "id": "HE2",
+   "template": "expense-approval",
+   "requestSource": "requests-mercury-3.json #3 (Evergreen Landscaping)",
+   "request": "for our expensify file: claims under 100 bucks get approved automatically when they have a photo. over that send to Owen. also if no receipt send to owen. keep a record of what u did.",
+   "questions": [
+    {
+     "id": "approver",
+     "slot": "approver",
+     "match": ["owen", "approver", "(e-?mail|address)\\b.*\\b(send|approv|decid|go)", "(who|whom)\\b.*\\b(approv|decid|sign)"],
+     "answer": "Owen is owen@evergreenlandscaping.co"
+    }
+   ],
+   "slotChecks": { "approver": "owen@evergreenlandscaping.co", "requireReceipt": true },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T16:00:00Z",
+    "sheets": {
+     "expenses": [
+      { "id": "EG-1", "employee": "Luis Ortega", "email": "luis@evergreenlandscaping.co", "amount": 64.2, "category": "fuel", "description": "Truck fuel", "receipt": true, "status": "submitted" },
+      { "id": "EG-2", "employee": "Hana Kim", "email": "hana@evergreenlandscaping.co", "amount": 99, "category": "supplies", "description": "Mulch bags", "receipt": true, "status": "submitted" },
+      { "id": "EG-3", "employee": "Luis Ortega", "email": "luis@evergreenlandscaping.co", "amount": 180, "category": "equipment", "description": "Hedge trimmer blade", "receipt": true, "status": "submitted" },
+      { "id": "EG-4", "employee": "Dee Walsh", "email": "dee@evergreenlandscaping.co", "amount": 40, "category": "meals", "description": "Crew lunch", "receipt": false, "status": "submitted" },
+      { "id": "EG-5", "employee": "Hana Kim", "email": "hana@evergreenlandscaping.co", "amount": 12, "category": "supplies", "description": "Gloves", "receipt": true, "status": "rejected" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [ { "to": "owen@evergreenlandscaping.co", "contains": ["EG-3", "EG-4"], "notContains": ["EG-5"] } ],
+    "appended": { "expense-decisions": [ { "id": "EG-1", "decision": "approved" }, { "id": "EG-2", "decision": "approved" }, { "id": "EG-3", "decision": { "not": "approved" } }, { "id": "EG-4", "decision": { "not": "approved" } } ] }
+   },
+   "reference": { "autoApproveUpTo": 99.99, "approver": "owen@evergreenlandscaping.co", "requireReceipt": true, "notifyEmployees": false },
+   "controls": [
+    { "why": "guessed limit of 50: the fuel and the mulch go to Owen", "slots": { "autoApproveUpTo": 50 } },
+    { "why": "no receipt rule: the crew lunch is approved", "slots": { "requireReceipt": false } },
+    { "why": "guessed approver address", "slots": { "approver": "office@evergreenlandscaping.co" } }
+   ]
+  },
+  {
+   "id": "HI1",
+   "template": "invoice-chase",
+   "requestSource": "requests-mercury-3.json #4 (Pixel & Pixel Web Design)",
+   "request": "Our invoice spreadsheet has clients who are late. send a polite reminder at 30 days past due, a firmer one at 60, and a final one at 90. also email me a summary every monday of who still owes. don't send anything to clients who disputed.",
+   "questions": [
+    {
+     "id": "summaryTo",
+     "slot": "summaryTo",
+     "match": ["summary\\b.*\\b(e-?mail|address|send|who|where)", "(e-?mail|address)\\b.*\\b(you|your|summary)", "\\b(you|your)\\b.*\\b(e-?mail|address)", "where\\b.*\\bsummary"],
+     "answer": "maria@pixelandpixel.com"
+    }
+   ],
+   "slotChecks": { "firstAfterDays": 30, "secondAfterDays": 60, "finalAfterDays": 90, "sendSummary": true, "summaryTo": "maria@pixelandpixel.com" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-11-02T09:00:00Z",
+    "sheets": {
+     "invoices": [
+      { "invoice": "PP-201", "customer": "Lumen Cafe", "email": "owner@lumencafe.example", "amount": 1200, "due": "2026-09-25", "status": "open" },
+      { "invoice": "PP-202", "customer": "Orbit Fitness", "email": "billing@orbitfitness.example", "amount": 2400, "due": "2026-08-20", "status": "open" },
+      { "invoice": "PP-203", "customer": "Northwind Law", "email": "ap@northwindlaw.example", "amount": 5600, "due": "2026-07-15", "status": "open" },
+      { "invoice": "PP-204", "customer": "Copper Kettle", "email": "hello@copperkettle.example", "amount": 800, "due": "2026-08-01", "status": "disputed" },
+      { "invoice": "PP-205", "customer": "Daisy Florals", "email": "daisy@daisyflorals.example", "amount": 450, "due": "2026-09-01", "status": "paid" },
+      { "invoice": "PP-206", "customer": "Gale Studio", "email": "accounts@galestudio.example", "amount": 950, "due": "2026-11-20", "status": "open" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [
+     { "to": "owner@lumencafe.example", "contains": ["PP-201"], "notContains": ["second", "final"] },
+     { "to": "billing@orbitfitness.example", "contains": ["PP-202", ["second", "firm"]], "notContains": ["final"] },
+     { "to": "ap@northwindlaw.example", "contains": ["PP-203", "final"], "notContains": [] },
+     { "to": "maria@pixelandpixel.com", "contains": ["PP-201", "PP-202", "PP-203"], "notContains": ["PP-204", "PP-205"] }
+    ]
+   },
+   "reference": { "firstAfterDays": 30, "secondAfterDays": 60, "finalAfterDays": 90, "signature": "Accounts team", "sendSummary": true, "summaryTo": "maria@pixelandpixel.com" },
+   "controls": [
+    { "why": "default cadence 7/14/30: Lumen Cafe (38 days late) gets a final notice", "slots": { "firstAfterDays": 7, "secondAfterDays": 14, "finalAfterDays": 30 } },
+    { "why": "no summary to the person", "slots": { "sendSummary": false, "summaryTo": "" } },
+    { "why": "no final notice: Northwind Law (110 days late) gets the firmer reminder instead", "slots": { "finalAfterDays": 0 } }
+   ]
+  },
+  {
+   "id": "HI2",
+   "template": "invoice-chase",
+   "requestSource": "requests-mercury-3.json #5 (Midwest Pipe Supply)",
+   "request": "chase any open invoice that's overdue from our sheet. start 3 days after due date, remind again after 10, then 17. bcc me on the 2nd one. use the emails in the sheet.",
+   "questions": [
+    {
+     "id": "summaryTo",
+     "slot": "summaryTo",
+     "match": ["bcc", "\\b(you|your)\\b.*\\b(e-?mail|address)", "(e-?mail|address)\\b.*\\b(you|your|me|copy|summary)", "summary\\b.*\\b(e-?mail|address|send|who|where)"],
+     "answer": "dave@midwestpipesupply.com"
+    }
+   ],
+   "slotChecks": { "firstAfterDays": 3, "secondAfterDays": 10, "finalAfterDays": 17 },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T09:00:00Z",
+    "sheets": {
+     "invoices": [
+      { "invoice": "MP-501", "customer": "Ace Hardware Co.", "email": "ap@acehardwareco.example", "amount": 3120, "due": "2026-10-24", "status": "open" },
+      { "invoice": "MP-502", "customer": "Brick & Beam", "email": "pay@brickandbeam.example", "amount": 875, "due": "2026-10-16", "status": "open" },
+      { "invoice": "MP-503", "customer": "Clearwater Plumbing", "email": "office@clearwaterplumbing.example", "amount": 1990, "due": "2026-10-05", "status": "open" },
+      { "invoice": "MP-504", "customer": "Delta Fittings", "email": "billing@deltafittings.example", "amount": 410, "due": "2026-10-26", "status": "open" },
+      { "invoice": "MP-505", "customer": "Eagle Builders", "email": "ap@eaglebuilders.example", "amount": 6400, "due": "2026-10-10", "status": "paid" },
+      { "invoice": "MP-506", "customer": "Forge Mechanical", "email": "acct@forgemech.example", "amount": 2250, "due": "2026-10-14", "status": "disputed" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [
+     { "to": "ap@acehardwareco.example", "contains": ["MP-501"], "notContains": ["second", "final"] },
+     { "to": "pay@brickandbeam.example", "contains": ["MP-502", ["second", "again"]], "notContains": ["final"] },
+     { "to": "office@clearwaterplumbing.example", "contains": ["MP-503", "final"], "notContains": [] },
+     { "to": "dave@midwestpipesupply.com", "contains": ["MP-502"], "notContains": ["MP-505", "MP-506"] }
+    ]
+   },
+   "oracleNote": "'bcc me on the 2nd one': no flow here can bcc; the oracle accepts any message to the person that names each invoice getting its second reminder (the summary does). A flow that tells the person nothing fails.",
+   "reference": { "firstAfterDays": 3, "secondAfterDays": 10, "finalAfterDays": 17, "signature": "Accounts team", "sendSummary": true, "summaryTo": "dave@midwestpipesupply.com" },
+   "controls": [
+    { "why": "default cadence 7/14/30: Ace (4 days late) is not chased, Clearwater gets a second reminder", "slots": { "firstAfterDays": 7, "secondAfterDays": 14, "finalAfterDays": 30 } },
+    { "why": "the person is told nothing", "slots": { "sendSummary": false, "summaryTo": "" } }
+   ]
+  },
+  {
+   "id": "HL1",
+   "template": "lead-triage",
+   "requestSource": "requests-mercury-3.json #6 (SunRise Solar)",
+   "request": "new leads come in on our website form. if they're in california send to Marcus else send to priya. actually if company size is over 200 people also send to priya. log who got what.",
+   "questions": [
+    {
+     "id": "rules",
+     "slot": "rules",
+     "match": ["marcus", "priya", "(e-?mail|address)\\b.*\\b(each|person|people|rep|reps|team)", "(who|which)\\b.*\\b(rep|person|people)\\b.*(e-?mail|address)"],
+     "answer": "Marcus is marcus@sunrisesolar.energy and Priya is priya@sunrisesolar.energy"
+    },
+    {
+     "id": "defaultAssignee",
+     "slot": "defaultAssignee",
+     "match": ["(anyone|everyone|leads?) else", "default", "no rule", "\\brest\\b", "other (leads|states)"],
+     "answer": "everything else goes to Priya, priya@sunrisesolar.energy"
+    }
+   ],
+   "slotChecks": { "defaultAssignee": "priya@sunrisesolar.energy" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T08:00:00Z",
+    "sheets": {
+     "leads": [
+      { "name": "Lena Park", "email": "lena@oaklandhomes.example", "company": "Oakland Homes", "region": "California", "country": "USA", "source": "website", "companySize": 40, "budget": 18000, "message": "Quote for 12 rooftops", "status": "new" },
+      { "name": "Raj Mehta", "email": "raj@desertsunhoa.example", "company": "Desert Sun HOA", "region": "Arizona", "country": "USA", "source": "website", "companySize": 15, "budget": 9000, "message": "Community solar?", "status": "new" },
+      { "name": "Tom Kwan", "email": "tom@bayviewlogistics.example", "company": "Bayview Logistics", "region": "Oregon", "country": "USA", "source": "website", "companySize": 450, "budget": 120000, "message": "Warehouse roof array", "status": "new" },
+      { "name": "Sue Allen", "email": "sue@sacdental.example", "company": "Sacramento Dental", "region": "California", "country": "USA", "source": "website", "companySize": 12, "budget": 7000, "message": "Following up", "status": "contacted" },
+      { "name": "Win Big", "email": "win@prizes.example", "company": "Prizes", "region": "Nevada", "country": "USA", "source": "website", "companySize": 1, "budget": 0, "message": "You won", "status": "spam" },
+      { "name": "Ivy Chen", "email": "ivy@goldengatefarms.example", "company": "Golden Gate Farms", "region": "California", "country": "USA", "source": "website", "companySize": 150, "budget": 40000, "message": "Barn and pumps", "status": "new" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [
+     { "to": "marcus@sunrisesolar.energy", "contains": ["Oakland Homes"], "notContains": [] },
+     { "to": "priya@sunrisesolar.energy", "contains": ["Desert Sun HOA"], "notContains": [] },
+     { "to": "priya@sunrisesolar.energy", "contains": ["Bayview Logistics"], "notContains": [] },
+     { "to": "marcus@sunrisesolar.energy", "contains": ["Golden Gate Farms"], "notContains": [] }
+    ],
+    "appended": { "lead-log": [ { "email": "lena@oaklandhomes.example", "assignTo": "marcus@sunrisesolar.energy" }, { "email": "raj@desertsunhoa.example", "assignTo": "priya@sunrisesolar.energy" }, { "email": "tom@bayviewlogistics.example", "assignTo": "priya@sunrisesolar.energy" }, { "email": "ivy@goldengatefarms.example", "assignTo": "marcus@sunrisesolar.energy" } ] }
+   },
+   "oracleNote": "'actually if company size is over 200 people also send to priya' is ambiguous for a large California lead (Priya instead, or both?); the hidden world has no such lead.",
+   "reference": { "rules": [ { "field": "companySize", "op": "atLeast", "value": "201", "assignTo": "priya@sunrisesolar.energy" }, { "field": "region", "op": "is", "value": "California", "assignTo": "marcus@sunrisesolar.energy" } ], "defaultAssignee": "priya@sunrisesolar.energy" },
+   "controls": [
+    { "why": "no rules: every lead goes to Priya", "slots": { "rules": [] } },
+    { "why": "state written as CA: no California lead matches", "slots": { "rules": [ { "field": "region", "op": "is", "value": "CA", "assignTo": "marcus@sunrisesolar.energy" } ] } },
+    { "why": "Marcus and Priya swapped", "slots": { "rules": [ { "field": "region", "op": "is", "value": "California", "assignTo": "priya@sunrisesolar.energy" } ], "defaultAssignee": "marcus@sunrisesolar.energy" } }
+   ]
+  },
+  {
+   "id": "HL2",
+   "template": "lead-triage",
+   "requestSource": "requests-mercury-3.json #7 (Nimbus Consulting)",
+   "request": "route leads: west coast to ellen, east coast to rajesh, everyone else to sarah. if budget is above 25k also cc me. keep a log.",
+   "questions": [
+    {
+     "id": "rules",
+     "slot": "rules",
+     "match": ["ellen", "rajesh", "(e-?mail|address)\\b.*\\b(each|person|people|rep|reps|team)", "(who|which)\\b.*\\b(rep|person|people)\\b.*(e-?mail|address)"],
+     "answer": "ellen@nimbusconsulting.io, rajesh@nimbusconsulting.io, sarah@nimbusconsulting.io, and me: tom@nimbusconsulting.io"
+    },
+    {
+     "id": "defaultAssignee",
+     "slot": "defaultAssignee",
+     "match": ["sarah", "(anyone|everyone|leads?) else", "default", "no rule", "\\brest\\b"],
+     "answer": "sarah@nimbusconsulting.io"
+    }
+   ],
+   "slotChecks": { "defaultAssignee": "sarah@nimbusconsulting.io" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T08:00:00Z",
+    "sheets": {
+     "leads": [
+      { "name": "Ana Holt", "email": "ana@pacificretail.example", "company": "Pacific Retail", "region": "West Coast", "country": "USA", "source": "website", "companySize": 300, "budget": 10000, "message": "Ops review", "status": "new" },
+      { "name": "Ben Ruiz", "email": "ben@harborbank.example", "company": "Harbor Bank", "region": "East Coast", "country": "USA", "source": "referral", "companySize": 2000, "budget": 40000, "message": "Risk audit", "status": "new" },
+      { "name": "Cleo Ward", "email": "cleo@prairiefoods.example", "company": "Prairie Foods", "region": "Midwest", "country": "USA", "source": "website", "companySize": 120, "budget": 5000, "message": "Small project", "status": "new" },
+      { "name": "Dex Long", "email": "dex@gulfenergy.example", "company": "Gulf Energy", "region": "South", "country": "USA", "source": "event", "companySize": 800, "budget": 30000, "message": "Strategy offsite", "status": "new" },
+      { "name": "Eve Moss", "email": "eve@redwoodlabs.example", "company": "Redwood Labs", "region": "West Coast", "country": "USA", "source": "website", "companySize": 60, "budget": 15000, "message": "Following up", "status": "contacted" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [
+     { "to": "ellen@nimbusconsulting.io", "contains": ["Pacific Retail"], "notContains": [] },
+     { "to": "rajesh@nimbusconsulting.io", "contains": ["Harbor Bank"], "notContains": [] },
+     { "to": "sarah@nimbusconsulting.io", "contains": ["Prairie Foods"], "notContains": [] },
+     { "to": "sarah@nimbusconsulting.io", "contains": ["Gulf Energy"], "notContains": [] },
+     { "to": "tom@nimbusconsulting.io", "contains": ["Harbor Bank"], "notContains": [] },
+     { "to": "tom@nimbusconsulting.io", "contains": ["Gulf Energy"], "notContains": [] }
+    ],
+    "appended": { "lead-log": [ { "email": "ana@pacificretail.example" }, { "email": "ben@harborbank.example" }, { "email": "cleo@prairiefoods.example" }, { "email": "dex@gulfenergy.example" } ] }
+   },
+   "oracleNote": "'if budget is above 25k also cc me' needs a second message per big lead, which the lead-triage template cannot send: its reference flow fails here by design (a defect the person would see; T0 cannot).",
+   "reference": { "rules": [ { "field": "region", "op": "is", "value": "West Coast", "assignTo": "ellen@nimbusconsulting.io" }, { "field": "region", "op": "is", "value": "East Coast", "assignTo": "rajesh@nimbusconsulting.io" } ], "defaultAssignee": "sarah@nimbusconsulting.io" },
+   "controls": [
+    { "why": "no rules: every lead goes to Sarah", "slots": { "rules": [] } },
+    { "why": "big budgets routed to the person instead of copied: Harbor Bank and Gulf Energy never reach their reps", "slots": { "rules": [ { "field": "budget", "op": "atLeast", "value": "25001", "assignTo": "tom@nimbusconsulting.io" }, { "field": "region", "op": "is", "value": "West Coast", "assignTo": "ellen@nimbusconsulting.io" }, { "field": "region", "op": "is", "value": "East Coast", "assignTo": "rajesh@nimbusconsulting.io" } ] } }
+   ]
+  },
+  {
+   "id": "HO1",
+   "template": "oncall-digest",
+   "requestSource": "requests-mercury-3.json #8 (CoreStack IT)",
+   "request": "every morning at 8 post a digest of all unresolved alerts to our #oncall slack channel. include severity and service. if any critical alert isnt acknowledged within an hour email me directly.",
+   "questions": [
+    {
+     "id": "pageTo",
+     "slot": "pageTo",
+     "match": ["\\b(you|your)\\b.*\\b(e-?mail|address)", "(e-?mail|address)\\b.*\\b(you|your|me|page|critical|send)", "who\\b.*\\b(page|e-?mail|notify)"],
+     "answer": "jordan@corestackit.com"
+    }
+   ],
+   "slotChecks": { "channel": "#oncall", "page": true, "pageTo": "jordan@corestackit.com", "minSeverity": "info" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T08:00:00Z",
+    "sheets": {
+     "alerts": [
+      { "id": "K-1", "at": "2026-10-28T05:30:00Z", "service": "api", "severity": "critical", "message": "Error rate 12%", "acknowledged": false, "resolved": false },
+      { "id": "K-2", "at": "2026-10-28T07:40:00Z", "service": "db", "severity": "critical", "message": "Replica lag 90s", "acknowledged": false, "resolved": false },
+      { "id": "K-3", "at": "2026-10-27T22:00:00Z", "service": "web", "severity": "warning", "message": "Slow page loads", "acknowledged": false, "resolved": false },
+      { "id": "K-4", "at": "2026-10-28T06:00:00Z", "service": "cdn", "severity": "info", "message": "Cache purge done", "acknowledged": false, "resolved": false },
+      { "id": "K-5", "at": "2026-10-28T03:00:00Z", "service": "queue", "severity": "critical", "message": "Queue stuck", "acknowledged": true, "resolved": false },
+      { "id": "K-6", "at": "2026-10-25T09:00:00Z", "service": "auth", "severity": "warning", "message": "Token refresh slow", "acknowledged": false, "resolved": false },
+      { "id": "K-7", "at": "2026-10-27T20:00:00Z", "service": "api", "severity": "critical", "message": "Old outage", "acknowledged": true, "resolved": true }
+     ]
+    }
+   },
+   "oracle": {
+    "chat": { "#oncall": [ { "contains": ["Error rate 12%", "Replica lag 90s", "Slow page loads", "Cache purge done", "Queue stuck", "Token refresh slow", "critical", "warning", "auth", "cdn"], "notContains": ["Old outage"] } ] },
+    "outbox": [ { "to": "jordan@corestackit.com", "contains": ["Error rate 12%"], "notContains": ["Replica lag 90s"] } ]
+   },
+   "oracleNote": "'within an hour': the 20-minute-old critical (K-2) is not yet due an e-mail. The template pages every unacknowledged critical at once, so its reference flow fails here by design.",
+   "reference": { "channel": "#oncall", "windowHours": 168, "minSeverity": "info", "page": true, "pageTo": "jordan@corestackit.com" },
+   "controls": [
+    { "why": "the default 24-hour window drops the 3-day-old unresolved warning", "slots": { "windowHours": 24 } },
+    { "why": "warnings and up only: the info alert is left out of 'all unresolved alerts'", "slots": { "minSeverity": "warning" } },
+    { "why": "no paging", "slots": { "page": false, "pageTo": "" } }
+   ]
+  },
+  {
+   "id": "HO2",
+   "template": "oncall-digest",
+   "requestSource": "requests-mercury-3.json #9 (St. Mary's Hospital IT)",
+   "request": "at 9am put up a summary of unresolved warnings and criticals in our teams channel. for critical alerts nobody has acknowledged, send me an email. don't email for warnings. thanks",
+   "questions": [
+    {
+     "id": "channel",
+     "slot": "channel",
+     "match": ["channel", "where\\b.*\\b(post|send|summary|digest|put)", "(teams|chat|slack|room)\\b.*\\b(which|where|name)", "(which|what)\\b.*\\b(teams|chat|room)"],
+     "answer": "#it-oncall"
+    },
+    {
+     "id": "pageTo",
+     "slot": "pageTo",
+     "match": ["\\b(you|your)\\b.*\\b(e-?mail|address)", "(e-?mail|address)\\b.*\\b(you|your|me|page|critical|send)", "who\\b.*\\b(page|e-?mail|notify)"],
+     "answer": "n.okafor@stmaryshospital.org"
+    }
+   ],
+   "slotChecks": { "channel": "#it-oncall", "minSeverity": "warning", "page": true, "pageTo": "n.okafor@stmaryshospital.org" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T09:00:00Z",
+    "sheets": {
+     "alerts": [
+      { "id": "M-1", "at": "2026-10-28T07:10:00Z", "service": "ehr", "severity": "critical", "message": "EHR login failures", "acknowledged": false, "resolved": false },
+      { "id": "M-2", "at": "2026-10-28T01:00:00Z", "service": "pacs", "severity": "warning", "message": "PACS disk 88%", "acknowledged": false, "resolved": false },
+      { "id": "M-3", "at": "2026-10-28T08:00:00Z", "service": "wifi", "severity": "info", "message": "AP reboot", "acknowledged": false, "resolved": false },
+      { "id": "M-4", "at": "2026-10-27T03:00:00Z", "service": "lab", "severity": "critical", "message": "Lab interface down", "acknowledged": false, "resolved": false },
+      { "id": "M-5", "at": "2026-10-28T06:00:00Z", "service": "pharmacy", "severity": "critical", "message": "Dispense queue slow", "acknowledged": true, "resolved": false },
+      { "id": "M-6", "at": "2026-10-28T05:00:00Z", "service": "print", "severity": "warning", "message": "Printer offline", "acknowledged": false, "resolved": true }
+     ]
+    }
+   },
+   "oracle": {
+    "chat": { "#it-oncall": [ { "contains": ["EHR login failures", "PACS disk 88%", "Lab interface down", "Dispense queue slow"], "notContains": ["AP reboot", "Printer offline"] } ] },
+    "outbox": [
+     { "to": "n.okafor@stmaryshospital.org", "contains": ["EHR login failures"], "notContains": [] },
+     { "to": "n.okafor@stmaryshospital.org", "contains": ["Lab interface down"], "notContains": [] }
+    ]
+   },
+   "oracleNote": "'unresolved warnings and criticals' has no time limit: the 30-hour-old unresolved critical (M-4) belongs in the summary and gets an e-mail.",
+   "reference": { "channel": "#it-oncall", "windowHours": 168, "minSeverity": "warning", "page": true, "pageTo": "n.okafor@stmaryshospital.org" },
+   "controls": [
+    { "why": "the default 24-hour window drops the 30-hour-old unresolved critical", "slots": { "windowHours": 24 } },
+    { "why": "criticals only: the PACS warning is left out", "slots": { "minSeverity": "critical" } },
+    { "why": "no e-mails for unacknowledged criticals", "slots": { "page": false, "pageTo": "" } },
+    { "why": "info alerts included", "slots": { "minSeverity": "info" } }
+   ]
+  },
+  {
+   "id": "HS1",
+   "template": "support-deflection",
+   "requestSource": "requests-mercury-3.json #10 (Widgetly)",
+   "request": "tickets that mention 'refund' get our standard refund reply (I'll paste the text below). urgent tickets go to zara@widgetly.app. everything else also goes to zara in one digest each morning.",
+   "questions": [
+    {
+     "id": "answers",
+     "slot": "answers",
+     "match": ["refund\\b.*\\b(text|reply|wording|message|say|answer)", "paste", "(text|wording|reply)\\b.*\\brefund", "what should\\b.*\\b(reply|say)"],
+     "answer": "Here it is: \"Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.\""
+    }
+   ],
+   "slotChecks": { "escalateTo": "zara@widgetly.app" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T09:00:00Z",
+    "sheets": {
+     "tickets": [
+      { "id": "WT-1", "from": "jo@shopper.example", "subject": "Refund please", "body": "I want a refund for order 1182, it never worked", "priority": "normal", "status": "open" },
+      { "id": "WT-2", "from": "max@shopper.example", "subject": "Charged twice!!", "body": "you billed me twice, I need a refund NOW", "priority": "urgent", "status": "open" },
+      { "id": "WT-3", "from": "liv@shopper.example", "subject": "Where is my order?", "body": "ordered 9 days ago, nothing yet", "priority": "normal", "status": "open" },
+      { "id": "WT-4", "from": "buyer@bigstore.example", "subject": "Bulk discount?", "body": "we want 500 units", "priority": "normal", "status": "open" },
+      { "id": "WT-5", "from": "kim@shopper.example", "subject": "Refund status", "body": "thanks, got it", "priority": "normal", "status": "closed" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [
+     { "to": "jo@shopper.example", "contains": ["5 business days"], "notContains": [] },
+     { "to": "zara@widgetly.app", "contains": [["WT-2", "Charged twice"], ["WT-3", "Where is my order"], ["WT-4", "Bulk discount"]], "notContains": ["WT-1", "WT-5"] }
+    ]
+   },
+   "reference": { "answers": [ { "keyword": "refund", "reply": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away." } ], "escalateTo": "zara@widgetly.app", "signature": "The support team" },
+   "controls": [
+    { "why": "no canned reply: the refund ticket goes to the digest unanswered", "slots": { "answers": [] } },
+    { "why": "guessed escalation address", "slots": { "escalateTo": "support@widgetly.app" } },
+    { "why": "wrong keyword: the refund ticket is not answered", "slots": { "answers": [ { "keyword": "money back", "reply": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away." } ] } }
+   ]
+  },
+  {
+   "id": "HS2",
+   "template": "support-deflection",
+   "requestSource": "requests-mercury-3.json #11 (FitZone Equipment)",
+   "request": "if a ticket mentions 'shipping' answer with our shipping faq answer. anything urgent goes to mike at mike@fitzone.com, and all other tickets also go to mike in a single daily digest.",
+   "questions": [
+    {
+     "id": "answers",
+     "slot": "answers",
+     "match": ["shipping\\b.*\\b(faq|text|reply|wording|message|say|answer)", "faq", "(text|wording|reply)\\b.*\\bshipping", "what should\\b.*\\b(reply|say)"],
+     "answer": "Our shipping FAQ answer: \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\""
+    }
+   ],
+   "slotChecks": { "escalateTo": "mike@fitzone.com" },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-28T09:00:00Z",
+    "sheets": {
+     "tickets": [
+      { "id": "FZ-1", "from": "ann@runner.example", "subject": "Shipping time?", "body": "how long does shipping take to Ohio", "priority": "normal", "status": "open" },
+      { "id": "FZ-2", "from": "bo@lifter.example", "subject": "Treadmill arrived damaged", "body": "the shipping box was crushed and the motor is broken", "priority": "urgent", "status": "open" },
+      { "id": "FZ-3", "from": "cy@yogi.example", "subject": "Warranty question", "body": "is the rower covered for 2 years?", "priority": "normal", "status": "open" },
+      { "id": "FZ-4", "from": "di@cyclist.example", "subject": "Assembly help", "body": "missing two bolts", "priority": "normal", "status": "open" },
+      { "id": "FZ-5", "from": "ed@gymowner.example", "subject": "Shipping to Canada?", "body": "do you send orders to Toronto", "priority": "normal", "status": "open" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [
+     { "to": "ann@runner.example", "contains": ["2 business days"], "notContains": [] },
+     { "to": "ed@gymowner.example", "contains": ["2 business days"], "notContains": [] },
+     { "to": "mike@fitzone.com", "contains": [["FZ-2", "Treadmill arrived damaged"], ["FZ-3", "Warranty question"], ["FZ-4", "Assembly help"]], "notContains": ["FZ-1", "FZ-5"] }
+    ]
+   },
+   "reference": { "answers": [ { "keyword": "shipping", "reply": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email." } ], "escalateTo": "mike@fitzone.com", "signature": "The support team" },
+   "controls": [
+    { "why": "guessed escalation address", "slots": { "escalateTo": "support@fitzone.com" } },
+    { "why": "no canned reply: the shipping questions go to the digest", "slots": { "answers": [] } },
+    { "why": "keyword 'ship time': neither shipping question matches, both go to the digest", "slots": { "answers": [ { "keyword": "ship time", "reply": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email." } ] } }
+   ]
+  },
+  {
+   "id": "HW1",
+   "template": "weekly-report",
+   "requestSource": "requests-mercury-3.json #12 (Summit Construction)",
+   "request": "every friday at 4 email me a report of what got done this week from the tracker export, plus what's open and blocked. send it to rick@summitconstruction.com",
+   "questions": [],
+   "slotChecks": { "recipient": "rick@summitconstruction.com", "listOpen": true, "listBlocked": true },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-30T16:00:00Z",
+    "sheets": {
+     "tracker": [
+      { "title": "Pour foundation at Elm St", "status": "done", "owner": "Gus" },
+      { "title": "Frame second floor at Oak Ave", "status": "done", "owner": "Rita" },
+      { "title": "Order windows for Birch Ct", "status": "done", "owner": "Gus" },
+      { "title": "Electrical rough-in at Oak Ave", "status": "open", "owner": "Hal" },
+      { "title": "Final walkthrough at Maple Rd", "status": "open", "owner": "Rita" },
+      { "title": "City permit for Pine St", "status": "blocked", "owner": "Hal" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [ { "to": "rick@summitconstruction.com", "contains": ["Pour foundation at Elm St", "Frame second floor at Oak Ave", "Order windows for Birch Ct", "Electrical rough-in at Oak Ave", "Final walkthrough at Maple Rd", "City permit for Pine St"], "notContains": [] } ]
+   },
+   "reference": { "team": "Summit Construction", "recipient": "rick@summitconstruction.com", "listOpen": true, "listBlocked": true },
+   "controls": [
+    { "why": "blocked items not listed", "slots": { "listBlocked": false } },
+    { "why": "open items not listed", "slots": { "listOpen": false } },
+    { "why": "wrong recipient", "slots": { "recipient": "office@summitconstruction.com" } }
+   ]
+  },
+  {
+   "id": "HW2",
+   "template": "weekly-report",
+   "requestSource": "requests-mercury-3.json #13 (Beacon Content Co.)",
+   "request": "monday mornings email me just the tasks marked done last week. no open or blocked needed. short list is fine.",
+   "questions": [
+    {
+     "id": "recipient",
+     "slot": "recipient",
+     "match": ["(who|whom)\\b.*\\b(send|get|receive|go|goes|deliver)", "(send|deliver|e-?mail)\\b.*\\b(it|report|this|them)\\b.*\\bto\\b", "recipient", "e-?mail address", "which (e-?mail|address)", "\\b(you|your)\\b.*\\b(e-?mail|address)"],
+     "answer": "liz@beaconcontent.co"
+    }
+   ],
+   "slotChecks": { "recipient": "liz@beaconcontent.co", "listOpen": false, "listBlocked": false },
+   "trap": null,
+   "hidden": {
+    "now": "2026-10-26T08:00:00Z",
+    "sheets": {
+     "tracker": [
+      { "title": "Blog post: spring SEO checklist", "status": "done", "owner": "Ava" },
+      { "title": "Client newsletter for Harbor Gym", "status": "done", "owner": "Noor" },
+      { "title": "Case study: Lakeside Dental", "status": "done", "owner": "Ava" },
+      { "title": "Rebrand deck for Pine Labs", "status": "open", "owner": "Noor" },
+      { "title": "Podcast edit episode 14", "status": "blocked", "owner": "Eli" }
+     ]
+    }
+   },
+   "oracle": {
+    "outbox": [ { "to": "liz@beaconcontent.co", "contains": ["Blog post: spring SEO checklist", "Client newsletter for Harbor Gym", "Case study: Lakeside Dental"], "notContains": ["Rebrand deck for Pine Labs", "Podcast edit episode 14"] } ]
+   },
+   "reference": { "team": "Beacon Content", "recipient": "liz@beaconcontent.co", "listOpen": false, "listBlocked": false },
+   "controls": [
+    { "why": "open items listed although the person said not needed", "slots": { "listOpen": true } },
+    { "why": "blocked items listed", "slots": { "listBlocked": true } },
+    { "why": "guessed recipient", "slots": { "recipient": "team@beaconcontent.co" } }
+   ]
+  }
+ ]
+}

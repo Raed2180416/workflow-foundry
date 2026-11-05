@@ -1,0 +1,137 @@
+{
+ "schema": "tracker-gold/1",
+ "bed": "BUILDER-1 (research/surface-20261021/eval/cases.json)",
+ "author": "Claude Opus 5.5 in worktree wf_6d3b90c9-c30-6, 2026-10-21, written from the 24 requests and the answer key BEFORE any capture or bind call and before any tracker status was computed",
+ "words": "Per case: turn 0 is the request; turns 1.. are the answer key's answers in the order of the case's questions (the person's later words).",
+ "rule": "A gold condition is something the person stated or clearly implied by their own words that the result can be judged against. Context (where the data lives, greetings, umbrella sentences restated by later rules) is not a condition. testable: one practice run (or two consecutive runs) of a flow could show it. A captured condition covers a gold condition when its located span overlaps any of the gold anchors' spans in the same turn; each captured condition covers at most one gold condition (maximum one-to-one matching).",
+ "cases": {
+  "W1": [
+   { "id": "W1.1", "anchors": [[0, "every friday"]], "kind": "schedule", "testable": false },
+   { "id": "W1.2", "anchors": [[0, "send my manager (priya.n@kestrel-labs.io)"]], "kind": "must", "testable": true },
+   { "id": "W1.3", "anchors": [[0, "what the design team actually finished that week"]], "kind": "must", "testable": true },
+   { "id": "W1.4", "anchors": [[0, "nothing fancy"]], "kind": "style", "testable": false }
+  ],
+  "W2": [
+   { "id": "W2.1", "anchors": [[0, "the weekly status thing"]], "kind": "schedule", "testable": false },
+   { "id": "W2.2", "anchors": [[0, "for the Mobile squad"]], "kind": "other", "testable": false },
+   { "id": "W2.3", "anchors": [[0, "it should list whats done AND whats still open + whats blocked"]], "kind": "must", "testable": true },
+   { "id": "W2.4", "anchors": [[0, "send it to me i guess, tom@ortega-apps.co"]], "kind": "must", "testable": true }
+  ],
+  "W3": [
+   { "id": "W3.1", "anchors": [[0, "weekly report pls"]], "kind": "schedule", "testable": false },
+   { "id": "W3.2", "anchors": [[0, "Platform team"]], "kind": "other", "testable": false },
+   { "id": "W3.3", "anchors": [[0, "the usual"]], "kind": "other", "testable": false },
+   { "id": "W3.4", "anchors": [[1, "Send it to our CTO, maya@brightfold.com"]], "kind": "must", "testable": true }
+  ],
+  "I1": [
+   { "id": "I1.1", "anchors": [[0, "chase everyone who still owes us money"]], "kind": "must", "testable": true },
+   { "id": "I1.2", "anchors": [[0, "start nice and get firmer if they keep ignoring us"]], "kind": "style", "testable": false },
+   { "id": "I1.3", "anchors": [[0, "sign it as Hannah @ Little Fern Bakery"]], "kind": "must", "testable": true },
+   { "id": "I1.4", "anchors": [[0, "a couple of customers are arguing about their bills"]], "kind": "never", "testable": true }
+  ],
+  "I2": [
+   { "id": "I2.1", "anchors": [[0, "ONE polite reminder once an invoice is 10 days overdue"]], "kind": "when-then", "testable": true },
+   { "id": "I2.2", "anchors": [[0, "nothing after that"]], "kind": "count", "testable": true },
+   { "id": "I2.3", "anchors": [[0, "no threats"]], "kind": "style", "testable": false },
+   { "id": "I2.4", "anchors": [[0, "email me a list of who got reminded - accounts@verdant-studio.com"]], "kind": "must", "testable": true },
+   { "id": "I2.5", "anchors": [[0, "Sign off as Verdant Studio"]], "kind": "must", "testable": true }
+  ],
+  "I3": [
+   { "id": "I3.1", "anchors": [[0, "set up the overdue invoice reminders"]], "kind": "must", "testable": true },
+   { "id": "I3.2", "anchors": [[0, "7 / 21 / 45 days"]], "kind": "when-then", "testable": true },
+   { "id": "I3.3", "anchors": [[0, "send me a summary too"], [1, "ops@quill-and-ink.com"]], "kind": "must", "testable": true }
+  ],
+  "L1": [
+   { "id": "L1.0", "anchors": [[0, "new leads from the website form need to go to the right person"]], "kind": "must", "testable": true },
+   { "id": "L1.1", "anchors": [[0, "anything from europe (EMEA) goes to dana@peakline.io"]], "kind": "when-then", "testable": true },
+   { "id": "L1.2", "anchors": [[0, "US/canada (NA) to marcus@peakline.io"]], "kind": "when-then", "testable": true },
+   { "id": "L1.3", "anchors": [[0, "everything else to me - jo@peakline.io"]], "kind": "when-then", "testable": true },
+   { "id": "L1.4", "anchors": [[0, "dont email the leads themselves"]], "kind": "never", "testable": true }
+  ],
+  "L2": [
+   { "id": "L2.1", "anchors": [[0, "Big companies (500+ employees) go straight to our enterprise guy Raj, raj@tallyhq.com"]], "kind": "when-then", "testable": true },
+   { "id": "L2.2", "anchors": [[0, "Referals go to Sofia sofia@tallyhq.com"]], "kind": "when-then", "testable": true },
+   { "id": "L2.3", "anchors": [[0, "everything else to the shared inbox sales@tallyhq.com"]], "kind": "when-then", "testable": true }
+  ],
+  "L3": [
+   { "id": "L3.1", "anchors": [[0, "Germany & Austria -> Lena"], [1, "Lena is lena@brook-tools.de"]], "kind": "when-then", "testable": true },
+   { "id": "L3.2", "anchors": [[0, "France -> Paul"], [1, "Paul is paul@brook-tools.de"]], "kind": "when-then", "testable": true },
+   { "id": "L3.3", "anchors": [[0, "anyone else -> me"], [2, "Me: kai@brook-tools.de"]], "kind": "when-then", "testable": true }
+  ],
+  "S1": [
+   { "id": "S1.1", "anchors": [[0, "if a ticket asks about shipping just reply that orders ship in 2-3 business days and they get a tracking link by email"]], "kind": "when-then", "testable": true },
+   { "id": "S1.2", "anchors": [[0, "password questions -> tell them to use 'forgot password' on the login page"]], "kind": "when-then", "testable": true },
+   { "id": "S1.3", "anchors": [[0, "everything else send to me (help@cobaltcandle.com)"]], "kind": "when-then", "testable": true }
+  ],
+  "S2": [
+   { "id": "S2.1", "anchors": [[0, "opening hours question -> we're open mon-sat 9-6"]], "kind": "when-then", "testable": true },
+   { "id": "S2.2", "anchors": [[0, "returns -> you can return anything within 30 days, just reply with your order number"]], "kind": "when-then", "testable": true },
+   { "id": "S2.3", "anchors": [[0, "the rest goes to my support lead"], [1, "That's Gwen, gwen@harbor-goods.com"]], "kind": "when-then", "testable": true }
+  ],
+  "S3": [
+   { "id": "S3.1", "anchors": [[0, "If someone asks for a copy of their invoice tell them its in their account under Billing > Invoices"]], "kind": "when-then", "testable": true },
+   { "id": "S3.2", "anchors": [[0, "thats it for now"]], "kind": "never", "testable": true },
+   { "id": "S3.3", "anchors": [[0, "everything else goes to support@nimbusdesk.app"]], "kind": "when-then", "testable": true },
+   { "id": "S3.4", "anchors": [[0, "Sign it Nimbus Support"]], "kind": "must", "testable": true }
+  ],
+  "E1": [
+   { "id": "E1.1", "anchors": [[0, "auto-approve the small expenses"], [1, "anything up to $50 is fine"]], "kind": "when-then", "testable": true },
+   { "id": "E1.2", "anchors": [[0, "send the rest to me: finance@lumen-dental.com"]], "kind": "when-then", "testable": true },
+   { "id": "E1.3", "anchors": [[1, "anything up to $50 is fine"]], "kind": "never", "testable": true }
+  ],
+  "E2": [
+   { "id": "E2.1", "anchors": [[0, "anything under 200 with a receipt can be approved automatically"]], "kind": "when-then", "testable": true },
+   { "id": "E2.2", "anchors": [[0, "anything bigger goes to my cofounder ines@parcelpoint.eu for sign off"]], "kind": "when-then", "testable": true },
+   { "id": "E2.3", "anchors": [[0, "let people know when theirs got approved"]], "kind": "when-then", "testable": true }
+  ],
+  "E3": [
+   { "id": "E3.1", "anchors": [[0, "up to 75 bucks is ok automatically"]], "kind": "when-then", "testable": true },
+   { "id": "E3.2", "anchors": [[0, "doesnt matter if they forgot the receipt for small stuff"]], "kind": "when-then", "testable": true },
+   { "id": "E3.3", "anchors": [[0, "above that it needs an ok from someone"], [1, "our office manager, beth@gladwell-law.com"]], "kind": "when-then", "testable": true }
+  ],
+  "C1": [
+   { "id": "C1.1", "anchors": [[0, "make sure our newsletter list has everyone from the CRM on it"]], "kind": "must", "testable": true },
+   { "id": "C1.2", "anchors": [[0, "send me a report of what changed: owner@saltandcedar.com"]], "kind": "must", "testable": true }
+  ],
+  "C2": [
+   { "id": "C2.1", "anchors": [[0, "sync just our paying customers (tagged customer in the crm) to the mailing list"]], "kind": "when-then", "testable": true },
+   { "id": "C2.2", "anchors": [[0, "dont add the leads"]], "kind": "never", "testable": true },
+   { "id": "C2.3", "anchors": [[0, "report to me, ari@moss-and-moth.com"]], "kind": "must", "testable": true }
+  ],
+  "C3": [
+   { "id": "C3.1", "anchors": [[0, "who's in our CRM but NOT on the newsletter list"]], "kind": "must", "testable": true },
+   { "id": "C3.2", "anchors": [[0, "dont change anything"]], "kind": "never", "testable": true },
+   { "id": "C3.3", "anchors": [[0, "just tell me"], [1, "send it to me at lee@harborlight.org"]], "kind": "must", "testable": true }
+  ],
+  "O1": [
+   { "id": "O1.1", "anchors": [[0, "every morning"]], "kind": "schedule", "testable": false },
+   { "id": "O1.2", "anchors": [[0, "post a summary of unresolved alerts from the last 24h into #ops-alerts"]], "kind": "must", "testable": true },
+   { "id": "O1.3", "anchors": [[0, "warnings and up"]], "kind": "never", "testable": true },
+   { "id": "O1.4", "anchors": [[0, "no paging"]], "kind": "never", "testable": true }
+  ],
+  "O2": [
+   { "id": "O2.1", "anchors": [[0, "post the overnight alerts (last 12 hours) to #oncall"]], "kind": "must", "testable": true },
+   { "id": "O2.2", "anchors": [[0, "only critical ones"]], "kind": "never", "testable": true },
+   { "id": "O2.3", "anchors": [[0, "if a critical one hasnt been acked by anyone email pager@fennec.dev"]], "kind": "when-then", "testable": true }
+  ],
+  "O3": [
+   { "id": "O3.1", "anchors": [[0, "a daily digest"]], "kind": "schedule", "testable": false },
+   { "id": "O3.2", "anchors": [[0, "send a daily digest of our monitoring alerts to the team chat"], [1, "#eng-alerts please"]], "kind": "must", "testable": true }
+  ],
+  "N1": [
+   { "id": "N1.1", "anchors": [[0, "every friday"]], "kind": "schedule", "testable": false },
+   { "id": "N1.2", "anchors": [[0, "pay my contractors what they're owed from the hours in the timesheet sheet"]], "kind": "must", "testable": true },
+   { "id": "N1.3", "anchors": [[0, "send the money from our business account automatically"]], "kind": "must", "testable": true }
+  ],
+  "N2": [
+   { "id": "N2.1", "anchors": [[0, "every morning at 9"]], "kind": "schedule", "testable": false },
+   { "id": "N2.2", "anchors": [[0, "post our new product photos to instagram and tiktok"]], "kind": "must", "testable": true },
+   { "id": "N2.3", "anchors": [[0, "with the captions from my content sheet"]], "kind": "must", "testable": true }
+  ],
+  "N3": [
+   { "id": "N3.1", "anchors": [[0, "every day"]], "kind": "schedule", "testable": false },
+   { "id": "N3.2", "anchors": [[0, "check my 3 competitors websites"]], "kind": "must", "testable": true },
+   { "id": "N3.3", "anchors": [[0, "tell me if they drop their prices"]], "kind": "when-then", "testable": true }
+  ]
+ }
+}

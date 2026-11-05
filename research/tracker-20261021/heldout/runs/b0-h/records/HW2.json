@@ -1,0 +1,365 @@
+{
+ "arm": "B0-H",
+ "case": "HW2",
+ "expected": "weekly-report",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "q1",
+     "slot": null,
+     "question": "The tracker has no field for when an item was marked done. Should the email list all items with status done, or is there another sheet or column that records completion dates? If so, which one?"
+    },
+    {
+     "id": "q2",
+     "slot": null,
+     "question": "This flow runs when it is started and does not schedule itself. Is it fine to start it manually each Monday, or do you have an external scheduler that can run it? Also, should the email go to requester@example.test?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "q1",
+   "slot": null,
+   "question": "The tracker has no field for when an item was marked done. Should the email list all items with status done, or is there another sheet or column that records completion dates? If so, which one?",
+   "matched": [],
+   "answer": "I don't mind - use whatever you think is sensible."
+  },
+  {
+   "turn": 0,
+   "id": "q2",
+   "slot": null,
+   "question": "This flow runs when it is started and does not schedule itself. Is it fine to start it manually each Monday, or do you have an external scheduler that can run it? Also, should the email go to requester@example.test?",
+   "matched": [
+    "recipient"
+   ],
+   "answer": "liz@beaconcontent.co"
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "q1": "I don't mind - use whatever you think is sensible.",
+  "q2": "liz@beaconcontent.co"
+ },
+ "cost": {
+  "usd": 0.005542999999999999,
+  "tokens": 35044,
+  "inputTokens": 4,
+  "outputTokens": 3630,
+  "cacheReadTokens": 1730,
+  "cacheWriteTokens": 29680,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 878,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14814,
+   "costUsd": 0.0022996,
+   "costUnknown": false,
+   "latencyMs": 7576,
+   "journalId": 23
+  },
+  {
+   "turn": 1,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 2752,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14866,
+   "costUsd": 0.0032431,
+   "costUnknown": false,
+   "latencyMs": 14412,
+   "journalId": 24
+  }
+ ],
+ "builderWallMs": 22043,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "weekly-done-tasks-email",
+  "version": 1,
+  "title": "Email Liz the tasks marked done",
+  "goal": "Read the tracker, keep only items with status done, and email the short list to liz@beaconcontent.co, then independently confirm the message reached the outbox.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Recipient is liz@beaconcontent.co, as the person specified.",
+    "The tracker has no completion date, so the flow cannot filter to items finished last week; it sends all items currently marked done.",
+    "The person chose the simple format: one line per done item from the tracker."
+   ],
+   "risks": [
+    "Without a completion date, the email may repeat items already reported in earlier weeks.",
+    "The capabilities have no scheduler, so Monday-morning timing must be set up outside this flow.",
+    "outbox.send asks a person before each dispatch when run live."
+   ],
+   "successCriteria": [
+    "The email lists only tracker items with status done.",
+    "The email is delivered to liz@beaconcontent.co and the outbox audit passes."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_tracker",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all work items from the tracker sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "done_items",
+    "kind": "task",
+    "needs": [
+     "read_tracker"
+    ],
+    "description": "Keep only items whose status is done.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tracker.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "done"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "tally",
+    "kind": "task",
+    "needs": [
+     "done_items"
+    ],
+    "description": "Build the list of done item titles.",
+    "tool": "report.tally",
+    "args": {
+     "items": {
+      "$ref": "nodes.done_items.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "email_body",
+    "kind": "task",
+    "needs": [
+     "tally"
+    ],
+    "description": "Fill the email body with the done list.",
+    "tool": "core.template",
+    "args": {
+     "text": "Tasks marked done:\n{{done}}",
+     "variables": {
+      "done": {
+       "$ref": "nodes.tally.doneLines"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "email_body"
+    ],
+    "description": "Email the done list to Liz.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "liz@beaconcontent.co",
+     "subject": "Tasks marked done",
+     "body": {
+      "$ref": "nodes.email_body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_send",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Re-read the outbox to confirm the email was delivered to Liz with the saved hash.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "liz@beaconcontent.co"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_send.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "liz@beaconcontent.co",
+     "subject": "Tasks marked done",
+     "body": "Tasks marked done:\n- Blog post: spring SEO checklist (Ava)\n- Client newsletter for Harbor Gym (Noor)\n- Case study: Lakeside Dental (Ava)"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h/foundry-live-1Pu17s",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "The email lists only tracker items with status done.",
+    "exact": "the delivered of “Email the done list to Liz.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The email is delivered to liz@beaconcontent.co and the outbox audit passes.",
+    "exact": "the pass of “Re-read the outbox to confirm the email was delivered to Liz with the saved hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_send",
+    "plain": "Re-read the outbox to confirm the email was delivered to Liz with the saved hash.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 1,
+  "repeatQuestions": 0,
+  "questionsAsked": 2,
+  "personActions": 4,
+  "personActionsBeforeRun": 3,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

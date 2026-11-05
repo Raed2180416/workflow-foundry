@@ -1,0 +1,756 @@
+{
+ "arm": "B-H",
+ "case": "HE2",
+ "expected": "expense-approval",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": "expense-approval",
+   "selection": {
+    "template": "expense-approval",
+    "reason": "The main job is auto-approving small expense claims that have a receipt, recording them, and e-mailing larger claims to one approver, which is exactly what this template does.",
+    "notCovered": [
+     "Routing claims with no receipt to Owen may not be a built-in rule; the template's handling of receipt-less claims needs to be checked or adjusted to send them to Owen.",
+     "The Expensify file is an export, so the template works from a sheet export rather than a live Expensify connection."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "approver",
+     "slot": "approver",
+     "question": "What is Owen's e-mail address?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": "expense-approval",
+   "selection": {
+    "template": "expense-approval",
+    "reason": "The request is to auto-approve small expense claims that have a receipt and send the rest to one approver by e-mail, with a record kept, which is the core of the expense-approval template.",
+    "notCovered": [
+     "Claims without a receipt are also sent to Owen; the template's stated rule covers only over-limit claims going to the approver, so confirm it routes no-receipt claims that way too.",
+     "Owen's address (owen@evergreenlandscaping.co) is supplied as the approver, so it is used as given."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "approver",
+   "slot": "approver",
+   "question": "What is Owen's e-mail address?",
+   "matched": [
+    "approver"
+   ],
+   "answer": "Owen is owen@evergreenlandscaping.co"
+  }
+ ],
+ "modelQuestions": [
+  {
+   "turn": 0,
+   "slot": "approver",
+   "question": "What is Owen's e-mail address?"
+  }
+ ],
+ "answers": {
+  "approver": "Owen is owen@evergreenlandscaping.co"
+ },
+ "cost": {
+  "usd": 0.001975,
+  "tokens": 12342,
+  "inputTokens": 8,
+  "outputTokens": 2463,
+  "cacheReadTokens": 4272,
+  "cacheWriteTokens": 5599,
+  "calls": 4,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 556,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1661,
+   "costUsd": 0.000493945,
+   "costUnknown": false,
+   "latencyMs": 10122,
+   "journalId": 9
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 761,
+   "cacheReadTokens": 1324,
+   "cacheWriteTokens": 1103,
+   "costUsd": 0.0005318149999999999,
+   "costUnknown": false,
+   "latencyMs": 11871,
+   "journalId": 10
+  },
+  {
+   "turn": 1,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 451,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1696,
+   "costUsd": 0.00044582,
+   "costUnknown": false,
+   "latencyMs": 9445,
+   "journalId": 11
+  },
+  {
+   "turn": 1,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 695,
+   "cacheReadTokens": 1324,
+   "cacheWriteTokens": 1139,
+   "costUsd": 0.0005033150000000001,
+   "costUnknown": false,
+   "latencyMs": 11127,
+   "journalId": 12
+  }
+ ],
+ "builderWallMs": 43978,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "expense-approval",
+ "slots": {
+  "autoApproveUpTo": 99.99,
+  "approver": "owen@evergreenlandscaping.co",
+  "requireReceipt": true,
+  "notifyEmployees": false
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-approval",
+  "version": 1,
+  "title": "Expense approvals",
+  "goal": "Each run, approve automatically the submitted claims up to 99.99 with a receipt, record every decision, and e-mail owen@evergreenlandscaping.co the claims that need a decision, after a person approves the send.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The expenses sheet holds one row per claim with id, employee, email, amount, category, description, receipt and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Approving spending over the limit",
+    "A claim nobody decides on"
+   ],
+   "successCriteria": [
+    "Every approval is within the limit (and has a receipt when required)",
+    "Every submitted claim is recorded with its decision",
+    "The approver received the claims that need a decision",
+    "This run delivered exactly the planned e-mails and rows (checked by re-reading them)"
+   ],
+   "unsupported": [
+    "Payments",
+    "Several approvers",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the expenses sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the submitted claims",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decided",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Decide each claim: approved within the limit, otherwise waiting for the approver",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "rules": [
+      {
+       "field": "receipt",
+       "op": "ne",
+       "value": true,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "no receipt"
+       }
+      },
+      {
+       "field": "amount",
+       "op": "lte",
+       "value": 99.99,
+       "set": {
+        "decision": "approved",
+        "reason": "within the limit"
+       }
+      }
+     ],
+     "otherwise": {
+      "decision": "waiting for approver",
+      "reason": "over the limit"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approved",
+    "kind": "task",
+    "needs": [
+     "decided"
+    ],
+    "description": "The claims approved automatically",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decided.rows"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "approved"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "waiting",
+    "kind": "task",
+    "needs": [
+     "decided"
+    ],
+    "description": "The claims that need the approver",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decided.rows"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "waiting for approver"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "withinLimit",
+    "kind": "task",
+    "needs": [
+     "approved"
+    ],
+    "description": "Recheck the approvals against the limit a second way (used by a check)",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.approved.rows"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "lte",
+       "value": 99.99
+      },
+      {
+       "field": "receipt",
+       "op": "eq",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recordRows",
+    "kind": "task",
+    "needs": [
+     "decided"
+    ],
+    "description": "Prepare the decision rows",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decided.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount",
+      "decision",
+      "reason"
+     ],
+     "set": {
+      "at": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "record",
+    "kind": "task",
+    "needs": [
+     "recordRows",
+     "withinLimit"
+    ],
+    "description": "Record every decision in the expense-decisions sheet",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.recordRows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "waitingLines",
+    "kind": "task",
+    "needs": [
+     "waiting"
+    ],
+    "description": "List the claims for the approver",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.waiting.rows"
+     },
+     "line": "- {{id}} {{employee}}: {{amount}} for {{description}} ({{category}}; {{reason}})",
+     "empty": "- nothing today"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approvedLines",
+    "kind": "task",
+    "needs": [
+     "approved"
+    ],
+    "description": "List the claims approved automatically",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.approved.rows"
+     },
+     "line": "- {{id}} {{employee}}: {{amount}} for {{description}}",
+     "empty": "- none"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "message",
+    "kind": "task",
+    "needs": [
+     "waitingLines",
+     "approvedLines"
+    ],
+    "description": "Write the e-mail to the approver",
+    "tool": "core.template",
+    "args": {
+     "text": "Expense claims waiting for your decision ({{n}}):\n{{waiting}}\n\nApproved automatically (up to 99.99 with a receipt) ({{m}}):\n{{approved}}\n\nReply to approve or reject the waiting ones. This flow never pays anything.",
+     "variables": {
+      "n": {
+       "$ref": "nodes.waitingLines.count"
+      },
+      "waiting": {
+       "$ref": "nodes.waitingLines.text"
+      },
+      "m": {
+       "$ref": "nodes.approvedLines.count"
+      },
+      "approved": {
+       "$ref": "nodes.approvedLines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "subject",
+    "kind": "task",
+    "needs": [
+     "waitingLines"
+    ],
+    "description": "Write the subject line",
+    "tool": "core.template",
+    "args": {
+     "text": "Expenses: {{n}} waiting for your approval",
+     "variables": {
+      "n": {
+       "$ref": "nodes.waitingLines.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sendApprover",
+    "kind": "task",
+    "needs": [
+     "message",
+     "subject",
+     "record"
+    ],
+    "description": "E-mail owen@evergreenlandscaping.co the claims that need a decision (asks you first)",
+    "tool": "outbox.send",
+    "args": {
+     "to": "owen@evergreenlandscaping.co",
+     "subject": {
+      "$ref": "nodes.subject.text"
+     },
+     "body": {
+      "$ref": "nodes.message.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "sendApprover"
+    ],
+    "description": "Re-read the outbox: exactly the planned e-mails went out, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "owen@evergreenlandscaping.co",
+      []
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.sendApprover"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "sheetAudit",
+    "kind": "verify",
+    "needs": [
+     "record",
+     "decided"
+    ],
+    "description": "Re-read the decisions sheet: one row per submitted claim",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decided.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.record"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.withinLimit.count"
+    },
+    "right": {
+     "$ref": "nodes.approved.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sendApprover.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sheetAudit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "research/business-20261021/OPEN-CORE-AND-INVARIANTS.md (delegation-of-authority thresholds)",
+    "experiments/library/cards/catalog.json P09 gate -> review queue",
+    "app/core/templates/expense-approval.json sha256 dcd2d030fc9425d3b1dbc12250c33e1735b3776c08311321e0e11fea3c135697"
+   ],
+   "tags": [
+    "template:expense-approval",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5)",
+    "slots:{\"approver\":\"owen@evergreenlandscaping.co\",\"autoApproveUpTo\":99.99,\"notifyEmployees\":false,\"requireReceipt\":true}"
+   ],
+   "rationale": "Frontier-written template \"expense-approval\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "owen@evergreenlandscaping.co",
+     "subject": "Expenses: 2 waiting for your approval",
+     "body": "Expense claims waiting for your decision (2):\n- EG-3 Luis Ortega: 180 for Hedge trimmer blade (equipment; over the limit)\n- EG-4 Dee Walsh: 40 for Crew lunch (meals; no receipt)\n\nApproved automatically (up to 99.99 with a receipt) (2):\n- EG-1 Luis Ortega: 64.2 for Truck fuel\n- EG-2 Hana Kim: 99 for Mulch bags\n\nReply to approve or reject the waiting ones. This flow never pays anything."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 64.2,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "approved",
+      "employee": "Luis Ortega",
+      "id": "EG-1",
+      "reason": "within the limit"
+     },
+     {
+      "amount": 99,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "approved",
+      "employee": "Hana Kim",
+      "id": "EG-2",
+      "reason": "within the limit"
+     },
+     {
+      "amount": 180,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Luis Ortega",
+      "id": "EG-3",
+      "reason": "over the limit"
+     },
+     {
+      "amount": 40,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Dee Walsh",
+      "id": "EG-4",
+      "reason": "no receipt"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b-h/foundry-live-LlOssi",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every approval is within the limit (and has a receipt when required)",
+    "exact": "the count of “Recheck the approvals against the limit a second way (used by a check)” equals the count of “The claims approved automatically”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every submitted claim is recorded with its decision",
+    "exact": "the delivered of “E-mail owen@evergreenlandscaping.co the claims that need a decision (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The approver received the claims that need a decision",
+    "exact": "the pass of “Re-read the outbox: exactly the planned e-mails went out, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "This run delivered exactly the planned e-mails and rows (checked by re-reading them)",
+    "exact": "the pass of “Re-read the decisions sheet: one row per submitted claim” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: exactly the planned e-mails went out, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.sheetAudit",
+    "plain": "Re-read the decisions sheet: one row per submitted claim",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": 3,
+  "personActionsBeforeRun": 2,
+  "slotChecks": 2,
+  "slotChecksOk": 2
+ }
+}

@@ -1,0 +1,1098 @@
+{
+ "arm": "B0-H2+repair-none",
+ "case": "HI1",
+ "expected": "invoice-chase",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.007423435,
+  "tokens": 9967,
+  "inputTokens": 2,
+  "outputTokens": 9965,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.007423435,
+   "inputTokens": 2,
+   "outputTokens": 9965
+  }
+ ],
+ "builderWallMs": 50573,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "invoice-overdue-reminders",
+  "version": 2,
+  "title": "Overdue invoice reminders (once per tier) and Monday summary",
+  "goal": "Read open invoices, skip disputed and paid ones, and send one polite reminder at 30-59 days past due, one firmer reminder at 60-89 days, and one final reminder at 90+ days. Each invoice/tier pair is emailed only once, tracked in the reminder-log sheet. Then email maria@pixelandpixel.com a summary of all open, non-disputed invoices.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The flow is scheduled to run on Mondays and supplies input.now; every run sends the summary.",
+    "The sheet reminder-log exists (it may be empty, with columns invoice, customer, email, tier) before the first run.",
+    "Days past due are full days between the invoice due date and input.now.",
+    "Reminder bands: 30-59 days polite, 60-89 days firm, 90+ days final. An invoice receives each tier's reminder at most once.",
+    "Only invoices with status 'open' are reminded; 'disputed' and 'paid' are never sent to.",
+    "Summary recipient is maria@pixelandpixel.com."
+   ],
+   "risks": [
+    "If reminder-log is missing, the flow fails at its first read and sends nothing.",
+    "Each send asks a person for approval first.",
+    "A client with several overdue invoices receives one email per invoice."
+   ],
+   "successCriteria": [
+    "Only open invoices are reminded; disputed invoices receive no message.",
+    "Each client receives the reminder matching its days-past-due band, at most once per invoice and tier.",
+    "Every reminder sent in this run is recorded in reminder-log.",
+    "The summary is delivered to maria@pixelandpixel.com.",
+    "Outbox audit confirms every recipient and message hash for this run."
+   ]
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 1800000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read-invoices",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the invoices sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "invoices"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read-reminder-log",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the reminder log of already-sent reminders.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "reminder-log"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open-invoices",
+    "kind": "task",
+    "needs": [
+     "read-invoices"
+    ],
+    "description": "Keep only open invoices (excludes disputed and paid).",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read-invoices.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "open-invoices"
+    ],
+    "description": "Compute full days past due from the due date.",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open-invoices.rows"
+     },
+     "field": "due",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "days",
+     "as": "daysPastDue"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "polite-rows",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Invoices 30-59 days past due.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "daysPastDue",
+       "op": "gte",
+       "value": 30
+      },
+      {
+       "field": "daysPastDue",
+       "op": "lt",
+       "value": 60
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "firm-rows",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Invoices 60-89 days past due.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "daysPastDue",
+       "op": "gte",
+       "value": 60
+      },
+      {
+       "field": "daysPastDue",
+       "op": "lt",
+       "value": 90
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "final-rows",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Invoices 90+ days past due.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "daysPastDue",
+       "op": "gte",
+       "value": 90
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "polite-log",
+    "kind": "task",
+    "needs": [
+     "read-reminder-log"
+    ],
+    "description": "Logged polite reminders.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read-reminder-log.rows"
+     },
+     "where": [
+      {
+       "field": "tier",
+       "op": "eq",
+       "value": "polite"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "firm-log",
+    "kind": "task",
+    "needs": [
+     "read-reminder-log"
+    ],
+    "description": "Logged firm reminders.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read-reminder-log.rows"
+     },
+     "where": [
+      {
+       "field": "tier",
+       "op": "eq",
+       "value": "firm"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "final-log",
+    "kind": "task",
+    "needs": [
+     "read-reminder-log"
+    ],
+    "description": "Logged final reminders.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read-reminder-log.rows"
+     },
+     "where": [
+      {
+       "field": "tier",
+       "op": "eq",
+       "value": "final"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "polite-new",
+    "kind": "task",
+    "needs": [
+     "polite-rows",
+     "polite-log"
+    ],
+    "description": "Polite candidates not yet reminded at this tier.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.polite-rows.rows"
+     },
+     "right": {
+      "$ref": "nodes.polite-log.rows"
+     },
+     "key": "invoice"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "firm-new",
+    "kind": "task",
+    "needs": [
+     "firm-rows",
+     "firm-log"
+    ],
+    "description": "Firm candidates not yet reminded at this tier.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.firm-rows.rows"
+     },
+     "right": {
+      "$ref": "nodes.firm-log.rows"
+     },
+     "key": "invoice"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "final-new",
+    "kind": "task",
+    "needs": [
+     "final-rows",
+     "final-log"
+    ],
+    "description": "Final candidates not yet reminded at this tier.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.final-rows.rows"
+     },
+     "right": {
+      "$ref": "nodes.final-log.rows"
+     },
+     "key": "invoice"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "polite-emails",
+    "kind": "task",
+    "needs": [
+     "polite-new"
+    ],
+    "description": "Recipient list for the polite tier (for audit).",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.polite-new.missing"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "firm-emails",
+    "kind": "task",
+    "needs": [
+     "firm-new"
+    ],
+    "description": "Recipient list for the firm tier (for audit).",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.firm-new.missing"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "final-emails",
+    "kind": "task",
+    "needs": [
+     "final-new"
+    ],
+    "description": "Recipient list for the final tier (for audit).",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.final-new.missing"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "polite-sends",
+    "kind": "map",
+    "needs": [
+     "polite-new"
+    ],
+    "description": "Send the polite reminder to each new 30-59 day invoice.",
+    "items": {
+     "$ref": "nodes.polite-new.missing"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "polite-subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Subject line.",
+       "tool": "core.template",
+       "args": {
+        "text": "Friendly reminder: invoice {{invoice}}",
+        "variables": {
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "polite-body",
+       "kind": "task",
+       "needs": [],
+       "description": "Polite reminder body.",
+       "tool": "core.template",
+       "args": {
+        "text": "Hi {{customer}},\n\nThis is a friendly reminder that invoice {{invoice}} for {{amount}} was due on {{due}} and is still open on our records. If you have already paid, please disregard this message. Otherwise, could you arrange payment at your earliest convenience? Let us know if anything is unclear.\n\nThank you,",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "polite-mail",
+       "kind": "task",
+       "needs": [
+        "polite-subject",
+        "polite-body"
+       ],
+       "description": "Send the polite reminder.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": {
+         "$ref": "nodes.polite-subject.text"
+        },
+        "body": {
+         "$ref": "nodes.polite-body.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.polite-mail.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "firm-sends",
+    "kind": "map",
+    "needs": [
+     "firm-new"
+    ],
+    "description": "Send the firmer reminder to each new 60-89 day invoice.",
+    "items": {
+     "$ref": "nodes.firm-new.missing"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "firm-subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Subject line.",
+       "tool": "core.template",
+       "args": {
+        "text": "Second reminder: invoice {{invoice}}",
+        "variables": {
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "firm-body",
+       "kind": "task",
+       "needs": [],
+       "description": "Firmer reminder body.",
+       "tool": "core.template",
+       "args": {
+        "text": "Hi {{customer}},\n\nThis is a second reminder: invoice {{invoice}} for {{amount}}, due on {{due}}, is now more than 60 days past due and remains unpaid. Please arrange payment as soon as possible. If there is a problem with this invoice, please reply so we can resolve it.\n\nThank you,",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "firm-mail",
+       "kind": "task",
+       "needs": [
+        "firm-subject",
+        "firm-body"
+       ],
+       "description": "Send the firmer reminder.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": {
+         "$ref": "nodes.firm-subject.text"
+        },
+        "body": {
+         "$ref": "nodes.firm-body.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.firm-mail.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "final-sends",
+    "kind": "map",
+    "needs": [
+     "final-new"
+    ],
+    "description": "Send the final reminder to each new 90+ day invoice.",
+    "items": {
+     "$ref": "nodes.final-new.missing"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "final-subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Subject line.",
+       "tool": "core.template",
+       "args": {
+        "text": "Final reminder: invoice {{invoice}}",
+        "variables": {
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "final-body",
+       "kind": "task",
+       "needs": [],
+       "description": "Final reminder body.",
+       "tool": "core.template",
+       "args": {
+        "text": "Hi {{customer}},\n\nThis is a final reminder: invoice {{invoice}} for {{amount}}, due on {{due}}, is now more than 90 days past due and remains unpaid. Please pay immediately. If we do not hear from you, we will need to consider further steps to recover the amount. If you believe this invoice is wrong, reply right away.\n\nThank you,",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "final-mail",
+       "kind": "task",
+       "needs": [
+        "final-subject",
+        "final-body"
+       ],
+       "description": "Send the final reminder.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": {
+         "$ref": "nodes.final-subject.text"
+        },
+        "body": {
+         "$ref": "nodes.final-body.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.final-mail.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "polite-record",
+    "kind": "task",
+    "needs": [
+     "polite-new",
+     "polite-sends"
+    ],
+    "description": "Log-ready rows for the polite reminders sent this run.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.polite-new.missing"
+     },
+     "fields": [
+      "invoice",
+      "customer",
+      "email"
+     ],
+     "set": {
+      "tier": "polite"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "firm-record",
+    "kind": "task",
+    "needs": [
+     "firm-new",
+     "firm-sends"
+    ],
+    "description": "Log-ready rows for the firm reminders sent this run.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.firm-new.missing"
+     },
+     "fields": [
+      "invoice",
+      "customer",
+      "email"
+     ],
+     "set": {
+      "tier": "firm"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "final-record",
+    "kind": "task",
+    "needs": [
+     "final-new",
+     "final-sends"
+    ],
+    "description": "Log-ready rows for the final reminders sent this run.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.final-new.missing"
+     },
+     "fields": [
+      "invoice",
+      "customer",
+      "email"
+     ],
+     "set": {
+      "tier": "final"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log-polite",
+    "kind": "task",
+    "needs": [
+     "polite-record"
+    ],
+    "description": "Record polite reminders in reminder-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "reminder-log",
+     "rows": {
+      "$ref": "nodes.polite-record.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log-firm",
+    "kind": "task",
+    "needs": [
+     "firm-record"
+    ],
+    "description": "Record firm reminders in reminder-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "reminder-log",
+     "rows": {
+      "$ref": "nodes.firm-record.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log-final",
+    "kind": "task",
+    "needs": [
+     "final-record"
+    ],
+    "description": "Record final reminders in reminder-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "reminder-log",
+     "rows": {
+      "$ref": "nodes.final-record.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "summary-lines",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "One line per open invoice showing who still owes.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "line": "{{invoice}} | {{customer}} | {{email}} | {{amount}} | due {{due}} | {{daysPastDue}} days past due",
+     "empty": "No open invoices."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "summary-body",
+    "kind": "task",
+    "needs": [
+     "summary-lines"
+    ],
+    "description": "Summary email body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Weekly overdue summary as of {{now}}\nOpen invoices (not disputed): {{count}}\n\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.summary-lines.count"
+      },
+      "lines": {
+       "$ref": "nodes.summary-lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "summary-send",
+    "kind": "task",
+    "needs": [
+     "summary-body"
+    ],
+    "description": "Email Maria the Monday summary.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "maria@pixelandpixel.com",
+     "subject": "Weekly overdue invoices summary",
+     "body": {
+      "$ref": "nodes.summary-body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit-sends",
+    "kind": "verify",
+    "needs": [
+     "polite-sends",
+     "firm-sends",
+     "final-sends",
+     "summary-send",
+     "polite-emails",
+     "firm-emails",
+     "final-emails",
+     "log-polite",
+     "log-firm",
+     "log-final"
+    ],
+    "description": "Independently confirm every reminder and the summary reached the expected recipients.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.polite-emails.items"
+      },
+      {
+       "$ref": "nodes.firm-emails.items"
+      },
+      {
+       "$ref": "nodes.final-emails.items"
+      },
+      "maria@pixelandpixel.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.summary-send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit-sends.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.summary-send.delivered"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "harness_fault",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "SHEET_NOT_FOUND",
+   "message": "There is no sheet named reminder-log"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair2-none/foundry-live-JaJNyW",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Only open invoices are reminded; disputed invoices receive no message.",
+    "exact": "the pass of “Independently confirm every reminder and the summary reached the expected recipients.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Each client receives the reminder matching its days-past-due band, at most once per invoice and tier.",
+    "exact": "the delivered of “Email Maria the Monday summary.” equals true",
+    "passed": null
+   },
+   {
+    "id": "verify.audit-sends",
+    "plain": "Independently confirm every reminder and the summary reached the expected recipients.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Read the reminder log of already-sent reminders."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict harness_fault): SHEET_NOT_FOUND",
+   "outbox : missing a message to owner@lumencafe.example containing \"PP-201\" without second, final",
+   "outbox : missing a message to billing@orbitfitness.example containing \"PP-202\", one of [second | firm] without final",
+   "outbox : missing a message to ap@northwindlaw.example containing \"PP-203\", \"final\"",
+   "outbox : missing a message to maria@pixelandpixel.com containing \"PP-201\", \"PP-202\", \"PP-203\" without PP-204, PP-205"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 5,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h2/HI1",
+  "verifiedBefore": true,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

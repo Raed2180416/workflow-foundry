@@ -1,0 +1,775 @@
+{
+ "arm": "B0-H+repair-t1",
+ "case": "HI2",
+ "expected": "invoice-chase",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t1",
+     "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-005: The automation states outbox.send has no BCC field. It sends a separate visible copy of each stage-2 reminder to dave@midwestpipesupply.com, not a blind copy. The 'user' address is also unclear, since the user's account email differs.\n- C-007: Nothing sends a run summary to dave@midwestpipesupply.com. The only messages to Dave are per-invoice copies of second reminders, and the audit step is a verification, not a summary email.\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.006050435,
+  "tokens": 7440,
+  "inputTokens": 2,
+  "outputTokens": 7438,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.006050435,
+   "inputTokens": 2,
+   "outputTokens": 7438
+  }
+ ],
+ "builderWallMs": 30197,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "overdue-invoice-reminders",
+  "version": 2,
+  "title": "Overdue invoice reminders (day 3, 10, 17)",
+  "goal": "For each open invoice whose due date is exactly 3, 10 or 17 days in the past, send the matching payment reminder to the invoice's email from the invoices sheet. Send a separate copy of each second reminder (10 days overdue) to dave@midwestpipesupply.com, and send Dave a run summary.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Reminders are chosen by exact whole-day match: 3, 10 and 17 days after the due date. The flow is expected to run once per day.",
+    "Days overdue are counted from the due date (YYYY-MM-DD, midnight UTC) to input.now.",
+    "outbox.send has no BCC field, so the copy to dave@midwestpipesupply.com is a separate, visible message per day-10 reminder, not a hidden copy on the customer message. Dave is the copy recipient because that is the address the person gave.",
+    "The run summary is sent to dave@midwestpipesupply.com once per run, after the reminders and copies.",
+    "Only invoices with status 'open' are considered; paid and disputed invoices are skipped."
+   ],
+   "risks": [
+    "A run skipped on a due day means that reminder is never sent, since nothing tracks past sends.",
+    "Re-running the same day sends duplicate reminders, copies and summaries (outbox.send is non-idempotent).",
+    "One invoice with an unreadable due date makes rows.age fail and stops the whole run.",
+    "Dave sees each day-10 copy in full view, and the customer's address appears in the copy body."
+   ],
+   "successCriteria": [
+    "Every open invoice exactly 3, 10 or 17 days overdue gets one reminder to its sheet email.",
+    "Each 10-days-overdue invoice produces one copy to dave@midwestpipesupply.com.",
+    "Dave receives one run summary per run with the reminder and copy counts.",
+    "The outbox audit confirms the recipients match the expected list, including Dave's copies and summary."
+   ]
+  },
+  "budget": {
+   "maxSteps": 5000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 900000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_invoices",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the invoices sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "invoices"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2,
+     "backoffMs": 1000
+    }
+   },
+   {
+    "id": "open_invoices",
+    "kind": "task",
+    "needs": [
+     "read_invoices"
+    ],
+    "description": "Keep only open invoices.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_invoices.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "open_invoices"
+    ],
+    "description": "Add whole days overdue (daysOverdue) from due date to input.now.",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_invoices.rows"
+     },
+     "field": "due",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "days",
+     "as": "daysOverdue"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "staged",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Label stage 1, 2 or 3 for invoices exactly 3, 10 or 17 days overdue; others get stage 0.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "rules": [
+      {
+       "field": "daysOverdue",
+       "op": "eq",
+       "value": 3,
+       "set": {
+        "stage": 1
+       }
+      },
+      {
+       "field": "daysOverdue",
+       "op": "eq",
+       "value": 10,
+       "set": {
+        "stage": 2
+       }
+      },
+      {
+       "field": "daysOverdue",
+       "op": "eq",
+       "value": 17,
+       "set": {
+        "stage": 3
+       }
+      }
+     ],
+     "otherwise": {
+      "stage": 0
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "due_now",
+    "kind": "task",
+    "needs": [
+     "staged"
+    ],
+    "description": "Keep invoices that get a reminder today.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.staged.rows"
+     },
+     "where": [
+      {
+       "field": "stage",
+       "op": "gt",
+       "value": 0
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "stage2_rows",
+    "kind": "task",
+    "needs": [
+     "staged"
+    ],
+    "description": "Keep invoices getting the second reminder (10 days overdue).",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.staged.rows"
+     },
+     "where": [
+      {
+       "field": "stage",
+       "op": "eq",
+       "value": 2
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "due_emails",
+    "kind": "task",
+    "needs": [
+     "due_now"
+    ],
+    "description": "List the customer emails receiving a reminder today.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.due_now.rows"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "dave_rows",
+    "kind": "task",
+    "needs": [
+     "stage2_rows"
+    ],
+    "description": "One row per day-10 copy, with the copy recipient set to Dave.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.stage2_rows.rows"
+     },
+     "fields": [
+      "invoice"
+     ],
+     "set": {
+      "to": "dave@midwestpipesupply.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "dave_list",
+    "kind": "task",
+    "needs": [
+     "dave_rows"
+    ],
+    "description": "List Dave's copy recipients, one per copy, for the audit.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.dave_rows.rows"
+     },
+     "field": "to"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "send_reminders",
+    "kind": "map",
+    "needs": [
+     "due_now"
+    ],
+    "description": "Send one reminder to each due invoice's customer email.",
+    "items": {
+     "$ref": "nodes.due_now.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "subj",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the reminder subject.",
+       "tool": "core.template",
+       "args": {
+        "text": "Payment reminder {{stage}}: invoice {{invoice}} is overdue",
+        "variables": {
+         "stage": {
+          "$ref": "item.stage"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      },
+      {
+       "id": "body",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the reminder body.",
+       "tool": "core.template",
+       "args": {
+        "text": "Hello {{customer}},\n\nThis is reminder {{stage}} for invoice {{invoice}} ({{amount}}), which was due on {{due}} and is now {{days}} days overdue. Please arrange payment, or reply if there is an issue.\n\nThank you.",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "stage": {
+          "$ref": "item.stage"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         },
+         "days": {
+          "$ref": "item.daysOverdue"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "subj",
+        "body"
+       ],
+       "description": "Send the reminder to the customer.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": {
+         "$ref": "nodes.subj.text"
+        },
+        "body": {
+         "$ref": "nodes.body.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "send_copies",
+    "kind": "map",
+    "needs": [
+     "send_reminders",
+     "stage2_rows"
+    ],
+    "description": "Send Dave a separate copy of each second reminder (in place of a BCC, which outbox.send does not support).",
+    "items": {
+     "$ref": "nodes.stage2_rows.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "subj2",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the copy subject.",
+       "tool": "core.template",
+       "args": {
+        "text": "Copy of reminder {{stage}}: invoice {{invoice}} is overdue",
+        "variables": {
+         "stage": {
+          "$ref": "item.stage"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      },
+      {
+       "id": "body2",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the copy body.",
+       "tool": "core.template",
+       "args": {
+        "text": "Copy of the reminder sent to {{customer}} <{{email}}>.\n\nReminder {{stage}} for invoice {{invoice}} ({{amount}}), due {{due}}, now {{days}} days overdue.",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "email": {
+          "$ref": "item.email"
+         },
+         "stage": {
+          "$ref": "item.stage"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         },
+         "days": {
+          "$ref": "item.daysOverdue"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      },
+      {
+       "id": "copy",
+       "kind": "task",
+       "needs": [
+        "subj2",
+        "body2"
+       ],
+       "description": "Send the copy to Dave.",
+       "tool": "outbox.send",
+       "args": {
+        "to": "dave@midwestpipesupply.com",
+        "subject": {
+         "$ref": "nodes.subj2.text"
+        },
+        "body": {
+         "$ref": "nodes.body2.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.copy.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "summary_subj",
+    "kind": "task",
+    "needs": [],
+    "description": "Build the run summary subject.",
+    "tool": "core.template",
+    "args": {
+     "text": "Overdue invoice reminders run summary ({{now}})",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "summary_body",
+    "kind": "task",
+    "needs": [
+     "send_reminders",
+     "send_copies"
+    ],
+    "description": "Build the run summary body with reminder and copy counts.",
+    "tool": "core.template",
+    "args": {
+     "text": "Overdue invoice reminders run at {{now}}.\n\nReminders sent to customers: {{reminders}}\nCopies sent to dave@midwestpipesupply.com: {{copies}}\n\nThis is an automated summary.",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "reminders": {
+       "$ref": "nodes.send_reminders.count"
+      },
+      "copies": {
+       "$ref": "nodes.send_copies.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "summary_send",
+    "kind": "task",
+    "needs": [
+     "summary_subj",
+     "summary_body"
+    ],
+    "description": "Send the run summary to dave@midwestpipesupply.com.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "dave@midwestpipesupply.com",
+     "subject": {
+      "$ref": "nodes.summary_subj.text"
+     },
+     "body": {
+      "$ref": "nodes.summary_body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "send_reminders",
+     "due_emails",
+     "dave_list",
+     "summary_send"
+    ],
+    "description": "Independently re-read the outbox and confirm the recipients match the expected list: customer reminders, Dave's copies, and Dave's summary.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.due_emails.items"
+      },
+      {
+       "$ref": "nodes.dave_list.items"
+      },
+      "dave@midwestpipesupply.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_reminders"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_reminders.count"
+    },
+    "right": {
+     "$ref": "nodes.due_now.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_copies.count"
+    },
+    "right": {
+     "$ref": "nodes.stage2_rows.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.summary_send.delivered"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "rationale": "Reminders go to the sheet email on days 3, 10 and 17 after due. outbox.send cannot BCC, so Dave gets a separate copy of each day-10 reminder, plus a run summary.",
+   "tags": [
+    "invoices",
+    "reminders"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "dave@midwestpipesupply.com",
+     "subject": "Overdue invoice reminders run summary (2026-10-28T09:00:00Z)",
+     "body": "Overdue invoice reminders run at 2026-10-28T09:00:00Z.\n\nReminders sent to customers: 0\nCopies sent to dave@midwestpipesupply.com: 0\n\nThis is an automated summary."
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-t1/foundry-live-oyuhd1",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open invoice exactly 3, 10 or 17 days overdue gets one reminder to its sheet email.",
+    "exact": "the pass of “Independently re-read the outbox and confirm the recipients match the expected list: customer reminders, Dave's copies, and Dave's summary.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Each 10-days-overdue invoice produces one copy to dave@midwestpipesupply.com.",
+    "exact": "the count of “Send one reminder to each due invoice's customer email.” equals the count of “Keep invoices that get a reminder today.”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "Dave receives one run summary per run with the reminder and copy counts.",
+    "exact": "the count of “Send Dave a separate copy of each second reminder (in place of a BCC, which outbox.send does not support).” equals the count of “Keep invoices getting the second reminder (10 days overdue).”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "The outbox audit confirms the recipients match the expected list, including Dave's copies and summary.",
+    "exact": "the delivered of “Send the run summary to dave@midwestpipesupply.com.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Independently re-read the outbox and confirm the recipients match the expected list: customer reminders, Dave's copies, and Dave's summary.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to ap@acehardwareco.example containing \"MP-501\" without second, final",
+   "outbox : missing a message to pay@brickandbeam.example containing \"MP-502\", one of [second | again] without final",
+   "outbox : missing a message to office@clearwaterplumbing.example containing \"MP-503\", \"final\"",
+   "outbox : missing a message to dave@midwestpipesupply.com containing \"MP-502\" without MP-505, MP-506",
+   "outbox : unexpected or wrong message to dave@midwestpipesupply.com (\"Overdue invoice reminders run summary (2026-10-28T09:00:00Z)\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 3,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HI2",
+  "verifiedBefore": false,
+  "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-005: The automation states outbox.send has no BCC field. It sends a separate visible copy of each stage-2 reminder to dave@midwestpipesupply.com, not a blind copy. The 'user' address is also unclear, since the user's account email differs.\n- C-007: Nothing sends a run summary to dave@midwestpipesupply.com. The only messages to Dave are per-invoice copies of second reminders, and the audit step is a verification, not a summary email.\nFix the workflow so it meets them."
+ }
+}

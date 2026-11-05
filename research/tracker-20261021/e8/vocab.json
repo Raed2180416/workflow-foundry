@@ -1,0 +1,719 @@
+{
+ "kind": "e8",
+ "version": "tracker-vocab-e8/1",
+ "channels": {
+  "orders.create": {
+   "describe": "orders.create: Record an order and its fulfilments; the order starts pending, a fulfilment pending (unavailable when its location is null).",
+   "fields": [
+    "args.orderId",
+    "args.customerId",
+    "args.placedAt",
+    "args.currency",
+    "args.items",
+    "args.items[*].sku",
+    "args.items[*].qty",
+    "args.fulfilments",
+    "args.fulfilments[*].fulfilmentId",
+    "args.fulfilments[*].location",
+    "args.fulfilments[*].items",
+    "args.fulfilments[*].items[*].sku",
+    "args.fulfilments[*].items[*].qty",
+    "args.fulfilments[*].amountMinor",
+    "args.totalMinor",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "orders.setStatus": {
+   "describe": "orders.setStatus: Set the status of the order (fulfilmentId null) or of one of its fulfilments. Transitions are not checked.",
+   "fields": [
+    "args.orderId",
+    "args.fulfilmentId",
+    "args.status",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "inventory.allocate": {
+   "describe": "inventory.allocate: The fulfilment plan of an order (read-only): { orderId, fulfilments: [{ fulfilmentId, location, items, available }] }.",
+   "fields": [
+    "args.orderId",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "inventory.reserve": {
+   "describe": "inventory.reserve: Reserve each item of one fulfilment at its location. Items: [{ key, sku, qty }].",
+   "fields": [
+    "args.orderId",
+    "args.fulfilmentId",
+    "args.location",
+    "args.items",
+    "args.items[*].key",
+    "args.items[*].sku",
+    "args.items[*].qty",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "inventory.release": {
+   "describe": "inventory.release: Release the active reservation of one item of one fulfilment.",
+   "fields": [
+    "args.orderId",
+    "args.fulfilmentId",
+    "args.sku",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "billing.charge": {
+   "describe": "billing.charge: ",
+   "fields": [
+    "args.orderId",
+    "args.fulfilmentId",
+    "args.customerId",
+    "args.amountMinor",
+    "args.currency",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "billing.refund": {
+   "describe": "billing.refund: Refund (part of) the charge of one fulfilment.",
+   "fields": [
+    "args.orderId",
+    "args.fulfilmentId",
+    "args.amountMinor",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "carrier.create": {
+   "describe": "carrier.create: ",
+   "fields": [
+    "args.orderId",
+    "args.fulfilmentId",
+    "args.location",
+    "args.ref",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "carrier.cancel": {
+   "describe": "carrier.cancel: Cancel the shipment of one fulfilment; refused once the carrier has collected it.",
+   "fields": [
+    "args.orderId",
+    "args.fulfilmentId",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "fraud.check": {
+   "describe": "fraud.check: ",
+   "fields": [
+    "args.orderId",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "notify.send": {
+   "describe": "notify.send: ",
+   "fields": [
+    "args.to",
+    "args.about",
+    "args.template",
+    "args.text",
+    "args.ref",
+    "key",
+    "after",
+    "subject",
+    "result.status",
+    "result.items[*].status",
+    "result.items[*].index",
+    "result.error.code",
+    "result.error.retryable",
+    "result.error.status",
+    "result.at"
+   ]
+  },
+  "humanTask.create": {
+   "describe": "a human task the workflow declared",
+   "fields": [
+    "task.id",
+    "task.kind",
+    "task.role",
+    "task.subject",
+    "task.dueAt",
+    "task.form",
+    "subject"
+   ]
+  },
+  "timer.set": {
+   "describe": "a timer the workflow declared",
+   "fields": [
+    "id",
+    "dueAt",
+    "subject"
+   ]
+  }
+ },
+ "sources": {
+  "effect:orders.create": {
+   "describe": "each orders.create effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.customerId": {},
+    "args.placedAt": {},
+    "args.currency": {},
+    "args.items": {},
+    "args.items[*].sku": {},
+    "args.items[*].qty": {},
+    "args.fulfilments": {},
+    "args.fulfilments[*].fulfilmentId": {},
+    "args.fulfilments[*].location": {},
+    "args.fulfilments[*].items": {},
+    "args.fulfilments[*].items[*].sku": {},
+    "args.fulfilments[*].items[*].qty": {},
+    "args.fulfilments[*].amountMinor": {},
+    "args.totalMinor": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:orders.setStatus": {
+   "describe": "each orders.setStatus effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.fulfilmentId": {},
+    "args.status": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:inventory.allocate": {
+   "describe": "each inventory.allocate effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:inventory.reserve": {
+   "describe": "each inventory.reserve effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.fulfilmentId": {},
+    "args.location": {},
+    "args.items": {},
+    "args.items[*].key": {},
+    "args.items[*].sku": {},
+    "args.items[*].qty": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:inventory.release": {
+   "describe": "each inventory.release effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.fulfilmentId": {},
+    "args.sku": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:billing.charge": {
+   "describe": "each billing.charge effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.fulfilmentId": {},
+    "args.customerId": {},
+    "args.amountMinor": {},
+    "args.currency": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:billing.refund": {
+   "describe": "each billing.refund effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.fulfilmentId": {},
+    "args.amountMinor": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:carrier.create": {
+   "describe": "each carrier.create effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.fulfilmentId": {},
+    "args.location": {},
+    "args.ref": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:carrier.cancel": {
+   "describe": "each carrier.cancel effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "args.fulfilmentId": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:fraud.check": {
+   "describe": "each fraud.check effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.orderId": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "effect:notify.send": {
+   "describe": "each notify.send effect the workflow emitted (as a trigger)",
+   "columns": {
+    "args.to": {},
+    "args.about": {},
+    "args.template": {},
+    "args.text": {},
+    "args.ref": {},
+    "key": {},
+    "after": {},
+    "subject": {},
+    "result.status": {},
+    "result.items[*].status": {},
+    "result.items[*].index": {},
+    "result.error.code": {},
+    "result.error.retryable": {},
+    "result.error.status": {},
+    "result.at": {}
+   }
+  },
+  "inbound:carrier.status": {
+   "describe": "each carrier.status message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.carrier": {},
+    "payload.code": {},
+    "payload.fulfilmentRef": {},
+    "payload.ref": {},
+    "payload.reportedAt": {},
+    "payload.shipmentId": {},
+    "source": {}
+   }
+  },
+  "inbound:customer.action": {
+   "describe": "each customer.action message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.action": {},
+    "payload.from": {},
+    "payload.orderRef": {},
+    "source": {}
+   }
+  },
+  "inbound:humanTask.answerRejected": {
+   "describe": "each humanTask.answerRejected message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.errors": {},
+    "payload.late": {},
+    "payload.taskId": {},
+    "payload.user": {},
+    "source": {}
+   }
+  },
+  "inbound:humanTask.answered": {
+   "describe": "each humanTask.answered message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.answer": {},
+    "payload.answer.decision": {},
+    "payload.late": {},
+    "payload.taskId": {},
+    "payload.user": {},
+    "source": {}
+   }
+  },
+  "inbound:humanTask.delegated": {
+   "describe": "each humanTask.delegated message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.from": {},
+    "payload.taskId": {},
+    "payload.to": {},
+    "source": {}
+   }
+  },
+  "inbound:humanTask.timeout": {
+   "describe": "each humanTask.timeout message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.onTimeout": {},
+    "payload.taskId": {},
+    "source": {}
+   }
+  },
+  "inbound:migration": {
+   "describe": "each migration message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.events": {},
+    "payload.events[*].at": {},
+    "payload.events[*].id": {},
+    "payload.events[*].payload": {},
+    "payload.events[*].payload.carrier": {},
+    "payload.events[*].payload.channel": {},
+    "payload.events[*].payload.code": {},
+    "payload.events[*].payload.currency": {},
+    "payload.events[*].payload.customerId": {},
+    "payload.events[*].payload.fulfilmentRef": {},
+    "payload.events[*].payload.items": {},
+    "payload.events[*].payload.orderId": {},
+    "payload.events[*].payload.placedAt": {},
+    "payload.events[*].payload.reportedAt": {},
+    "payload.events[*].payload.shipmentId": {},
+    "payload.events[*].source": {},
+    "payload.events[*].type": {},
+    "payload.records": {},
+    "payload.records.billing.charges": {},
+    "payload.records.billing.charges[*].amountMinor": {},
+    "payload.records.billing.charges[*].at": {},
+    "payload.records.billing.charges[*].chargeId": {},
+    "payload.records.billing.charges[*].currency": {},
+    "payload.records.billing.charges[*].customerId": {},
+    "payload.records.billing.charges[*].fulfilmentId": {},
+    "payload.records.billing.charges[*].orderId": {},
+    "payload.records.billing.charges[*].refundedMinor": {},
+    "payload.records.carrier.shipments": {},
+    "payload.records.carrier.shipments[*].carrier": {},
+    "payload.records.carrier.shipments[*].createdAt": {},
+    "payload.records.carrier.shipments[*].fulfilmentId": {},
+    "payload.records.carrier.shipments[*].location": {},
+    "payload.records.carrier.shipments[*].orderId": {},
+    "payload.records.carrier.shipments[*].ref": {},
+    "payload.records.carrier.shipments[*].shipmentId": {},
+    "payload.records.carrier.shipments[*].status": {},
+    "payload.records.inventory.reservations": {},
+    "payload.records.inventory.reservations[*].at": {},
+    "payload.records.inventory.reservations[*].fulfilmentId": {},
+    "payload.records.inventory.reservations[*].location": {},
+    "payload.records.inventory.reservations[*].orderId": {},
+    "payload.records.inventory.reservations[*].qty": {},
+    "payload.records.inventory.reservations[*].reservationId": {},
+    "payload.records.inventory.reservations[*].sku": {},
+    "payload.records.inventory.reservations[*].status": {},
+    "payload.records.notify.notifications": {},
+    "payload.records.notify.notifications[*].about": {},
+    "payload.records.notify.notifications[*].notificationId": {},
+    "payload.records.notify.notifications[*].ref": {},
+    "payload.records.notify.notifications[*].sentAt": {},
+    "payload.records.notify.notifications[*].template": {},
+    "payload.records.notify.notifications[*].text": {},
+    "payload.records.notify.notifications[*].to": {},
+    "payload.records.orders.fulfilments": {},
+    "payload.records.orders.fulfilments[*].amountMinor": {},
+    "payload.records.orders.fulfilments[*].fulfilmentId": {},
+    "payload.records.orders.fulfilments[*].items": {},
+    "payload.records.orders.fulfilments[*].location": {},
+    "payload.records.orders.fulfilments[*].orderId": {},
+    "payload.records.orders.fulfilments[*].status": {},
+    "payload.records.orders.orders": {},
+    "payload.records.orders.orders[*].currency": {},
+    "payload.records.orders.orders[*].customerId": {},
+    "payload.records.orders.orders[*].items": {},
+    "payload.records.orders.orders[*].orderId": {},
+    "payload.records.orders.orders[*].placedAt": {},
+    "payload.records.orders.orders[*].status": {},
+    "payload.records.orders.orders[*].totalMinor": {},
+    "source": {}
+   }
+  },
+  "inbound:order.placed": {
+   "describe": "each order.placed message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.channel": {},
+    "payload.currency": {},
+    "payload.customerId": {},
+    "payload.items": {},
+    "payload.items[*].qty": {},
+    "payload.items[*].sku": {},
+    "payload.orderId": {},
+    "payload.placedAt": {},
+    "source": {}
+   }
+  },
+  "inbound:timer.fired": {
+   "describe": "each timer.fired message the world delivered",
+   "columns": {
+    "at": {},
+    "payload.anchor": {},
+    "payload.dueAt": {},
+    "payload.kind": {},
+    "payload.obligationId": {},
+    "payload.onDue": {},
+    "payload.onDue.orderId": {},
+    "source": {}
+   }
+  },
+  "records:orders.orders": {
+   "describe": "final rows of orders.orders",
+   "columns": {
+    "orderId": {},
+    "customerId": {},
+    "status": {},
+    "placedAt": {},
+    "currency": {},
+    "items": {},
+    "totalMinor": {}
+   }
+  },
+  "records:orders.fulfilments": {
+   "describe": "final rows of orders.fulfilments",
+   "columns": {
+    "fulfilmentId": {},
+    "orderId": {},
+    "location": {},
+    "items": {},
+    "amountMinor": {},
+    "status": {}
+   }
+  },
+  "records:inventory.stock": {
+   "describe": "final rows of inventory.stock",
+   "columns": {
+    "stockId": {},
+    "location": {},
+    "sku": {},
+    "onHand": {},
+    "reserved": {}
+   }
+  },
+  "records:inventory.reservations": {
+   "describe": "final rows of inventory.reservations",
+   "columns": {
+    "reservationId": {},
+    "orderId": {},
+    "fulfilmentId": {},
+    "location": {},
+    "sku": {},
+    "qty": {},
+    "status": {},
+    "at": {}
+   }
+  },
+  "records:billing.charges": {
+   "describe": "final rows of billing.charges",
+   "columns": {
+    "chargeId": {},
+    "orderId": {},
+    "fulfilmentId": {},
+    "customerId": {},
+    "amountMinor": {},
+    "currency": {},
+    "at": {},
+    "refundedMinor": {}
+   }
+  },
+  "records:billing.refunds": {
+   "describe": "final rows of billing.refunds",
+   "columns": {
+    "refundId": {},
+    "chargeId": {},
+    "orderId": {},
+    "fulfilmentId": {},
+    "amountMinor": {},
+    "at": {}
+   }
+  },
+  "records:carrier.shipments": {
+   "describe": "final rows of carrier.shipments",
+   "columns": {
+    "shipmentId": {},
+    "orderId": {},
+    "fulfilmentId": {},
+    "location": {},
+    "carrier": {},
+    "status": {},
+    "createdAt": {},
+    "ref": {}
+   }
+  },
+  "records:notify.notifications": {
+   "describe": "final rows of notify.notifications",
+   "columns": {
+    "notificationId": {},
+    "to": {},
+    "about": {},
+    "template": {},
+    "text": {},
+    "ref": {},
+    "sentAt": {}
+   }
+  }
+ }
+}

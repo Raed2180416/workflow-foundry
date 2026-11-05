@@ -22,3 +22,5 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .error { color: var(--bad); }
 @media (max-width: 600px) { table { font-size: 13px; } th:nth-child(4), td:nth-child(4) { display: none; } }
+ul.conds { list-style: none; padding: 0; margin: 6px 0; } li.cond { border-top: 1px solid var(--line); padding: 8px 0; } li.cond p { margin: 2px 0; }
+.asked input[type=text] { flex: 1 1 260px; font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }

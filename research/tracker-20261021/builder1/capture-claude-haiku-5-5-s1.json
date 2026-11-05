@@ -1,0 +1,2342 @@
+{
+ "method": "model",
+ "prompt": "tracker-capture/1",
+ "model": "claude-haiku-5-5",
+ "sample": 1,
+ "cases": {
+  "W1": [
+   {
+    "id": "C-001",
+    "quote": "every friday i have to send my manager",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 7,
+     "end": 45
+    },
+    "summary": "The rundown is sent every Friday.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A schedule can only be confirmed over multiple weeks, not by one practice run.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "send my manager (priya.n@kestrel-labs.io) a quick rundown",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 30,
+     "end": 87
+    },
+    "summary": "The rundown is sent to priya.n@kestrel-labs.io.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "a quick rundown of what the design team actually finished that week",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 72,
+     "end": 139
+    },
+    "summary": "The rundown covers only work the design team actually finished that week.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "its all in our tracker",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 141,
+     "end": 163
+    },
+    "summary": "The rundown's content is drawn from the team's tracker.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "a quick rundown",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 72,
+     "end": 87
+    },
+    "summary": "The rundown should be brief.",
+    "kind": "style",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "'Quick' is a vague length wish with no defined limit.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "nothing fancy pls",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 165,
+     "end": 182
+    },
+    "summary": "The rundown should be plain, without elaborate formatting or extras.",
+    "kind": "style",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "'Nothing fancy' is a subjective tone and style preference.",
+    "check": null,
+    "missing": []
+   }
+  ],
+  "W2": [
+   {
+    "id": "C-001",
+    "quote": "can u set up the weekly status thing for the Mobile squad??",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 59
+    },
+    "summary": "The automation should be set up as a weekly status report for the Mobile squad.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Whether it is set up weekly is a schedule that one practice run cannot confirm.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "it should list whats done",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 60,
+     "end": 85
+    },
+    "summary": "The report should list what is done.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "AND whats still open",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 86,
+     "end": 106
+    },
+    "summary": "The report should list what is still open.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "+ whats blocked so the boss can see where were stuck",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 107,
+     "end": 159
+    },
+    "summary": "The report should list what is blocked, so the boss can see where the squad is stuck.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "send it to me i guess, tom@ortega-apps.co",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 161,
+     "end": 202
+    },
+    "summary": "The report should be sent to tom@ortega-apps.co.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "W3": [
+   {
+    "id": "C-001",
+    "quote": "weekly report pls",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 17
+    },
+    "summary": "The output is a weekly report.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "weekly report pls",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 17
+    },
+    "summary": "The report is produced on a weekly cadence.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The weekly cadence is over time and cannot be confirmed from one practice run.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "Platform team",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 19,
+     "end": 32
+    },
+    "summary": "The report covers the Platform team.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "the usual",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 34,
+     "end": 43
+    },
+    "summary": "The report follows the usual format and contents from previous reports.",
+    "kind": "style",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The usual format is not described in the conversation, so a run cannot be compared against it.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "Send it to our CTO, maya@brightfold.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 39
+    },
+    "summary": "The report is sent to maya@brightfold.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "I1": [
+   {
+    "id": "C-001",
+    "quote": "can you chase everyone who still owes us money?",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 47
+    },
+    "summary": "Send payment chasers to every customer who still owes money.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "its all in the invoices sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 48,
+     "end": 77
+    },
+    "summary": "The invoices sheet is the source of truth for who owes what.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "start nice",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 79,
+     "end": 89
+    },
+    "summary": "The first chaser message to each customer should be polite and friendly.",
+    "kind": "style",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Politeness is a matter of tone and judgment; one run cannot objectively verify it.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "get firmer if they keep ignoring us",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 94,
+     "end": 129
+    },
+    "summary": "If a customer does not respond to earlier chasers, later messages should be progressively firmer.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "sign it as Hannah @ Little Fern Bakery",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 131,
+     "end": 169
+    },
+    "summary": "Every message is signed as \"Hannah @ Little Fern Bakery\".",
+    "kind": "style",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "fyi a couple of customers are arguing about their bills rn",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 172,
+     "end": 230
+    },
+    "summary": "Customers with disputed bills are sensitive; the user implies they should be handled with care, though which customers and how is not specified.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The disputed customers are not named and no handling rule is given, so a run cannot check a specific behaviour.",
+    "check": null,
+    "missing": []
+   }
+  ],
+  "I2": [
+   {
+    "id": "C-001",
+    "quote": "Our invoices are net 30",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 23
+    },
+    "summary": "Invoice due dates are 30 days after issue, so overdue time is counted from day 30.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "I want ONE polite reminder",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 53,
+     "end": 79
+    },
+    "summary": "Each overdue invoice gets exactly one reminder.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "once an invoice is 10 days overdue",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 80,
+     "end": 114
+    },
+    "summary": "The reminder is sent once an invoice is 10 days past its net 30 due date.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "nothing after that",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 116,
+     "end": 134
+    },
+    "summary": "No further reminders are sent after the first one for an invoice.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "polite reminder",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 64,
+     "end": 79
+    },
+    "summary": "The reminder message is polite in tone.",
+    "kind": "style",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Politeness is a matter of tone and cannot be verified by a single run beyond subjective reading.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "no threats lol",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 136,
+     "end": 150
+    },
+    "summary": "The reminder message must contain no threats.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-007",
+    "quote": "Sign off as Verdant Studio",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 224,
+     "end": 250
+    },
+    "summary": "The reminder message is signed with the name Verdant Studio.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-008",
+    "quote": "email me a list of who got reminded - accounts@verdant-studio.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 157,
+     "end": 222
+    },
+    "summary": "A list of every customer who received a reminder is emailed to accounts@verdant-studio.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "I3": [
+   {
+    "id": "C-001",
+    "quote": "set up the overdue invoice reminders",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 36
+    },
+    "summary": "The automation must send reminders for overdue invoices.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "7 / 21 / 45 days",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 38,
+     "end": 54
+    },
+    "summary": "Reminders must be sent at 7, 21, and 45 days overdue.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "send me a summary too",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 56,
+     "end": 77
+    },
+    "summary": "A summary must also be sent to the user, in addition to the reminders.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "ops@quill-and-ink.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 21
+    },
+    "summary": "The summary must be sent to ops@quill-and-ink.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "L1": [
+   {
+    "id": "C-001",
+    "quote": "new leads from the website form need to go to the right person.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 63
+    },
+    "summary": "Each new lead from the website form must be routed to the person responsible for its region.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "anything from europe (EMEA) goes to dana@peakline.io",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 64,
+     "end": 116
+    },
+    "summary": "Leads from Europe (EMEA) must be sent to dana@peakline.io.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "US/canada (NA) to marcus@peakline.io",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 118,
+     "end": 154
+    },
+    "summary": "Leads from the US or Canada (NA) must be sent to marcus@peakline.io.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "everything else to me - jo@peakline.io",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 156,
+     "end": 194
+    },
+    "summary": "Leads from any region other than EMEA or NA must be sent to jo@peakline.io.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "dont email the leads themselves, our reps do that",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 196,
+     "end": 245
+    },
+    "summary": "The automation must not email the leads themselves; only the internal routing emails are sent.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "L2": [
+   {
+    "id": "C-001",
+    "quote": "Big companies (500+ employees) go straight to our enterprise guy Raj, raj@tallyhq.com.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 33,
+     "end": 119
+    },
+    "summary": "Inbound leads from companies with 500+ employees are routed directly to Raj at raj@tallyhq.com.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "Referals go to Sofia sofia@tallyhq.com.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 120,
+     "end": 159
+    },
+    "summary": "Referral leads are routed to Sofia at sofia@tallyhq.com.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "everything else to the shared inbox sales@tallyhq.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 160,
+     "end": 213
+    },
+    "summary": "All other inbound leads are routed to the shared inbox sales@tallyhq.com.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "go straight to",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 64,
+     "end": 78
+    },
+    "summary": "Big-company leads go directly to Raj, not through Sofia or the shared inbox first.",
+    "kind": "order",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "L3": [
+   {
+    "id": "C-001",
+    "quote": "leads should go to whoever covers that country.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 47
+    },
+    "summary": "Each lead is routed to the person who covers the lead's country.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "Germany & Austria -> Lena",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 48,
+     "end": 73
+    },
+    "summary": "Leads from Germany or Austria go to Lena.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "France -> Paul",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 75,
+     "end": 89
+    },
+    "summary": "Leads from France go to Paul.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "anyone else -> me",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 91,
+     "end": 108
+    },
+    "summary": "Leads from any other country go to the user (Kai).",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "Lena is lena@brook-tools.de",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 27
+    },
+    "summary": "Lena's address is lena@brook-tools.de.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "Paul is paul@brook-tools.de.",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 32,
+     "end": 60
+    },
+    "summary": "Paul's address is paul@brook-tools.de.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-007",
+    "quote": "Me: kai@brook-tools.de",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 22
+    },
+    "summary": "The user's address, used for 'me' and as the fallback recipient, is kai@brook-tools.de.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-008",
+    "quote": "Germany & Austria -> Lena, France -> Paul, anyone else -> me.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 48,
+     "end": 109
+    },
+    "summary": "Implied: Germany/Austria leads go only to Lena, France leads only to Paul, and other leads only to Kai, not to multiple people.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "S1": [
+   {
+    "id": "C-001",
+    "quote": "if a ticket asks about shipping just reply that orders ship in 2-3 business days and they get a tracking link by email",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 43,
+     "end": 161
+    },
+    "summary": "For shipping-related tickets, reply only with the statement that orders ship in 2-3 business days and the customer gets a tracking link by email.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "just reply that orders ship in 2-3 business days",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 75,
+     "end": 123
+    },
+    "summary": "The shipping reply should be limited to that message (\"just\"), with no other content added.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "password questions -> tell them to use 'forgot password' on the login page",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 163,
+     "end": 237
+    },
+    "summary": "For password questions, reply telling the customer to use the 'forgot password' option on the login page.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "everything else send to me (help@cobaltcandle.com)",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 239,
+     "end": 289
+    },
+    "summary": "All tickets that are neither shipping nor password questions are forwarded to help@cobaltcandle.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "S2": [
+   {
+    "id": "C-001",
+    "quote": "can you auto answer the easy support tickets?",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 45
+    },
+    "summary": "Automatically answer the easy support tickets.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Vague scope; 'easy' is not defined beyond the two listed topics, so it cannot be checked on its own.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "opening hours question -> we're open mon-sat 9-6",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 46,
+     "end": 94
+    },
+    "summary": "Opening-hours questions get the answer: open Monday to Saturday, 9 to 6.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "returns -> you can return anything within 30 days, just reply with your order number",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 96,
+     "end": 180
+    },
+    "summary": "Return questions get the answer: anything can be returned within 30 days, and the customer just replies with their order number.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "the rest goes to my support lead",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 182,
+     "end": 214
+    },
+    "summary": "Any ticket that is not an opening-hours or returns question goes to the support lead.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "That's Gwen, gwen@harbor-goods.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 34
+    },
+    "summary": "The support lead who receives escalated tickets is Gwen, at gwen@harbor-goods.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "S3": [
+   {
+    "id": "C-001",
+    "quote": "If someone asks for a copy of their invoice tell them its in their account under Billing > Invoices.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 28,
+     "end": 128
+    },
+    "summary": "When someone asks for a copy of their invoice, the auto-reply tells them it is in their account under Billing > Invoices.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "thats it for now",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 129,
+     "end": 145
+    },
+    "summary": "The invoice reply is the only specific auto-reply for now; no other canned replies are added.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "everything else goes to support@nimbusdesk.app",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 147,
+     "end": 193
+    },
+    "summary": "All tickets that are not invoice-copy requests are routed to support@nimbusdesk.app.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "Sign it Nimbus Support",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 195,
+     "end": 217
+    },
+    "summary": "Every auto-reply is signed \"Nimbus Support\".",
+    "kind": "style",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "E1": [
+   {
+    "id": "C-001",
+    "quote": "honestly just auto-approve the small expenses",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 45
+    },
+    "summary": "Expenses that count as small are auto-approved without a human reviewing them.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "anything up to $50 is fine",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 26
+    },
+    "summary": "The small-expense threshold is $50: expenses up to and including $50 are auto-approved.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "so i dont have to look at every coffee receipt",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 46,
+     "end": 92
+    },
+    "summary": "Expenses auto-approved under the threshold are not sent to the user for review.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "send the rest to me: finance@lumen-dental.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 98,
+     "end": 143
+    },
+    "summary": "Expenses above the $50 threshold are sent to finance@lumen-dental.com for review.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "E2": [
+   {
+    "id": "C-001",
+    "quote": "anything under 200 with a receipt can be approved automatically",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 31,
+     "end": 94
+    },
+    "summary": "Expenses under 200 that have a receipt are approved automatically.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "anything under 200 with a receipt",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 31,
+     "end": 64
+    },
+    "summary": "Expenses under 200 without a receipt are not approved automatically.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "anything bigger goes to my cofounder ines@parcelpoint.eu for sign off",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 96,
+     "end": 165
+    },
+    "summary": "Expenses of 200 or more are sent to ines@parcelpoint.eu for sign-off.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "let people know when theirs got approved",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 167,
+     "end": 207
+    },
+    "summary": "The person whose expense was approved is notified that it was approved.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "E3": [
+   {
+    "id": "C-001",
+    "quote": "up to 75 bucks is ok automatically",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 30,
+     "end": 64
+    },
+    "summary": "Expenses up to $75 are approved automatically.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "doesnt matter if they forgot the receipt for small stuff",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 66,
+     "end": 122
+    },
+    "summary": "Expenses up to $75 are approved automatically even if the receipt is missing.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "above that it needs an ok from someone",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 124,
+     "end": 162
+    },
+    "summary": "Expenses above $75 require approval from someone.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "our office manager, beth@gladwell-law.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 41
+    },
+    "summary": "The approver for expenses above $75 is the office manager, beth@gladwell-law.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "C1": [
+   {
+    "id": "C-001",
+    "quote": "make sure our newsletter list has everyone from the CRM on it",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 61
+    },
+    "summary": "After the run, every contact in the CRM must be on the newsletter list.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "send me a report of what changed",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 63,
+     "end": 95
+    },
+    "summary": "A report of the changes made to the newsletter list must be sent to the user.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "owner@saltandcedar.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 97,
+     "end": 119
+    },
+    "summary": "The change report must be sent to owner@saltandcedar.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "C2": [
+   {
+    "id": "C-001",
+    "quote": "can you sync just our paying customers (tagged customer in the crm) to the mailing list?",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 88
+    },
+    "summary": "Only contacts tagged 'customer' in the CRM are synced to the mailing list.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "just our paying customers",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 13,
+     "end": 38
+    },
+    "summary": "Only paying customers are synced; no other contacts are included.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "dont add the leads",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 89,
+     "end": 107
+    },
+    "summary": "Leads must not be added to the mailing list.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "report to me, ari@moss-and-moth.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 109,
+     "end": 144
+    },
+    "summary": "A report of the sync goes to ari@moss-and-moth.com.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "C3": [
+   {
+    "id": "C-001",
+    "quote": "I just want to know who's in our CRM but NOT on the newsletter list.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 68
+    },
+    "summary": "The output must list the people who are in the CRM but not on the newsletter list.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "dont change anything, just tell me",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 69,
+     "end": 103
+    },
+    "summary": "Do not modify the CRM or the newsletter list; only report the findings.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "send it to me at lee@harborlight.org",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 36
+    },
+    "summary": "The report must be sent to lee@harborlight.org.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "O1": [
+   {
+    "id": "C-001",
+    "quote": "every morning",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 13
+    },
+    "summary": "The summary runs once every morning.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A single practice run cannot show a recurring schedule.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "post a summary of unresolved alerts",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 14,
+     "end": 49
+    },
+    "summary": "The automation posts a summary containing only unresolved alerts.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "into #ops-alerts",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 68,
+     "end": 84
+    },
+    "summary": "The summary is posted into the #ops-alerts channel.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "from the last 24h",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 50,
+     "end": 67
+    },
+    "summary": "Only alerts from the last 24 hours are included.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "warnings and up",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 86,
+     "end": 101
+    },
+    "summary": "Alerts included are at warning severity or higher; lower-severity alerts are excluded.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "no paging",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 103,
+     "end": 112
+    },
+    "summary": "The automation must never page anyone.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "O2": [
+   {
+    "id": "C-001",
+    "quote": "post the overnight alerts (last 12 hours) to #oncall",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 52
+    },
+    "summary": "Post the alerts from the last 12 hours to the #oncall channel.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "only critical ones",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 54,
+     "end": 72
+    },
+    "summary": "Only critical alerts are posted; non-critical alerts are left out.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "if a critical one hasnt been acked by anyone",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 78,
+     "end": 122
+    },
+    "summary": "A critical alert that no one has acknowledged is the trigger for escalation.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "email pager@fennec.dev so it wakes someone up",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 123,
+     "end": 168
+    },
+    "summary": "For each unacknowledged critical alert, send an email to pager@fennec.dev so it pages someone.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "O3": [
+   {
+    "id": "C-001",
+    "quote": "send a daily digest of our monitoring alerts",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 8,
+     "end": 52
+    },
+    "summary": "The automation sends a digest, as a summary, of the team's monitoring alerts.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "daily digest",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 15,
+     "end": 27
+    },
+    "summary": "The digest is sent once per day.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A schedule can only be confirmed by observing it run over multiple days, not in one practice run.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "to the team chat",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 53,
+     "end": 69
+    },
+    "summary": "The digest is sent to the team chat.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "#eng-alerts please",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 18
+    },
+    "summary": "The digest goes to the #eng-alerts channel specifically.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "N1": [
+   {
+    "id": "C-001",
+    "quote": "every friday",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 12
+    },
+    "summary": "The payments run every Friday.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A schedule describes recurring timing that one practice run cannot show.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "pay my contractors",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 13,
+     "end": 31
+    },
+    "summary": "The payments go to the user's contractors.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "what they're owed",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 32,
+     "end": 49
+    },
+    "summary": "Each contractor is paid the amount they are owed, not a different amount.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "from the hours in the timesheet sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 50,
+     "end": 87
+    },
+    "summary": "The amount owed is calculated from the hours recorded in the timesheet sheet.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-005",
+    "quote": "just send the money from our business account",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 89,
+     "end": 134
+    },
+    "summary": "The money is sent from the business account.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-006",
+    "quote": "automatically",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 135,
+     "end": 148
+    },
+    "summary": "Payments are sent automatically, without a manual confirmation or approval step.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "N2": [
+   {
+    "id": "C-001",
+    "quote": "post our new product photos to instagram and tiktok",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 51
+    },
+    "summary": "Product photos are posted to both Instagram and TikTok.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "our new product photos",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 5,
+     "end": 27
+    },
+    "summary": "Only the new product photos are posted, not other images.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "every morning at 9",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 52,
+     "end": 70
+    },
+    "summary": "Posting runs every morning at 9.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A recurring daily schedule cannot be confirmed by a single practice run.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-004",
+    "quote": "with the captions from my content sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 71,
+     "end": 110
+    },
+    "summary": "Each post's caption is taken from the user's content sheet.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ],
+  "N3": [
+   {
+    "id": "C-001",
+    "quote": "check my 3 competitors websites every day",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 41
+    },
+    "summary": "Check exactly 3 competitor websites once every day.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A schedule of daily frequency cannot be verified in a single practice run.",
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-002",
+    "quote": "3 competitors websites",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 9,
+     "end": 31
+    },
+    "summary": "The automation covers exactly three competitor websites.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   },
+   {
+    "id": "C-003",
+    "quote": "tell me if they drop their prices",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 46,
+     "end": 79
+    },
+    "summary": "Report to the user whenever a competitor's prices drop.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": []
+   }
+  ]
+ },
+ "dropped": {
+  "W1": [],
+  "W2": [],
+  "W3": [],
+  "I1": [],
+  "I2": [],
+  "I3": [],
+  "L1": [],
+  "L2": [],
+  "L3": [],
+  "S1": [],
+  "S2": [],
+  "S3": [],
+  "E1": [],
+  "E2": [],
+  "E3": [],
+  "C1": [],
+  "C2": [],
+  "C3": [],
+  "O1": [],
+  "O2": [],
+  "O3": [],
+  "N1": [],
+  "N2": [],
+  "N3": []
+ },
+ "calls": [
+  {
+   "case": "W1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 1286,
+   "cacheReadTokens": 3179,
+   "cacheWriteTokens": 1273,
+   "costUsd": 0.000834315,
+   "latencyMs": 9095
+  },
+  {
+   "case": "W2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 770,
+   "cacheReadTokens": 1419,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00044389,
+   "latencyMs": 6408
+  },
+  {
+   "case": "W3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 1189,
+   "cacheReadTokens": 1406,
+   "cacheWriteTokens": 355,
+   "costUsd": 0.000653135,
+   "latencyMs": 8538
+  },
+  {
+   "case": "I1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 1188,
+   "cacheReadTokens": 1433,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00065303,
+   "latencyMs": 8236
+  },
+  {
+   "case": "I2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 1175,
+   "cacheReadTokens": 1444,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00064664,
+   "latencyMs": 8894
+  },
+  {
+   "case": "I3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 767,
+   "cacheReadTokens": 1419,
+   "cacheWriteTokens": 355,
+   "costUsd": 0.000442265,
+   "latencyMs": 6626
+  },
+  {
+   "case": "L1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 728,
+   "cacheReadTokens": 1436,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00042306,
+   "latencyMs": 7743
+  },
+  {
+   "case": "L2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 1012,
+   "cacheReadTokens": 3232,
+   "cacheWriteTokens": 1033,
+   "costUsd": 0.000667845,
+   "latencyMs": 7955
+  },
+  {
+   "case": "L3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 1148,
+   "cacheReadTokens": 1486,
+   "cacheWriteTokens": 357,
+   "costUsd": 0.0006336849999999999,
+   "latencyMs": 7968
+  },
+  {
+   "case": "S1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 410,
+   "cacheReadTokens": 1443,
+   "cacheWriteTokens": 357,
+   "costUsd": 0.000264255,
+   "latencyMs": 6184
+  },
+  {
+   "case": "S2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 481,
+   "cacheReadTokens": 1461,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00029981,
+   "latencyMs": 4532
+  },
+  {
+   "case": "S3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 745,
+   "cacheReadTokens": 3210,
+   "cacheWriteTokens": 851,
+   "costUsd": 0.000511375,
+   "latencyMs": 6105
+  },
+  {
+   "case": "E1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 880,
+   "cacheReadTokens": 1438,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00049908,
+   "latencyMs": 8955
+  },
+  {
+   "case": "E2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 349,
+   "cacheReadTokens": 1417,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00023337000000000002,
+   "latencyMs": 4715
+  },
+  {
+   "case": "E3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 335,
+   "cacheReadTokens": 1445,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00022665,
+   "latencyMs": 4252
+  },
+  {
+   "case": "C1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 255,
+   "cacheReadTokens": 1390,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00018610000000000002,
+   "latencyMs": 4587
+  },
+  {
+   "case": "C2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 323,
+   "cacheReadTokens": 1400,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00022019999999999999,
+   "latencyMs": 5476
+  },
+  {
+   "case": "C3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 702,
+   "cacheReadTokens": 1422,
+   "cacheWriteTokens": 355,
+   "costUsd": 0.000409795,
+   "latencyMs": 6134
+  },
+  {
+   "case": "O1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 619,
+   "cacheReadTokens": 1388,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00036808,
+   "latencyMs": 5528
+  },
+  {
+   "case": "O2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 353,
+   "cacheReadTokens": 1412,
+   "cacheWriteTokens": 355,
+   "costUsd": 0.00023519500000000003,
+   "latencyMs": 4365
+  },
+  {
+   "case": "O3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 610,
+   "cacheReadTokens": 1402,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00036372,
+   "latencyMs": 6539
+  },
+  {
+   "case": "N1",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 691,
+   "cacheReadTokens": 1388,
+   "cacheWriteTokens": 355,
+   "costUsd": 0.000403955,
+   "latencyMs": 6015
+  },
+  {
+   "case": "N2",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 637,
+   "cacheReadTokens": 1381,
+   "cacheWriteTokens": 357,
+   "costUsd": 0.000377135,
+   "latencyMs": 6892
+  },
+  {
+   "case": "N3",
+   "nodeKey": "capture",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 245,
+   "cacheReadTokens": 1372,
+   "cacheWriteTokens": 356,
+   "costUsd": 0.00018092,
+   "latencyMs": 4084
+  }
+ ],
+ "costUsd": 0.010177
+}

@@ -1,0 +1,625 @@
+{
+ "arm": "B0-H2+repair-none",
+ "case": "HL1",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.0051619349999999994,
+  "tokens": 5999,
+  "inputTokens": 2,
+  "outputTokens": 5997,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.0051619349999999994,
+   "inputTokens": 2,
+   "outputTokens": 5997
+  }
+ ],
+ "builderWallMs": 24260,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "lead-routing",
+  "version": 2,
+  "title": "Route new website leads and log assignments",
+  "goal": "Read new website leads. Assign every California lead (region California or CA) to Marcus. Assign every lead with more than 200 employees to Priya, regardless of region. Assign every other non-California lead (200 or fewer employees, or missing companySize) to Priya. A California lead over 200 employees gets two log rows, one for Marcus and one for Priya. Append one lead-log row per assignment and verify the rows.",
+  "domain": "sales",
+  "envelope": {
+   "assumptions": [
+    "'send to' means record the assignment in lead-log; no outbound e-mail or chat is sent.",
+    "California is identified by region equal to 'California' or 'CA' (case-insensitive).",
+    "Leads with status 'new' are the only ones routed.",
+    "A lead over 200 employees in California gets two log rows: one for Marcus and one for Priya.",
+    "Non-California leads with a missing companySize go to Priya, since the request says 'else send to priya'."
+   ],
+   "risks": [
+    "Region values spelled differently (e.g. 'Calif.') will not match and will go to Priya.",
+    "Non-California leads with a missing companySize are logged to Priya and should be reviewed."
+   ],
+   "successCriteria": [
+    "Every new lead is logged to lead-log for the correct assignee.",
+    "The lead-log rows written by this run pass the independent sheet audit."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 50,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all leads.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_leads",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Keep only new leads.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "ca_leads",
+    "kind": "task",
+    "needs": [
+     "new_leads"
+    ],
+    "description": "New leads in California (any size).",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.new_leads.rows"
+     },
+     "where": [
+      {
+       "field": "region",
+       "op": "in",
+       "value": [
+        "California",
+        "CA"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "route_other",
+    "kind": "task",
+    "needs": [
+     "new_leads"
+    ],
+    "description": "Mark new leads that are California or over 200 employees as skipped for the Priya non-California branch.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.new_leads.rows"
+     },
+     "rules": [
+      {
+       "field": "companySize",
+       "op": "gt",
+       "value": 200,
+       "set": {
+        "skip": true
+       }
+      },
+      {
+       "field": "region",
+       "op": "in",
+       "value": [
+        "California",
+        "CA"
+       ],
+       "set": {
+        "skip": true
+       }
+      }
+     ],
+     "otherwise": {
+      "skip": false
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "other_leads",
+    "kind": "task",
+    "needs": [
+     "route_other"
+    ],
+    "description": "Non-California leads that are not over 200 employees (includes missing companySize).",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route_other.rows"
+     },
+     "where": [
+      {
+       "field": "skip",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "big_leads",
+    "kind": "task",
+    "needs": [
+     "new_leads"
+    ],
+    "description": "New leads with more than 200 employees, any region.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.new_leads.rows"
+     },
+     "where": [
+      {
+       "field": "companySize",
+       "op": "gt",
+       "value": 200
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "marcus_rows",
+    "kind": "task",
+    "needs": [
+     "ca_leads"
+    ],
+    "description": "Log rows for Marcus.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.ca_leads.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company"
+     ],
+     "set": {
+      "assignTo": "Marcus",
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "priya_rows_a",
+    "kind": "task",
+    "needs": [
+     "other_leads"
+    ],
+    "description": "Log rows for Priya (non-California, not over 200).",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.other_leads.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company"
+     ],
+     "set": {
+      "assignTo": "Priya",
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "priya_rows_b",
+    "kind": "task",
+    "needs": [
+     "big_leads"
+    ],
+    "description": "Log rows for Priya (over 200 employees, any region).",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.big_leads.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company"
+     ],
+     "set": {
+      "assignTo": "Priya",
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "append_marcus",
+    "kind": "task",
+    "needs": [
+     "marcus_rows"
+    ],
+    "description": "Append Marcus assignments to lead-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.marcus_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_priya_a",
+    "kind": "task",
+    "needs": [
+     "priya_rows_a"
+    ],
+    "description": "Append Priya assignments (non-California, not over 200) to lead-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.priya_rows_a.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_priya_b",
+    "kind": "task",
+    "needs": [
+     "priya_rows_b"
+    ],
+    "description": "Append Priya assignments (over 200 employees) to lead-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.priya_rows_b.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "verify_marcus",
+    "kind": "verify",
+    "needs": [
+     "append_marcus"
+    ],
+    "description": "Independently verify Marcus rows in lead-log.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.append_marcus.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_marcus"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "verify_priya_a",
+    "kind": "verify",
+    "needs": [
+     "append_priya_a"
+    ],
+    "description": "Independently verify non-California Priya rows in lead-log.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.append_priya_a.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_priya_a"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "verify_priya_b",
+    "kind": "verify",
+    "needs": [
+     "append_priya_b"
+    ],
+    "description": "Independently verify over-200 Priya rows in lead-log.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.append_priya_b.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_priya_b"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_marcus.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_priya_a.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_priya_b.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "inconclusive",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "VERIFY_FAILED",
+   "message": "verify_marcus: gate verification failed (score 0)"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "Marcus",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Oakland Homes",
+      "email": "lena@oaklandhomes.example",
+      "name": "Lena Park"
+     },
+     {
+      "assignTo": "Marcus",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Golden Gate Farms",
+      "email": "ivy@goldengatefarms.example",
+      "name": "Ivy Chen"
+     },
+     {
+      "assignTo": "Priya",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Desert Sun HOA",
+      "email": "raj@desertsunhoa.example",
+      "name": "Raj Mehta"
+     },
+     {
+      "assignTo": "Priya",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Bayview Logistics",
+      "email": "tom@bayviewlogistics.example",
+      "name": "Tom Kwan"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair2-none/foundry-live-Ho0sSS",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead is logged to lead-log for the correct assignee.",
+    "exact": "the pass of “Independently verify Marcus rows in lead-log.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The lead-log rows written by this run pass the independent sheet audit.",
+    "exact": "the pass of “Independently verify non-California Priya rows in lead-log.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "the pass of “Independently verify over-200 Priya rows in lead-log.” equals true",
+    "exact": "the pass of “Independently verify over-200 Priya rows in lead-log.” equals true",
+    "passed": null
+   },
+   {
+    "id": "verify.verify_marcus",
+    "plain": "Independently verify Marcus rows in lead-log.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": false
+   },
+   {
+    "id": "verify.verify_priya_a",
+    "plain": "Independently verify non-California Priya rows in lead-log.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": false
+   },
+   {
+    "id": "verify.verify_priya_b",
+    "plain": "Independently verify over-200 Priya rows in lead-log.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Independently verify Marcus rows in lead-log."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict inconclusive): VERIFY_FAILED",
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Oakland Homes\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Desert Sun HOA\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Bayview Logistics\"",
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Golden Gate Farms\"",
+   "sheet lead-log: missing an expected item {\"email\":\"lena@oaklandhomes.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"raj@desertsunhoa.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"tom@bayviewlogistics.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"ivy@goldengatefarms.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Marcus\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Oakland Homes\",\"email\":\"lena@oaklandhomes.example\",\"name\":\"Lena Park\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Marcus\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Golden Gate Farms\",\"email\":\"ivy@goldengatefarms.example\",\"name\":\"Ivy Chen\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Priya\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Desert Sun HOA\",\"email\":\"raj@desertsunhoa.example\",\"name\":\"Raj Mehta\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Priya\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Bayview Logistics\",\"email\":\"tom@bayviewlogistics.example\",\"name\":\"Tom Kwan\"}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h2/HL1",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

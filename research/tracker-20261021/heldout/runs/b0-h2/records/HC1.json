@@ -1,0 +1,320 @@
+{
+ "arm": "B0-H",
+ "case": "HC1",
+ "expected": "contact-sync",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003568,
+  "tokens": 18770,
+  "inputTokens": 2,
+  "outputTokens": 3257,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 15511,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3257,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 15511,
+   "costUsd": 0.003567575,
+   "costUnknown": false,
+   "latencyMs": 14321,
+   "journalId": 1
+  }
+ ],
+ "builderWallMs": 14477,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "newsletter-crm-diff",
+  "version": 1,
+  "title": "Newsletter vs CRM diff (read-only)",
+  "goal": "Read the CRM and newsletter sheets, list CRM contacts that are not yet on the newsletter list, skipping anyone marked unsubscribed. Write the diff as an artifact. Do not append or change any sheet.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The 'crm' and 'newsletter' sheets are keyed by email.",
+    "Contacts with unsubscribed = true must not be added and are excluded from the diff."
+   ],
+   "risks": [
+    "Email case or spacing differences are handled by the reconcile key matching; malformed emails are not checked."
+   ],
+   "successCriteria": [
+    "A diff artifact lists every non-unsubscribed CRM contact whose email is absent from the newsletter sheet.",
+    "No sheet is written."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 10,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the CRM contact sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the newsletter mailing list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "drop_unsubscribed",
+    "kind": "task",
+    "needs": [
+     "read_crm"
+    ],
+    "description": "Keep only CRM contacts that have not unsubscribed.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_crm.rows"
+     },
+     "where": [
+      {
+       "field": "unsubscribed",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "diff",
+    "kind": "task",
+    "needs": [
+     "drop_unsubscribed",
+     "read_newsletter"
+    ],
+    "description": "Find active CRM contacts missing from the newsletter list (by email).",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.drop_unsubscribed.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_newsletter.rows"
+     },
+     "key": "email",
+     "compare": [
+      "name"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "render_diff",
+    "kind": "task",
+    "needs": [
+     "diff"
+    ],
+    "description": "Render the missing contacts as text lines.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.diff.missing"
+     },
+     "line": "{{email}} | {{name}} | {{company}}",
+     "empty": "No active CRM contacts are missing from the newsletter."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "save_diff",
+    "kind": "task",
+    "needs": [
+     "render_diff"
+    ],
+    "description": "Save the diff as a report artifact (no sheet changes).",
+    "tool": "core.artifact",
+    "args": {
+     "name": "newsletter-diff.txt",
+     "content": {
+      "$ref": "nodes.render_diff.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "exists",
+    "value": {
+     "$ref": "nodes.save_diff.sha256"
+    }
+   },
+   {
+    "op": "gte",
+    "left": {
+     "$ref": "nodes.diff.matched"
+    },
+    "right": 0
+   },
+   {
+    "op": "gte",
+    "left": {
+     "$ref": "nodes.render_diff.count"
+    },
+    "right": 0
+   }
+  ],
+  "oracle": {
+   "mode": "none",
+   "reason": "No independent oracle exists for a set difference between two local sheets; a person should spot-check the artifact against the two sheets before acting on it."
+  },
+  "metadata": {
+   "tags": [
+    "newsletter",
+    "crm",
+    "read-only"
+   ],
+   "rationale": "Read-only diff so the user can review who is missing before any sync; unsubscribed contacts are excluded and nothing is appended."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "unverified",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h2/foundry-live-EbQaBS",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "A diff artifact lists every non-unsubscribed CRM contact whose email is absent from the newsletter sheet.",
+    "exact": "the sha256 of “Save the diff as a report artifact (no sheet changes).” exists",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No sheet is written.",
+    "exact": "the matched of “Find active CRM contacts missing from the newsletter list (by email).” is at least 0",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "the count of “Render the missing contacts as text lines.” is at least 0",
+    "exact": "the count of “Render the missing contacts as text lines.” is at least 0",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended succeeded (verdict unverified)",
+   "outbox : missing a message to nadia@yogaflowstudio.com containing \"ben.k@quickpost.example\", \"devi@inbox.example\" without carla@sunmail.example"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ },
+ "rerun": {
+  "of": "b0-h",
+  "why": "PREREG-TRACKER-H2: the same writer through the identity-isolated claude-cli provider",
+  "hostIdentityOccurrences": 0
+ }
+}

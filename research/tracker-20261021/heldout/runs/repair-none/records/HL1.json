@@ -1,0 +1,405 @@
+{
+ "arm": "B0-H+repair-none",
+ "case": "HL1",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004482685,
+  "tokens": 4823,
+  "inputTokens": 2,
+  "outputTokens": 4821,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.004482685,
+   "inputTokens": 2,
+   "outputTokens": 4821
+  }
+ ],
+ "builderWallMs": 46129,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-website-leads",
+  "version": 2,
+  "title": "Route new website leads to Marcus or Priya and log assignments",
+  "goal": "Route each new website lead that is not yet in lead-log: companies over 200 employees go to Priya; otherwise leads in California go to Marcus; all others go to Priya. Record every new assignment in the lead-log sheet so re-runs never log the same lead twice.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Only leads with status 'new' are routed; contacted and spam leads are skipped.",
+    "Leads whose email already appears in lead-log are skipped, so re-runs do not duplicate assignments.",
+    "California is matched when region or country contains 'california', or region/country equals 'CA' (case-insensitive).",
+    "Assignment means recording the owner in lead-log; no e-mail or chat is sent.",
+    "companySize is a number of employees; a lead with company size over 200 goes to Priya even if in California.",
+    "The lead-log sheet already exists; if it is missing the run stops at the read step rather than logging blindly."
+   ],
+   "risks": [
+    "assignedAt is not filled per row because no capability can stamp a per-row timestamp; the lead-log row has no assignment time.",
+    "A lead with a missing or non-numeric companySize will not match the size rule and falls through to the California or default rule.",
+    "Leads whose region or country is spelled differently (for example 'Calif.') will not be recognised as California.",
+    "Duplicate detection is by email; two different leads sharing one email in the same run are both logged once each only if neither was logged before."
+   ],
+   "successCriteria": [
+    "Every new lead not already in lead-log appears in lead-log exactly once with the assignee chosen by the rules.",
+    "Leads already in lead-log are not appended again.",
+    "The appended row count matches the number of newly routed leads.",
+    "sheet.audit confirms the appended lead-log rows are present."
+   ]
+  },
+  "budget": {
+   "maxSteps": 10,
+   "maxConcurrency": 1,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all rows of the leads sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_leads",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Keep only leads with status new.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_log",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the existing lead-log rows so already-assigned leads are not logged again.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "lead-log"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unlogged",
+    "kind": "task",
+    "needs": [
+     "new_leads",
+     "read_log"
+    ],
+    "description": "Keep only new leads whose email is not already in lead-log.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.new_leads.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_log.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route_leads",
+    "kind": "task",
+    "needs": [
+     "unlogged"
+    ],
+    "description": "Label each unlogged new lead: size over 200 goes to Priya; California goes to Marcus; everyone else goes to Priya.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.unlogged.missing"
+     },
+     "rules": [
+      {
+       "field": "companySize",
+       "op": "gt",
+       "value": 200,
+       "set": {
+        "assignTo": "Priya"
+       }
+      },
+      {
+       "field": [
+        "region",
+        "country"
+       ],
+       "op": "contains",
+       "value": "california",
+       "set": {
+        "assignTo": "Marcus"
+       }
+      },
+      {
+       "field": [
+        "region",
+        "country"
+       ],
+       "op": "eq",
+       "value": "CA",
+       "set": {
+        "assignTo": "Marcus"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "Priya"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log_rows",
+    "kind": "task",
+    "needs": [
+     "route_leads"
+    ],
+    "description": "Build lead-log rows with name, email, company and assignee.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route_leads.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_log",
+    "kind": "task",
+    "needs": [
+     "log_rows"
+    ],
+    "description": "Append the new assignments to the lead-log sheet.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "verify_log",
+    "kind": "verify",
+    "needs": [
+     "append_log",
+     "log_rows"
+    ],
+    "description": "Independently confirm the appended lead-log rows are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log_rows.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_log.appended"
+    },
+    "right": {
+     "$ref": "nodes.log_rows.count"
+    }
+   }
+  ],
+  "metadata": {
+   "rationale": "Ordered rules make the size rule win over the California rule. Leads already present in lead-log (matched by email) are excluded first so repeated runs do not duplicate assignments. Assignments are only logged, not messaged.",
+   "tags": [
+    "leads",
+    "routing"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "harness_fault",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "SHEET_NOT_FOUND",
+   "message": "There is no sheet named lead-log"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-none/foundry-live-PkPNhc",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead not already in lead-log appears in lead-log exactly once with the assignee chosen by the rules.",
+    "exact": "the pass of “Independently confirm the appended lead-log rows are in the sheet.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Leads already in lead-log are not appended again.",
+    "exact": "the appended of “Append the new assignments to the lead-log sheet.” equals the count of “Build lead-log rows with name, email, company and assignee.”",
+    "passed": null
+   },
+   {
+    "id": "verify.verify_log",
+    "plain": "Independently confirm the appended lead-log rows are in the sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Read the existing lead-log rows so already-assigned leads are not logged again."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict harness_fault): SHEET_NOT_FOUND",
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Oakland Homes\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Desert Sun HOA\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Bayview Logistics\"",
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Golden Gate Farms\"",
+   "sheet lead-log: missing an expected item {\"email\":\"lena@oaklandhomes.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"raj@desertsunhoa.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"tom@bayviewlogistics.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"ivy@goldengatefarms.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HL1",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

@@ -1,0 +1,587 @@
+{
+ "arm": "B0-H2+repair-none",
+ "case": "HS1",
+ "expected": "support-deflection",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004942810000000001,
+  "tokens": 5431,
+  "inputTokens": 2,
+  "outputTokens": 5429,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.004942810000000001,
+   "inputTokens": 2,
+   "outputTokens": 5429
+  }
+ ],
+ "builderWallMs": 20022,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "ticket-refund-urgent-digest",
+  "version": 1,
+  "title": "Refund auto-reply, urgent ticket alert and morning digest",
+  "goal": "For open support tickets: send the standard refund reply to customers whose ticket mentions 'refund'; send urgent open tickets to zara@widgetly.app; send all other open tickets to zara in one morning digest; then verify every outgoing message in the outbox.",
+  "domain": "support",
+  "envelope": {
+   "assumptions": [
+    "Only tickets with status open are processed.",
+    "'Mentions refund' means the words 'refund' appear in the subject or body, ignoring case.",
+    "A refund ticket that is also urgent gets the refund reply and is also listed in the urgent alert to zara.",
+    "Urgent alert is one message to zara listing all urgent open tickets; the digest is one separate message to zara listing the other open tickets.",
+    "Tickets with no priority or a priority other than urgent count as 'everything else'.",
+    "The morning schedule is handled by whoever runs this flow each morning; the flow itself runs once per invocation.",
+    "Refund reply text is exactly the text supplied by the requester."
+   ],
+   "risks": [
+    "Each outbound message asks a person for approval before it is sent when run live.",
+    "Refund replies go to real customers; a wrong match on 'refund' would send an unneeded reply.",
+    "Sends are non-idempotent, so a failed run may need manual checking of the outbox.",
+    "An urgent alert and a digest are sent to zara even when a list is empty, which may be noise."
+   ],
+   "successCriteria": [
+    "Every open ticket mentioning 'refund' receives exactly one refund reply at its from address.",
+    "Urgent open tickets are listed in one message to zara@widgetly.app.",
+    "Other open tickets are listed in one digest message to zara@widgetly.app.",
+    "The outbox audit confirms recipients and message hashes for this run."
+   ]
+  },
+  "budget": {
+   "maxSteps": 1000,
+   "maxConcurrency": 1,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_tickets",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all ticket rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tickets"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_tickets",
+    "kind": "task",
+    "needs": [
+     "read_tickets"
+    ],
+    "description": "Keep only open tickets.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tickets.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "refund_tickets",
+    "kind": "task",
+    "needs": [
+     "open_tickets"
+    ],
+    "description": "Open tickets whose subject or body mentions refund.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_tickets.rows"
+     },
+     "where": [
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "refund"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "urgent_tickets",
+    "kind": "task",
+    "needs": [
+     "open_tickets"
+    ],
+    "description": "Open tickets with urgent priority.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_tickets.rows"
+     },
+     "where": [
+      {
+       "field": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "other_tickets",
+    "kind": "task",
+    "needs": [
+     "open_tickets"
+    ],
+    "description": "Open tickets that are not urgent and do not mention refund.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_tickets.rows"
+     },
+     "where": [
+      {
+       "field": "priority",
+       "op": "ne",
+       "value": "urgent"
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "not_contains",
+       "value": "refund"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "refund_replies",
+    "kind": "map",
+    "needs": [
+     "refund_tickets"
+    ],
+    "description": "Send the standard refund reply to each refund ticket's customer.",
+    "items": {
+     "$ref": "nodes.refund_tickets.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "send_refund",
+       "kind": "task",
+       "needs": [],
+       "description": "Send the standard refund reply to the ticket sender.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.from"
+        },
+        "subject": "Re: your refund request",
+        "body": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away."
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send_refund.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "refund_recipients",
+    "kind": "task",
+    "needs": [
+     "refund_tickets"
+    ],
+    "description": "List the customer addresses that should have received a refund reply.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.refund_tickets.rows"
+     },
+     "field": "from"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "urgent_lines",
+    "kind": "task",
+    "needs": [
+     "urgent_tickets"
+    ],
+    "description": "One line per urgent ticket.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.urgent_tickets.rows"
+     },
+     "line": "{{id}} from {{from}}: {{subject}}",
+     "empty": "No urgent tickets."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "urgent_body",
+    "kind": "task",
+    "needs": [
+     "urgent_lines"
+    ],
+    "description": "Build the urgent alert text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Urgent open tickets: {{count}}\n{{lines}}",
+     "variables": {
+      "count": {
+       "$ref": "nodes.urgent_lines.count"
+      },
+      "lines": {
+       "$ref": "nodes.urgent_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_urgent",
+    "kind": "task",
+    "needs": [
+     "urgent_body"
+    ],
+    "description": "Send the urgent alert to zara.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "zara@widgetly.app",
+     "subject": "Urgent open tickets",
+     "body": {
+      "$ref": "nodes.urgent_body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "digest_lines",
+    "kind": "task",
+    "needs": [
+     "other_tickets"
+    ],
+    "description": "One line per other open ticket.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.other_tickets.rows"
+     },
+     "line": "{{id}} from {{from}}: {{subject}}",
+     "empty": "No other open tickets."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest_body",
+    "kind": "task",
+    "needs": [
+     "digest_lines"
+    ],
+    "description": "Build the morning digest text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Morning digest of other open tickets: {{count}}\n{{lines}}",
+     "variables": {
+      "count": {
+       "$ref": "nodes.digest_lines.count"
+      },
+      "lines": {
+       "$ref": "nodes.digest_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_digest",
+    "kind": "task",
+    "needs": [
+     "digest_body"
+    ],
+    "description": "Send the morning digest to zara.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "zara@widgetly.app",
+     "subject": "Morning ticket digest",
+     "body": {
+      "$ref": "nodes.digest_body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_sends",
+    "kind": "verify",
+    "needs": [
+     "refund_replies",
+     "refund_recipients",
+     "send_urgent",
+     "send_digest"
+    ],
+    "description": "Independently re-read the outbox and check every message this run sent (refund replies, urgent alert, digest) against the expected recipients and hashes.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.refund_recipients.items"
+      },
+      "zara@widgetly.app",
+      "zara@widgetly.app"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_digest"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_sends.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_urgent.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_digest.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.refund_replies.count"
+    },
+    "right": {
+     "$ref": "nodes.refund_recipients.count"
+    }
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 4,
+   "approved": 4,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "max@shopper.example",
+     "subject": "Re: your refund request",
+     "body": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away."
+    },
+    {
+     "to": "zara@widgetly.app",
+     "subject": "Morning ticket digest",
+     "body": "Morning digest of other open tickets: 2\nWT-3 from liv@shopper.example: Where is my order?\nWT-4 from buyer@bigstore.example: Bulk discount?"
+    },
+    {
+     "to": "zara@widgetly.app",
+     "subject": "Urgent open tickets",
+     "body": "Urgent open tickets: 1\nWT-2 from max@shopper.example: Charged twice!!"
+    },
+    {
+     "to": "jo@shopper.example",
+     "subject": "Re: your refund request",
+     "body": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away."
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair2-none/foundry-live-PCbyfR",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open ticket mentioning 'refund' receives exactly one refund reply at its from address.",
+    "exact": "the pass of “Independently re-read the outbox and check every message this run sent (refund replies, urgent alert, digest) against the expected recipients and hashes.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Urgent open tickets are listed in one message to zara@widgetly.app.",
+    "exact": "the delivered of “Send the urgent alert to zara.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "Other open tickets are listed in one digest message to zara@widgetly.app.",
+    "exact": "the delivered of “Send the morning digest to zara.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "The outbox audit confirms recipients and message hashes for this run.",
+    "exact": "the count of “Send the standard refund reply to each refund ticket's customer.” equals the count of “List the customer addresses that should have received a refund reply.”",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_sends",
+    "plain": "Independently re-read the outbox and check every message this run sent (refund replies, urgent alert, digest) against the expected recipients and hashes.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to zara@widgetly.app containing one of [WT-2 | Charged twice], one of [WT-3 | Where is my order], one of [WT-4 | Bulk discount] without WT-1, WT-5",
+   "outbox : unexpected or wrong message to max@shopper.example (\"Re: your refund request\")",
+   "outbox : unexpected or wrong message to zara@widgetly.app (\"Morning ticket digest\")",
+   "outbox : unexpected or wrong message to zara@widgetly.app (\"Urgent open tickets\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h2/HS1",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

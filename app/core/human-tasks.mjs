@@ -206,6 +206,10 @@ async function continueRun(app, runId, { waitMs = 1000, resume = {} } = {}) {
   return holder ? { outcome: 'waiting', code: null, words: 'It continues when the steps it is working on finish.' } : { outcome: 'running', code: null, words: 'It is running.' };
 }
 
+// The run's status after a person's answer or decision; a run that ended also carries the condition tracker's live check (FoundryApp's
+// narrow hook, as for run and decideAction), so a resumed run reports what of the person's conditions it broke.
+const statusWithConditions = async (app, runId) => { const s = app.status({ runId }); return typeof app.withConditions === 'function' ? app.withConditions(s) : s; };
+
 /** A person's answer to one question. `requestHash` is the hash of the human.requested event the person was shown (compare-and-swap).
  *  `waitMs`: how long the call may wait for the run's outcome (the run goes on in the background). */
 export async function answerQuestion(app, { runId, nodeKey, answer, requestHash, channel, actor = null, waitMs = 1000, resume = {} } = {}) {
@@ -224,7 +228,7 @@ export async function answerQuestion(app, { runId, nodeKey, answer, requestHash,
   // The engine validates the answer against the node's schema again and records human.answered (and, from engine v2, the actor and channel).
   app.foundry.runtime.answer(runId, nodeKey, answer, { actor, channel });
   const continued = await continueRun(app, runId, { waitMs, resume });
-  return { ok: true, runId, nodeKey, channel, continued, run: app.status({ runId }) };
+  return { ok: true, runId, nodeKey, channel, continued, run: await statusWithConditions(app, runId) };
 }
 
 /** A person's yes or no on one paused action. The approval id is a digest over the exact tool and arguments, so it binds what was shown. */
@@ -235,5 +239,5 @@ export async function decideApproval(app, { runId, approvalId, approved, channel
   if (run.approvals?.[approvalId]?.status !== 'pending') throw new FoundryError('APPROVAL_CONFLICT', 'That action is no longer waiting for a decision');
   app.foundry.runtime.approve(runId, approvalId, approved, 'user');
   const continued = approved ? await continueRun(app, runId, { waitMs, resume }) : { outcome: 'stopped', code: 'APPROVAL_REJECTED', words: 'You said no, so the run stopped.' };
-  return { ok: true, runId, approvalId, approved, channel, continued, run: app.status({ runId }) };
+  return { ok: true, runId, approvalId, approved, channel, continued, run: await statusWithConditions(app, runId) };
 }

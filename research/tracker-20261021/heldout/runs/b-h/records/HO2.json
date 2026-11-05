@@ -1,0 +1,736 @@
+{
+ "arm": "B-H",
+ "case": "HO2",
+ "expected": "oncall-digest",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": "oncall-digest",
+   "selection": {
+    "template": "oncall-digest",
+    "reason": "The main request is a scheduled summary of unresolved warning and critical alerts posted to a team chat channel, plus an optional e-mail page for unacknowledged critical alerts, which matches oncall-digest.",
+    "notCovered": [
+     "Scheduling at a specific time (9am) may need to be configured outside the template",
+     "Email goes to the requester, and the template's e-mail paging is for critical alerts nobody acknowledged, so the warning-level exclusion from email needs to be confirmed against the template's options"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "channel",
+     "slot": "channel",
+     "question": "Which chat channel should the digest go to? For example, #ops."
+    },
+    {
+     "id": "pageTo",
+     "slot": "pageTo",
+     "question": "Who should be paged about critical alerts? (one e-mail address)"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": "oncall-digest",
+   "selection": {
+    "template": "oncall-digest",
+    "reason": "The main ask is a scheduled 9am digest of unresolved warnings and criticals posted to a team chat channel (#it-oncall), with an email page only for unacknowledged critical alerts, which is exactly the oncall-digest template's optional paging feature.",
+    "notCovered": [
+     "The request says 'teams channel'; the template posts to a chat channel, and the stated channel is #it-oncall, so the target platform should be confirmed as matching the template's chat integration.",
+     "Warnings are included in the digest but never emailed, which the template's paging is designed to handle by only paging critical unacknowledged alerts."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "channel",
+   "slot": "channel",
+   "question": "Which chat channel should the digest go to? For example, #ops.",
+   "matched": [
+    "channel"
+   ],
+   "answer": "#it-oncall"
+  },
+  {
+   "turn": 0,
+   "id": "pageTo",
+   "slot": "pageTo",
+   "question": "Who should be paged about critical alerts? (one e-mail address)",
+   "matched": [
+    "pageTo"
+   ],
+   "answer": "n.okafor@stmaryshospital.org"
+  }
+ ],
+ "modelQuestions": [
+  {
+   "turn": 0,
+   "slot": "channel",
+   "question": "Which chat channel should the digest go to? For example, #ops."
+  }
+ ],
+ "answers": {
+  "channel": "#it-oncall",
+  "pageTo": "n.okafor@stmaryshospital.org"
+ },
+ "cost": {
+  "usd": 0.001787,
+  "tokens": 12078,
+  "inputTokens": 8,
+  "outputTokens": 2067,
+  "cacheReadTokens": 4332,
+  "cacheWriteTokens": 5671,
+  "calls": 4,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 256,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1664,
+   "costUsd": 0.00034431999999999996,
+   "costUnknown": false,
+   "latencyMs": 10498,
+   "journalId": 31
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 738,
+   "cacheReadTokens": 1354,
+   "cacheWriteTokens": 1127,
+   "costUsd": 0.0005236150000000001,
+   "costUnknown": false,
+   "latencyMs": 13649,
+   "journalId": 32
+  },
+  {
+   "turn": 1,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 427,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1709,
+   "costUsd": 0.000435445,
+   "costUnknown": false,
+   "latencyMs": 10778,
+   "journalId": 33
+  },
+  {
+   "turn": 1,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 646,
+   "cacheReadTokens": 1354,
+   "cacheWriteTokens": 1171,
+   "costUsd": 0.000483115,
+   "costUnknown": false,
+   "latencyMs": 12161,
+   "journalId": 34
+  }
+ ],
+ "builderWallMs": 48501,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "oncall-digest",
+ "slots": {
+  "channel": "#it-oncall",
+  "minSeverity": "warning",
+  "page": true,
+  "pageTo": "n.okafor@stmaryshospital.org",
+  "windowHours": 24
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "oncall-digest",
+  "version": 1,
+  "title": "On-call digest for #it-oncall",
+  "goal": "Each run, post one digest of the unresolved alerts of the last 24 hours (warning and above) to #it-oncall after a person approves the post.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The alerts sheet holds one row per alert with id, at, service, severity, message, acknowledged and resolved",
+    "The channel is a local file standing in for chat and the outbox stands in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Posting to the wrong channel",
+    "Missing a critical alert",
+    "Paging the wrong person or paging for nothing"
+   ],
+   "successCriteria": [
+    "One digest was posted to the channel you named",
+    "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)"
+   ],
+   "unsupported": [
+    "Fixing anything",
+    "Phone or SMS paging",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the alerts sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Work out how many hours ago each alert was raised",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "field": "at",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "hours",
+     "as": "hoursAgo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recent",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Keep unresolved alerts in the window at the chosen severity or above",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "hoursAgo",
+       "op": "lte",
+       "value": 24
+      },
+      {
+       "field": "hoursAgo",
+       "op": "gte",
+       "value": 0
+      },
+      {
+       "field": "resolved",
+       "op": "ne",
+       "value": true
+      },
+      {
+       "field": "severity",
+       "op": "in",
+       "value": [
+        "warning",
+        "critical"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "recent"
+    ],
+    "description": "List the alerts",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recent.rows"
+     },
+     "line": "- [{{severity}}] {{service}}: {{message}} (alert {{id}}, {{hoursAgo}}h ago, acknowledged: {{acknowledged}})",
+     "empty": "- nothing unresolved. A quiet shift."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "lines"
+    ],
+    "description": "Write the digest",
+    "tool": "core.template",
+    "args": {
+     "text": "On-call digest: {{n}} unresolved alert(s) in the last 24 hours (warning and above)\n{{lines}}",
+     "variables": {
+      "n": {
+       "$ref": "nodes.lines.count"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post",
+    "kind": "task",
+    "needs": [
+     "digest"
+    ],
+    "description": "Post the digest to #it-oncall (asks you first)",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#it-oncall",
+     "text": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "critical",
+    "kind": "task",
+    "needs": [
+     "recent"
+    ],
+    "description": "Critical alerts nobody acknowledged",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recent.rows"
+     },
+     "where": [
+      {
+       "field": "severity",
+       "op": "eq",
+       "value": "critical"
+      },
+      {
+       "field": "acknowledged",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pages",
+    "kind": "map",
+    "needs": [
+     "critical",
+     "post"
+    ],
+    "description": "Page n.okafor@stmaryshospital.org about each one",
+    "items": {
+     "$ref": "nodes.critical.rows"
+    },
+    "maxItems": 200,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the page",
+       "tool": "core.template",
+       "args": {
+        "text": "CRITICAL alert {{id}} on {{service}}: {{message}}\nRaised {{hours}}h ago and not acknowledged.",
+        "variables": {
+         "id": {
+          "$ref": "item.id"
+         },
+         "service": {
+          "$ref": "item.service"
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         },
+         "hours": {
+          "$ref": "item.hoursAgo"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject",
+       "tool": "core.template",
+       "args": {
+        "text": "Page: {{service}} critical (alert {{id}})",
+        "variables": {
+         "service": {
+          "$ref": "item.service"
+         },
+         "id": {
+          "$ref": "item.id"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the page (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": "n.okafor@stmaryshospital.org",
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "pageList",
+    "kind": "task",
+    "needs": [
+     "critical"
+    ],
+    "description": "One expected page per critical alert",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.critical.rows"
+     },
+     "fields": [
+      "id"
+     ],
+     "set": {
+      "to": "n.okafor@stmaryshospital.org"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pageExpected",
+    "kind": "task",
+    "needs": [
+     "pageList"
+    ],
+    "description": "Who should have been paged",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.pageList.rows"
+     },
+     "field": "to"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "chatAudit",
+    "kind": "verify",
+    "needs": [
+     "post"
+    ],
+    "description": "Re-read the channel: exactly one digest from this run, intact",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#it-oncall",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "mailAudit",
+    "kind": "verify",
+    "needs": [
+     "pages",
+     "pageExpected",
+     "post"
+    ],
+    "description": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.pageExpected.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.post.posted"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.chatAudit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.mailAudit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.pages.count"
+    },
+    "right": {
+     "$ref": "nodes.critical.count"
+    }
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P01 linear pipeline, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (messaging automations: schedules 44%, failure notification 15%)",
+    "app/core/templates/oncall-digest.json sha256 afa75d3e3383ace11cd449670ddd50672249841a86722860e8b6f293b7930486"
+   ],
+   "tags": [
+    "template:oncall-digest",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5)",
+    "slots:{\"channel\":\"#it-oncall\",\"minSeverity\":\"warning\",\"page\":true,\"pageTo\":\"n.okafor@stmaryshospital.org\",\"windowHours\":24}"
+   ],
+   "rationale": "Frontier-written template \"oncall-digest\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "n.okafor@stmaryshospital.org",
+     "subject": "Page: ehr critical (alert M-1)",
+     "body": "CRITICAL alert M-1 on ehr: EHR login failures\nRaised 1h ago and not acknowledged."
+    }
+   ],
+   "chat": {
+    "#it-oncall": [
+     "On-call digest: 3 unresolved alert(s) in the last 24 hours (warning and above)\n- [critical] ehr: EHR login failures (alert M-1, 1h ago, acknowledged: false)\n- [warning] pacs: PACS disk 88% (alert M-2, 8h ago, acknowledged: false)\n- [critical] pharmacy: Dispense queue slow (alert M-5, 3h ago, acknowledged: true)"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b-h/foundry-live-ds0KKP",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "One digest was posted to the channel you named",
+    "exact": "the posted of “Post the digest to #it-oncall (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)",
+    "exact": "the pass of “Re-read the channel: exactly one digest from this run, intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "exact": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "the count of “Page n.okafor@stmaryshospital.org about each one” equals the count of “Critical alerts nobody acknowledged”",
+    "exact": "the count of “Page n.okafor@stmaryshospital.org about each one” equals the count of “Critical alerts nobody acknowledged”",
+    "passed": true
+   },
+   {
+    "id": "verify.chatAudit",
+    "plain": "Re-read the channel: exactly one digest from this run, intact",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.mailAudit",
+    "plain": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to n.okafor@stmaryshospital.org containing \"Lab interface down\"",
+   "chat #it-oncall: missing an expected item containing \"EHR login failures\", \"PACS disk 88%\", \"Lab interface down\", \"Dispense queue slow\" without AP reboot, Printer offline",
+   "chat #it-oncall: unexpected or wrong item {\"text\":\"On-call digest: 3 unresolved alert(s) in the last 24 hours (warning and above)\\n- [critical] ehr: EHR login failures (alert M-1, 1h ago, acknowledged: "
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 2,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 2,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 4,
+  "slotChecksOk": 4
+ }
+}

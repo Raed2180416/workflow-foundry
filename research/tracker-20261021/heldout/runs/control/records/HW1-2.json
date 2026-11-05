@@ -1,0 +1,526 @@
+{
+ "arm": "CONTROL",
+ "case": "HW1",
+ "expected": "weekly-report",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "weekly-report",
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 0,
+  "unknown": 0
+ },
+ "callLog": [],
+ "builderWallMs": 0,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "weekly-report",
+ "slots": {
+  "team": "Summit Construction",
+  "recipient": "office@summitconstruction.com",
+  "listOpen": true,
+  "listBlocked": true
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "weekly-report-summit-construction",
+  "version": 1,
+  "title": "Weekly report for Summit Construction",
+  "goal": "Each run, count what Summit Construction finished in the tracker sheet, write a short report, save it, and e-mail it to office@summitconstruction.com after a person approves the send.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The tracker sheet in the workspace holds one row per item with a title, a status (done, open or blocked) and an owner",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Sending the report to the wrong person",
+    "A report that silently drops items"
+   ],
+   "successCriteria": [
+    "Every item has a status the report counts (done, open or blocked)",
+    "The report is saved",
+    "The report is delivered to the one recipient you named",
+    "What was delivered is exactly the saved report (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Running on a schedule by itself",
+    "Reading Jira, Linear or Asana directly",
+    "Sending to anyone other than the named recipient"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 60,
+   "maxConcurrency": 2,
+   "maxDurationMs": 120000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the tracker sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "done",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Pick the finished items",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "done"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Pick the open items",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Pick the blocked items",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "blocked"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unknown",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Find items whose status the report would not count (used by a check)",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "not_in",
+       "value": [
+        "done",
+        "open",
+        "blocked"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "count",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Count every item a second, independent way",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "count",
+     "values": {
+      "$ref": "nodes.read.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "doneLines",
+    "kind": "task",
+    "needs": [
+     "done"
+    ],
+    "description": "List the finished items",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.done.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "- nothing marked done"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "openLines",
+    "kind": "task",
+    "needs": [
+     "open"
+    ],
+    "description": "List the open items",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "- nothing open"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blockedLines",
+    "kind": "task",
+    "needs": [
+     "blocked"
+    ],
+    "description": "List the blocked items",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.blocked.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "- nothing blocked"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "compose",
+    "kind": "task",
+    "needs": [
+     "count",
+     "doneLines",
+     "openLines",
+     "blockedLines"
+    ],
+    "description": "Write the report text",
+    "tool": "core.template",
+    "args": {
+     "text": "Weekly report for Summit Construction\nReport date: {{now}}\n\nFinished {{done}} of {{total}} items. Still open: {{open}}. Blocked: {{blocked}}.\n\nFinished:\n{{doneLines}}\n\nStill open:\n{{openLines}}\n\nBlocked:\n{{blockedLines}}\n",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "done": {
+       "$ref": "nodes.doneLines.count"
+      },
+      "total": {
+       "$ref": "nodes.count.value"
+      },
+      "open": {
+       "$ref": "nodes.openLines.count"
+      },
+      "blocked": {
+       "$ref": "nodes.blockedLines.count"
+      },
+      "doneLines": {
+       "$ref": "nodes.doneLines.text"
+      },
+      "openLines": {
+       "$ref": "nodes.openLines.text"
+      },
+      "blockedLines": {
+       "$ref": "nodes.blockedLines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "save",
+    "kind": "task",
+    "needs": [
+     "compose"
+    ],
+    "description": "Save the report as weekly-report.md",
+    "tool": "core.artifact",
+    "args": {
+     "name": "weekly-report.md",
+     "content": {
+      "$ref": "nodes.compose.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "save"
+    ],
+    "description": "Send the report to office@summitconstruction.com (asks you first)",
+    "tool": "outbox.send",
+    "args": {
+     "to": "office@summitconstruction.com",
+     "subject": "Weekly report: Summit Construction",
+     "body": {
+      "$ref": "nodes.compose.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "confirm",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Re-read what was delivered and compare it with the saved report",
+    "method": "capability",
+    "tool": "outbox.check",
+    "args": {
+     "messageId": {
+      "$ref": "nodes.send.messageId"
+     },
+     "sha256": {
+      "$ref": "nodes.save.sha256"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.unknown.count"
+    },
+    "right": 0
+   },
+   {
+    "op": "exists",
+    "value": {
+     "$ref": "nodes.save.sha256"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.confirm.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "app/core/builder.mjs weeklyReportWorkflow (the stub's template)",
+    "experiments/library/cards/catalog.json P01 linear pipeline, P04 draft -> check -> deliver",
+    "app/core/templates/weekly-report.json sha256 dc550375f5f2deae2ca5529652feca574e2ba87d0f285ac8a2176da24ff902bb"
+   ],
+   "tags": [
+    "template:weekly-report",
+    "builder:control 2: wrong recipient",
+    "slots:{\"listBlocked\":true,\"listOpen\":true,\"recipient\":\"office@summitconstruction.com\",\"team\":\"Summit Construction\"}"
+   ],
+   "rationale": "Frontier-written template \"weekly-report\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1, adapted from the stub template in app/core/builder.mjs)). Slots filled by control 2: wrong recipient; every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "office@summitconstruction.com",
+     "subject": "Weekly report: Summit Construction",
+     "body": "Weekly report for Summit Construction\nReport date: 2026-10-30T16:00:00Z\n\nFinished 3 of 6 items. Still open: 2. Blocked: 1.\n\nFinished:\n- Pour foundation at Elm St (Gus)\n- Frame second floor at Oak Ave (Rita)\n- Order windows for Birch Ct (Gus)\n\nStill open:\n- Electrical rough-in at Oak Ave (Hal)\n- Final walkthrough at Maple Rd (Rita)\n\nBlocked:\n- City permit for Pine St (Hal)\n"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/control/foundry-live-C8cp2u",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every item has a status the report counts (done, open or blocked)",
+    "exact": "the count of “Find items whose status the report would not count (used by a check)” equals 0",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The report is saved",
+    "exact": "the sha256 of “Save the report as weekly-report.md” exists",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The report is delivered to the one recipient you named",
+    "exact": "the delivered of “Send the report to office@summitconstruction.com (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "What was delivered is exactly the saved report (checked by re-reading the outbox)",
+    "exact": "the pass of “Re-read what was delivered and compare it with the saved report” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.confirm",
+    "plain": "Re-read what was delivered and compare it with the saved report",
+    "exact": "outbox.check (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to rick@summitconstruction.com containing \"Pour foundation at Elm St\", \"Frame second floor at Oak Ave\", \"Order windows for Birch Ct\", \"Electrical rough-in at Oak Ave\", \"Final walkthrough at Maple Rd\", \"City permit for Pine St\"",
+   "outbox : unexpected or wrong message to office@summitconstruction.com (\"Weekly report: Summit Construction\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 3,
+  "slotChecksOk": 2
+ }
+}

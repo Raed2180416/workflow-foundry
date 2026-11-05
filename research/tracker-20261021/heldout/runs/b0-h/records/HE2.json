@@ -1,0 +1,521 @@
+{
+ "arm": "B0-H",
+ "case": "HE2",
+ "expected": "expense-approval",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "owen_email",
+     "slot": null,
+     "question": "What is Owen's email address? Claims that need his approval will be sent there (each send still asks you first)."
+    },
+    {
+     "id": "amount_100",
+     "slot": null,
+     "question": "A claim of exactly 100 is neither under nor over 100. Should exactly 100 go to Owen (my plan), or be auto-approved?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "owen_email",
+   "slot": null,
+   "question": "What is Owen's email address? Claims that need his approval will be sent there (each send still asks you first).",
+   "matched": [
+    "approver"
+   ],
+   "answer": "Owen is owen@evergreenlandscaping.co"
+  },
+  {
+   "turn": 0,
+   "id": "amount_100",
+   "slot": null,
+   "question": "A claim of exactly 100 is neither under nor over 100. Should exactly 100 go to Owen (my plan), or be auto-approved?",
+   "matched": [
+    "approver"
+   ],
+   "answer": "Owen is owen@evergreenlandscaping.co"
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "owen_email": "Owen is owen@evergreenlandscaping.co",
+  "amount_100": "Owen is owen@evergreenlandscaping.co"
+ },
+ "cost": {
+  "usd": 0.007863,
+  "tokens": 39729,
+  "inputTokens": 4,
+  "outputTokens": 8255,
+  "cacheReadTokens": 1730,
+  "cacheWriteTokens": 29740,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 1523,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14837,
+   "costUsd": 0.002624975,
+   "costUnknown": false,
+   "latencyMs": 10551,
+   "journalId": 8
+  },
+  {
+   "turn": 1,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 6732,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14903,
+   "costUsd": 0.005237725,
+   "costUnknown": false,
+   "latencyMs": 33579,
+   "journalId": 9
+  }
+ ],
+ "builderWallMs": 44333,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-claim-routing",
+  "version": 1,
+  "title": "Route expense claims: auto-approve small receipted claims, send the rest to Owen",
+  "goal": "Read submitted expense claims. Approve automatically claims under 100 that have a receipt (photo). Send every other submitted claim (100 or more, or no receipt) to Owen at owen@evergreenlandscaping.co in one summary email, and record one decision row per submitted claim in the expense-decisions sheet.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "'Under 100' means amount < 100; an amount of exactly 100 or more goes to Owen.",
+    "'Has a photo' means the expenses row has receipt = true.",
+    "Only rows with status 'submitted' are processed.",
+    "Amounts are in the same currency and are numbers.",
+    "Owen's address is owen@evergreenlandscaping.co, as the person stated."
+   ],
+   "risks": [
+    "outbox.send asks a person before dispatch, so the Owen email only goes out after approval.",
+    "Auto-approval only records the decision in expense-decisions; it does not change the expenses sheet status or pay anyone.",
+    "The 'at' timestamp is filled from the run input; if the reference does not resolve, the at field may be empty."
+   ],
+   "successCriteria": [
+    "Every submitted claim gets exactly one row in expense-decisions.",
+    "Claims under 100 with a receipt are marked approved; all others are marked waiting for approver.",
+    "Owen receives one summary email listing the claims waiting for approver, when there are any.",
+    "The sheet audit confirms the appended rows are in the expense-decisions file."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read every row of the expenses sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read_expenses"
+    ],
+    "description": "Keep only claims with status submitted.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Label each claim: waiting for approver if amount is 100 or more, or there is no receipt; otherwise approved.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "rules": [
+      {
+       "field": "amount",
+       "op": "gte",
+       "value": 100,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "amount 100 or more - sent to Owen"
+       }
+      },
+      {
+       "field": "receipt",
+       "op": "ne",
+       "value": true,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "no receipt - sent to Owen"
+       }
+      }
+     ],
+     "otherwise": {
+      "decision": "approved",
+      "reason": "under 100 with receipt - auto-approved"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decisions",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Shape each decision row for the expense-decisions sheet.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount",
+      "decision",
+      "reason"
+     ],
+     "set": {
+      "at": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_decisions",
+    "kind": "task",
+    "needs": [
+     "decisions"
+    ],
+    "description": "Record one decision row per submitted claim.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decisions.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "waiting",
+    "kind": "task",
+    "needs": [
+     "decisions"
+    ],
+    "description": "Keep only the claims waiting for Owen.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decisions.rows"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "waiting for approver"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "waiting"
+    ],
+    "description": "Build the text listing claims for Owen.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.waiting.rows"
+     },
+     "line": "{{id}} | {{employee}} | {{amount}} | {{reason}}",
+     "empty": "No expense claims are waiting for approval."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify_owen",
+    "kind": "task",
+    "needs": [
+     "digest"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.digest.count"
+     },
+     "right": 0
+    },
+    "description": "Send Owen one summary email of claims that need approval.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "owen@evergreenlandscaping.co",
+     "subject": "Expense claims waiting for your approval",
+     "body": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit_decisions",
+    "kind": "verify",
+    "needs": [
+     "append_decisions",
+     "submitted"
+    ],
+    "description": "Independently confirm the appended decision rows are in the expense-decisions sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_decisions.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_decisions"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_decisions.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_decisions.appended"
+    },
+    "right": {
+     "$ref": "nodes.submitted.count"
+    }
+   }
+  ],
+  "metadata": {
+   "rationale": "Rules come straight from the request: under 100 with a photo is auto-approved; over that, or with no receipt, goes to Owen; every decision is recorded in the expense-decisions sheet.",
+   "tags": [
+    "expenses",
+    "approval"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "owen@evergreenlandscaping.co",
+     "subject": "Expense claims waiting for your approval",
+     "body": "EG-3 | Luis Ortega | 180 | amount 100 or more - sent to Owen\nEG-4 | Dee Walsh | 40 | no receipt - sent to Owen"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 64.2,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "approved",
+      "employee": "Luis Ortega",
+      "id": "EG-1",
+      "reason": "under 100 with receipt - auto-approved"
+     },
+     {
+      "amount": 99,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "approved",
+      "employee": "Hana Kim",
+      "id": "EG-2",
+      "reason": "under 100 with receipt - auto-approved"
+     },
+     {
+      "amount": 180,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Luis Ortega",
+      "id": "EG-3",
+      "reason": "amount 100 or more - sent to Owen"
+     },
+     {
+      "amount": 40,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Dee Walsh",
+      "id": "EG-4",
+      "reason": "no receipt - sent to Owen"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h/foundry-live-8A6yeF",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim gets exactly one row in expense-decisions.",
+    "exact": "the pass of “Independently confirm the appended decision rows are in the expense-decisions sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Claims under 100 with a receipt are marked approved; all others are marked waiting for approver.",
+    "exact": "the appended of “Record one decision row per submitted claim.” equals the count of “Keep only claims with status submitted.”",
+    "passed": true
+   },
+   {
+    "id": "verify.audit_decisions",
+    "plain": "Independently confirm the appended decision rows are in the expense-decisions sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 1,
+  "questionsAsked": 2,
+  "personActions": 4,
+  "personActionsBeforeRun": 3,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

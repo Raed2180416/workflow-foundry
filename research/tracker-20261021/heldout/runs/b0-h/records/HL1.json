@@ -1,0 +1,388 @@
+{
+ "arm": "B0-H",
+ "case": "HL1",
+ "expected": "lead-triage",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003969,
+  "tokens": 19910,
+  "inputTokens": 2,
+  "outputTokens": 4213,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14830,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4213,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14830,
+   "costUsd": 0.0039691,
+   "costUnknown": false,
+   "latencyMs": 22115,
+   "journalId": 13
+  }
+ ],
+ "builderWallMs": 22141,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-website-leads",
+  "version": 1,
+  "title": "Route new website leads to Marcus or Priya and log assignments",
+  "goal": "Route each new website lead: companies over 200 employees go to Priya; otherwise leads in California go to Marcus; all others go to Priya. Record every assignment in the lead-log sheet.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Only leads with status 'new' are routed; contacted and spam leads are skipped.",
+    "California is matched when region or country contains 'california', or region/country equals 'CA' (case-insensitive).",
+    "Assignment means recording the owner in lead-log; no e-mail or chat is sent.",
+    "companySize is a number of employees; a lead with company size over 200 goes to Priya even if in California."
+   ],
+   "risks": [
+    "assignedAt is not filled per row because no capability can stamp a per-row timestamp; the lead-log row has no assignment time.",
+    "A lead with a missing or non-numeric companySize will not match the size rule and falls through to the California or default rule.",
+    "Leads whose region or country is spelled differently (for example 'Calif.') will not be recognised as California."
+   ],
+   "successCriteria": [
+    "Every new lead appears in lead-log exactly once with the assignee chosen by the rules.",
+    "The appended row count matches the number of routed leads.",
+    "sheet.audit confirms the appended lead-log rows are present."
+   ]
+  },
+  "budget": {
+   "maxSteps": 10,
+   "maxConcurrency": 1,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all rows of the leads sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_leads",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Keep only leads with status new.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route_leads",
+    "kind": "task",
+    "needs": [
+     "new_leads"
+    ],
+    "description": "Label each new lead: size over 200 goes to Priya; California goes to Marcus; everyone else goes to Priya.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.new_leads.rows"
+     },
+     "rules": [
+      {
+       "field": "companySize",
+       "op": "gt",
+       "value": 200,
+       "set": {
+        "assignTo": "Priya"
+       }
+      },
+      {
+       "field": [
+        "region",
+        "country"
+       ],
+       "op": "contains",
+       "value": "california",
+       "set": {
+        "assignTo": "Marcus"
+       }
+      },
+      {
+       "field": [
+        "region",
+        "country"
+       ],
+       "op": "eq",
+       "value": "CA",
+       "set": {
+        "assignTo": "Marcus"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "Priya"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log_rows",
+    "kind": "task",
+    "needs": [
+     "route_leads"
+    ],
+    "description": "Build lead-log rows with name, email, company and assignee.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route_leads.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_log",
+    "kind": "task",
+    "needs": [
+     "log_rows"
+    ],
+    "description": "Append the assignments to the lead-log sheet.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "verify_log",
+    "kind": "verify",
+    "needs": [
+     "append_log",
+     "log_rows"
+    ],
+    "description": "Independently confirm the appended lead-log rows are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log_rows.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_log.appended"
+    },
+    "right": {
+     "$ref": "nodes.log_rows.count"
+    }
+   }
+  ],
+  "metadata": {
+   "rationale": "Routing uses ordered rules so the size rule wins over the California rule, as the request implies. Assignments are only logged, not messaged.",
+   "tags": [
+    "leads",
+    "routing"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "Marcus",
+      "company": "Oakland Homes",
+      "email": "lena@oaklandhomes.example",
+      "name": "Lena Park"
+     },
+     {
+      "assignTo": "Priya",
+      "company": "Desert Sun HOA",
+      "email": "raj@desertsunhoa.example",
+      "name": "Raj Mehta"
+     },
+     {
+      "assignTo": "Priya",
+      "company": "Bayview Logistics",
+      "email": "tom@bayviewlogistics.example",
+      "name": "Tom Kwan"
+     },
+     {
+      "assignTo": "Marcus",
+      "company": "Golden Gate Farms",
+      "email": "ivy@goldengatefarms.example",
+      "name": "Ivy Chen"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h/foundry-live-2GXhgb",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead appears in lead-log exactly once with the assignee chosen by the rules.",
+    "exact": "the pass of “Independently confirm the appended lead-log rows are in the sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The appended row count matches the number of routed leads.",
+    "exact": "the appended of “Append the assignments to the lead-log sheet.” equals the count of “Build lead-log rows with name, email, company and assignee.”",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_log",
+    "plain": "Independently confirm the appended lead-log rows are in the sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Oakland Homes\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Desert Sun HOA\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Bayview Logistics\"",
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Golden Gate Farms\"",
+   "sheet lead-log: missing an expected item {\"email\":\"lena@oaklandhomes.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"raj@desertsunhoa.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"tom@bayviewlogistics.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"ivy@goldengatefarms.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Marcus\",\"company\":\"Oakland Homes\",\"email\":\"lena@oaklandhomes.example\",\"name\":\"Lena Park\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Priya\",\"company\":\"Desert Sun HOA\",\"email\":\"raj@desertsunhoa.example\",\"name\":\"Raj Mehta\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Priya\",\"company\":\"Bayview Logistics\",\"email\":\"tom@bayviewlogistics.example\",\"name\":\"Tom Kwan\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Marcus\",\"company\":\"Golden Gate Farms\",\"email\":\"ivy@goldengatefarms.example\",\"name\":\"Ivy Chen\"}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

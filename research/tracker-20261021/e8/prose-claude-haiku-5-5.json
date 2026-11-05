@@ -1,0 +1,4726 @@
+{
+ "model": "claude-haiku-5-5",
+ "builds": {
+  "b1lh-e8-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement about the spec; the automation has no behaviour to check against it."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement about the inputs; not an automation behaviour."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The automation only reads fields from messages and documents (ids, codes, decisions); it never executes text from them."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "Contract framing (case-tick); not an automation behaviour."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Platform retry behaviour; the automation does not implement retries itself, so nothing here shows it."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "Platform behaviour (only the final outcome is delivered); not shown by the automation or the run."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Permanent errors (retryable false) lead to failFulfilment without any re-issue; only invalid-args/field-renamed are re-sent."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Every keyed effect carries a key: orders setStatus/create/notify, billing, carrier, release, and per-item reserve keys."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Keys are deterministic per effect and repush() re-sends the stored key and args; emit guards prevent new keys for the same effect."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Keys are namespaced by effect kind, order, fulfilment, sku or status, so no key is reused for a different effect."
+    },
+    "C-011": {
+     "verdict": "cannot-tell",
+     "why": "Result timing is set by the platform; the run does not show when results arrive relative to emission."
+    },
+    "C-012": {
+     "verdict": "cannot-tell",
+     "why": "The automation never emits an effect with after:; nothing in it or the run exercises this."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "Placed orders, customer actions and carrier messages without a local instance are routed via merge or handled in place, per the routing code."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "merge is set only on the first tick of a message-started instance (handlePlaced, routeToOrder, routeCarrier) when another open instance exists."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "ctx.instances is used for merges and ctx.query('orders.fulfilments') for carrier routing."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is set to the normalised order id, or null when there is none."
+    },
+    "C-017": {
+     "verdict": "cannot-tell",
+     "why": "Local Amsterdam date is used for edition selection, but no schedule or calendar-based behaviour is shown in the run."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create carries orderId, customerId, placedAt, currency, items, fulfilments and totalMinor; statuses are set later via setStatus."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "inventory.allocate is read and its fulfilments drive the order record and amounts."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "inventory.reserve is sent as a batch with per-item keys, as the schema requires."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "The fraud verdict pass, review or reject is read and drives the branches."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "normaliseOrderId trims, strips leading #, and upper-cases for placed orders, customer actions, carrier routing and migration."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "A duplicate placed order is merged into the existing instance (R1.4) and does not start a second order; order counts in the run match one per order."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "carrierMeaning returns 'info' for any code not present in the table, and 'info' triggers nothing."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Status moves are rank-guarded, so an early delivered can set dispatched then completed and a later collected cannot move back; collectedAt keeps the earliest proof."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "handleCarrier returns when the fulfilment is terminal (completed, failed or cancelled), so messages about it change nothing."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "The late flag is never read; review answers are judged against the deadline (answer at or before the deadline counts)."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "restoreMigration handles a migration event as the first event and then processes the messages it carries."
+    },
+    "C-029": {
+     "verdict": "cannot-tell",
+     "why": "Migration resume logic exists (resumeProcessing, status branches), but the run contains no migration case to show it works."
+    },
+    "C-030": {
+     "verdict": "cannot-tell",
+     "why": "routeCarrier matches fulfilmentRef through ctx.query, but the query results and the orders.fulfilments shape are not shown in the run."
+    },
+    "C-031": {
+     "verdict": "cannot-tell",
+     "why": "Most rule windows are acted on when results or messages arrive; no timers guard the R4.2 reserve/charge/ship windows, and the run shows no timing."
+    },
+    "C-032": {
+     "verdict": "met",
+     "why": "Effects are emitted only on triggering events (allocation, verdicts, actions, timers, results); the run reports 0 refused outputs."
+    },
+    "C-033": {
+     "verdict": "cannot-tell",
+     "why": "allocate is emitted immediately on intake, but whether the 60-min window holds depends on platform latency, which the run does not show."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "computeAmounts adds the location fee only when location is not null."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor is the sum of fulfilment amountMinor values."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "Editions are discovered from rulebook/<dir>/edition.json, using id and effectiveFrom."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "pickEdition chooses the latest effectiveFrom on or before the local date of placedAt."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition is stored at intake and policy values (D, review hours) are read from placedAt's edition."
+    },
+    "C-039": {
+     "verdict": "cannot-tell",
+     "why": "Editions are discovered from published files, but the run does not show a newer edition appearing before its effectiveFrom."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A duplicate placed order is merged into the existing instance and gets no new effects."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check is emitted for every new order that is recorded."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "pass calls onCleared with state.placedAt, so the order is cleared at p."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "reject calls cancelOrder with reason fraud on the verdict tick, inside the window."
+    },
+    "C-044": {
+     "verdict": "met",
+     "why": "review opens exactly one fraudReview task on the verdict tick."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "The task has kind fraudReview, role fraudAnalyst, subject = orderId, and an answerSchema for approve or reject."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "The deadline is set once from the first review task; askReviewAgain keeps it."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "askReviewAgain opens a new task id for rejected, withdrawn or unusable answers and does not move the deadline."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve before the deadline calls onCleared with the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject before the deadline calls cancelOrder with reason fraud."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "A reviewDeadline timer at deadline+1 min cancels with fraud-review-timeout if nothing was decided."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "Once decided is set, later answers return early and change nothing."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "Answers without a decision value are unusable and trigger a new task."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "onCleared sets customerActionRequired, sends action-required, and sets the D timer for any order with an unavailable fulfilment."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D = placedAt + customerActionHours from the edition at placedAt."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "The first amend or cancel at or before D is counted; waiting is then cleared."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "After a counted action, waiting is false, so later actions are ignored."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "A counted amend sets unavailable fulfilments cancelled and then starts processing at the action time."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "An amend with no available fulfilment calls cancelOrder with reason nothing-available."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel calls cancelOrder with reason customer."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "A timer at D+1 min runs timeOut: fulfilments cancelled, order timedOut, order-timed-out sent."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout timer is set at D+1 min, not at D."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "An order with no unavailable fulfilment goes straight to startProcessing when cleared."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "startProcessing sets the order and each available fulfilment to processing on the ready tick."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "Reservations start only after the order is recorded and cleared; the order record is emitted first in the same tick."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "Reserve, then charge (on reserve result), then ship (on charge result), per fulfilment."
+    },
+    "C-066": {
+     "verdict": "cannot-tell",
+     "why": "Reserve is sent on the ready tick, but the 120-min window is not enforced by a timer and the run shows no timing."
+    },
+    "C-067": {
+     "verdict": "cannot-tell",
+     "why": "Partial batches resubmit only items matched by key; if outcomes lack keys, retry is empty and the code proceeds to charge anyway. The run does not show outcome shape."
+    },
+    "C-068": {
+     "verdict": "cannot-tell",
+     "why": "Charge is sent on reserve commit, but no timer checks the 120-min window and the run gives no timing."
+    },
+    "C-069": {
+     "verdict": "cannot-tell",
+     "why": "Ship is sent on charge commit, but no timer checks the 120-min window and the run gives no timing."
+    },
+    "C-070": {
+     "verdict": "cannot-tell",
+     "why": "Invalid-args and field-renamed errors are re-sent with the same key; correction happens only through conformArgs at emit. No corrected re-issue is shown in the run."
+    },
+    "C-071": {
+     "verdict": "unmet",
+     "why": "Charge: after 3 reissues an invalid-args 400 (permanent) falls into the failFulfilment branch. Reserve: after 5 attempts it fails too. An invalid request is thus treated as a fulfilment failure."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Collection schedule is not implemented in the automation (carrier-driven); nothing in the run shows collection times."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "collectionCutoffMinutes is not used; collection timing is left to the carrier, so the cutoff cannot be checked."
+    },
+    "C-074": {
+     "verdict": "met",
+     "why": "Customer cancels are gated on collectedAt (R6.2); carrier cancel is only sent for unshipped or uncollected fulfilments, and a collection report blocks customer cancels."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "A collected report sets the fulfilment dispatched."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "delivered sets dispatched (if not set) and then completed, with rank guards."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info produce no status change."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "collectionFailed sets collectionFailed and calls failFulfilment."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "checkOrderOutcome sets completed, failed or cancelled when every fulfilment is terminal, on the event that ended the last one."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "compensate cancels the shipment first, then refunds the charge, then releases reserved items."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "An unknown outcome counts as committed only if ctx.status shows committed; otherwise the same request is re-sent."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Compensation checks committed flags and emit guards keyed by effect, so no step is undone twice or when it did not commit."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "card-declined, collectionFailed and permanent non-invalid errors fail the fulfilment (invalid-args in charge is the exception, see C-071)."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "failFulfilment compensates, sets failed, and sends fulfilment-failed on the failure tick."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "Permanent errors are not re-sent; repush happens only for invalid-args or field-renamed."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "A failure only touches its own fulfilment; the order outcome is decided later by checkOrderOutcome."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "cancelOrder cancels non-terminal fulfilments, then the order, then sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "state.ready is set when processing starts and the cancel rules check it."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "A processing cancel counts only if collectedAt is absent or later than the cancel time."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted cancel sets stopped and cancelRequested."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "cancelOrder compensates each non-terminal fulfilment, sets it cancelled, sets the order cancelled and sends order-cancelled on the same tick."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "handleAfterStop compensates steps that commit after the stop."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "Once stopped, no new reserve, charge or carrier effects are emitted; in-flight results are only compensated."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "compensate emits carrier cancel immediately for a booked, uncollected shipment."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A refused processing cancel sends cancel-refused and changes nothing else."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "Cancels for orders already final return early."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "A cancel before clearance (review open) calls cancelOrder with reason customer; later review answers are ignored."
+    },
+    "C-098": {
+     "verdict": "cannot-tell",
+     "why": "The final records are the platform's state. The run shows matching counts of refunds, cancels and releases, but no record contents are given."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "setStatus refuses any move back in RANK or past a terminal status."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "Each status key is emitted once through the emit guard."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "A late or repeated message cannot lower a status because of the rank guard."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "notify's to is the email from master/customers.json (falls back to the id only if missing)."
+    },
+    "C-103": {
+     "verdict": "cannot-tell",
+     "why": "This is only the table header of §4.8, not a behaviour to check."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "notify keys are per order, template and about, so each notification is sent once."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "D is anchored at placedAt, not at the time customerActionRequired is set."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Acts at or before D count; the timeout timer is set at D+1 min."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "There is one review deadline, set from the first review task."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Amends with nothing unavailable and actions after D on a non-waiting order do nothing."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Once collectedAt is set, a cancel is refused and does not cancel the whole order."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend, state.ready is set and a later cancel goes through the processing path (R6.2)."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "Customer action and cancel stop the order before the R3.1 step or R4.1 processing where moot; the code's ordering allows this."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking the R3.1 step anyway is allowed, and the code does it on clearance."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "collectedAt uses reportedAt for collected, inTransit and delivered reports; the earliest proof counts."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Background about a prior application; not a requirement of the automation."
+    },
+    "C-115": {
+     "verdict": "cannot-tell",
+     "why": "Summary of the spec's intent; not a checkable behaviour on its own."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0154462,
+    "inputTokens": 33882,
+    "outputTokens": 22422,
+    "calls": 1
+   }
+  },
+  "b1lh-e8-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The automation implements the SPEC-E rules directly; no other work is performed."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "It reads rulebook editions, policy, fees, codes, master catalog and customers, and api schemas from ctx at run time."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Document and message text is parsed as data only; no text is acted on as an instruction."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "tick() handles one input per call with carry, events and instance, returning one output."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Effects are re-issued with the same key and args only on invalid-args or non-committed unknown outcomes; platform retries are not duplicated."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Outcomes are read from effect.result as final; status(key) is used only for unknown outcomes."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "permanent() marks retryable:false and declined errors; run1 returns fail for them without re-issue."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Every keyed op (orders, billing, carrier, notify, inventory release, reserve items) is emitted with a key."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Keys are derived from order and fulfilment ids and reused on every re-emit of the same effect."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Keys embed the effect kind (ch, sh, xs, rf, rl, reserve item, status, notify), so a key is never shared across effects."
+    },
+    "C-011": {
+     "verdict": "met",
+     "why": "Results are only read on a later tick (effect.result); state is not assumed before the result arrives."
+    },
+    "C-012": {
+     "verdict": "cannot-tell",
+     "why": "The automation never uses an after: option; ordering is enforced by settle() instead, which is not the platform's after mechanism."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "route() handles placed, action, carrier and migration first events and merges or closes others."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "On first tick of a message-started instance, returns merge into the open case or close."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "ctx.query is used to rebuild migrated orders and to find recorded orders and fulfilment owners."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is the normalised order id, or null when no order applies."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "isoAms formats all output times with the Europe/Amsterdam offset."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create args carry fulfilments with location; unavailable status follows the null location."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "inventory.allocate result is parsed into fulfilments with location, items and available."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "reserve is a batch per fulfilment with a per-item key on each item."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check is read once per order and its verdict is parsed."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "normId trims, strips leading #, and upper-cases order ids in routing and migration."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "A repeated placed order is merged into the open instance or closed when already recorded."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "codeMeaning falls back to info for codes not in the table."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Collection time keeps the minimum; a delivered report sets dispatched before completed."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "onCarrier returns early for final or cancelled fulfilments and for fulfilments with a cancel emitted."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "Answers are judged by rv.ans.t against rv.dl; the late flag is not read."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "Migration events rebuild state from orders, fulfilments, reservations, charges and shipments."
+    },
+    "C-029": {
+     "verdict": "met",
+     "why": "Rebuild maps existing statuses and marks committed steps so they are not re-issued."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "Carrier messages for pre-go-live shipments are matched to the order via orders.fulfilments by fulfilmentRef."
+    },
+    "C-031": {
+     "verdict": "met",
+     "why": "Customer, review and fulfilment-failure deadlines are computed inclusive as specified; forward-step windows are not checked (see C-066, C-068, C-069)."
+    },
+    "C-032": {
+     "verdict": "met",
+     "why": "Effects are emitted only from the rule that requires them; no extra emits seen in the logic."
+    },
+    "C-033": {
+     "verdict": "met",
+     "why": "allocate is read on the first tick and orders.create follows within the same instance flow."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "Fee is added only when location is not null."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor is the sum of all fulfilment amountMinor values."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "pickEdition reads each rulebook/<dir>/edition.json with id and effectiveFrom."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "pickEdition chooses the latest effectiveFrom on or before the placement date."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The chosen edition is stored in the carry and used for the order's life."
+    },
+    "C-039": {
+     "verdict": "cannot-tell",
+     "why": "Publication timing of editions is an input property not visible in the code or practice output."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A recorded order id on a new placed event closes without effects."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check is emitted for each new order."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass verdict calls clearOrder with the placement time."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "A reject verdict calls cancelOrder with reason fraud on the same tick."
+    },
+    "C-044": {
+     "verdict": "met",
+     "why": "A review verdict opens one fraudReview task on the same tick."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "Task has kind fraudReview, role fraudAnalyst, subject oid and an approve/reject answerSchema."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "Review deadline is set once when the first task opens; reask does not move it."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "A rejected, withdrawn or unusable answer sets reask and opens a new task id with the same deadline."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve at or before the deadline clears the order at the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject at or before the deadline cancels the order with reason fraud."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "After the deadline with no usable answer the order is cancelled with fraud-review-timeout and a wake-up is set at deadline+1 min."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "Once the order is ended, later answers are ignored."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "An answer without decision is marked unusable and triggers a re-ask."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "Unavailable fulfilments on clearing set customerActionRequired and send action-required immediately."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D is computed as placement time plus customerActionHours from the edition at p."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "Only actions with time at or before D are considered; the first amend or cancel counts."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "All due actions are marked used after the first counted one; later ones do nothing."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "amend cancels unavailable fulfilments and starts processing on the tick of the amend."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "amend with no available fulfilment calls cancelOrder with nothing-available."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel calls cancelOrder with reason customer."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "After D with no counted action, timeOut cancels fulfilments, sets timedOut and sends order-timed-out; a wake-up is set at D+1 min."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "timeOut runs only when now is after D, not at D."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "An order with no unavailable fulfilment goes straight to startProcessing when cleared."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "startProcessing sets the order and available fulfilments to processing on the same tick."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "No status or reservation effect is emitted before the order is recorded."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "forward() runs reserve, then charge, then ship, each gated on the previous settle."
+    },
+    "C-066": {
+     "verdict": "cannot-tell",
+     "why": "Reserve is emitted on the tick after ready, but no check enforces the 120-minute window and no wake-up exists for it."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "Partial batch items are tracked by key and only the failed items are resubmitted with the same keys."
+    },
+    "C-068": {
+     "verdict": "cannot-tell",
+     "why": "Charge follows reservation commit on the next tick; the 120-minute window is not checked or scheduled."
+    },
+    "C-069": {
+     "verdict": "cannot-tell",
+     "why": "Ship follows charge commit on the next tick; the 120-minute window is not checked or scheduled."
+    },
+    "C-070": {
+     "verdict": "met",
+     "why": "run1 and stepReserve re-issue an invalid-args effect with the same key instead of failing it."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "invalidArgs errors are excluded from fail paths in run1 and stepReserve."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Carrier collection schedule is not modelled by the automation and no collection times appear in the practice output."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "collectionCutoffMinutes is not used by the automation; it depends on carrier collection timing not shown."
+    },
+    "C-074": {
+     "verdict": "unmet",
+     "why": "carrier.cancel refused with already-collected is not handled: compensate proceeds to refund and release and marks the fulfilment cancelled even though the shipment was collected."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "collected sets the fulfilment dispatched via setFul on the message tick."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "delivered sets dispatched then completed in order."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info produce no status change."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "collectionFailed calls failFul, triggering compensation and fulfilment-failed."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "advance() sets the order status once when all fulfilments are final, with completed/failed/cancelled precedence."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "compensate runs shipment cancel, then refund, then releases in that order."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "settle() counts an unknown outcome as committed only when status(key) reports committed."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Each compensation step is emitted once under its own key and not re-emitted if committed or pending."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "A declined charge, collectionFailed, or permanent non-invalid error fails the fulfilment."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "failFul compensates, sets failed and sends fulfilment-failed on the same tick as the failure."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "A permanently failed step is not re-issued."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "failFul affects only its own fulfilment."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "cancelOrder cancels open fulfilments, sets the order cancelled and sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "Processing begins at startProcessing and ends at order end; cancels in proc phase are handled under R6.2."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "collectedBy compares collection time with the cancel time, with collection at the same instant winning."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted cancel sets stopped, which gates all new effects."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "cancelOrder sets open fulfilments and order cancelled and sends order-cancelled; compensation runs on the stopped order."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "compensate runs each tick while stopped, so a step committing later is undone."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "stepReserve, charge and ship are gated by !stopped and emit nothing after a counted cancel."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "compensate emits carrier.cancel as soon as a booked shipment is settled and not collection-failed."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A refused cancel in processing sends cancel-refused on the tick and leaves state unchanged."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "Ended orders are closed and their later cancels produce no state change."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "takeCancel in fraud or review phase cancels the order with reason customer; later answers are ignored."
+    },
+    "C-098": {
+     "verdict": "cannot-tell",
+     "why": "Final business records are applied by the platform; the practice output shows counts only, not the resulting records."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "FUL_ORDER and setFul prevent backward status moves; order transitions follow the listed ends."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "setFul and setOrd check current status and set each at most once."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Late or repeated carrier messages cannot move status backward because setFul checks order."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "notify uses emailOf from master/customers.json as the to field."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Templates used (action-required, order-cancelled, order-timed-out, fulfilment-failed, cancel-refused) match the table."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "notify keys are recorded and skipped on repeat."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "Deadline D is anchored at p, not at the time customerActionRequired is set."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Actions at D count (a.t <= D); the timeout runs only after D."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "Review deadline is set from the first task and kept for reasks."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Amend or action after D with no waiting order is ignored because the order is no longer in wait."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Any fulfilment collected at or before the cancel blocks the whole-order cancel via collectedBy."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend, later cancels are handled by the proc branch like any processing cancel."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "Processing and status steps are skipped when a counted cancel stops the order before they run."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking such steps anyway is permitted; the code does not block it."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "coll uses reportedAt of collected, inTransit or delivered reports as seen at the tick."
+    },
+    "C-114": {
+     "verdict": "met",
+     "why": "The automation compensates a failed or cancelled fulfilment rather than leaving the charge in place."
+    },
+    "C-115": {
+     "verdict": "met",
+     "why": "Compensation in reverse order, the collection-bound cancel right, and the explicit race rules are all implemented."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.016588645,
+    "inputTokens": 34200,
+    "outputTokens": 24951,
+    "calls": 1
+   }
+  },
+  "b1lh-e8-3": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Scope statement; the automation is driven only by the spec, files and tick input."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The code reads master/, rulebook/ and api/ through ctx.files and the systems' returns."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Carrier codes and answers are looked up as data; no message text is followed as an instruction."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "tick(input, ctx) replays the events of one tick into the carry and drives it, matching the case-tick contract."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Keys are deterministic per effect (order, tag, fulfilment, item), so platform retries reuse the same key and args."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Results are handled as final outcomes; the code does not try to handle intermediate retryable states."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "A permanent error sets the step to err and send() never re-emits a used key, so it is not retried."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Keyed ops (setStatus, notify, create, charge, refund, carrier create/cancel, release, reserve item keys) all carry keys."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "One key per logical effect, derived from order, tag, fulfilment and sub-id, so retries reuse the same key."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Keys include the effect tag and target, so no key is reused for a different effect."
+    },
+    "C-011": {
+     "verdict": "met",
+     "why": "The code waits for effect.result before advancing a step; nothing is applied before the result is seen."
+    },
+    "C-012": {
+     "verdict": "met",
+     "why": "The after: key is not used, but steps are sequenced by waiting for each committed result, which gives the same ordering."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "route() merges or closes non-own messages on the first tick, as the routing rules require."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "route() returns merge into the open instance or close on the first tick, and only then."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "queryRows uses ctx.query across the business tables for lookups such as duplicates and fulfilment matching."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is the normalised order id in both route() and out(), or null when no order applies."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "isoAms formats all times as Europe/Amsterdam with offset."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create is keyed and its fulfilments are set pending or unavailable from the allocation's location."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "allocate is sent unkeyed and plan() reads fulfilmentId, location, items and available."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "reserve is a batch with per-item keys; partial results are tracked per item and resubmitted."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check is sent unkeyed and its verdict pass, review or reject is read."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "norm() trims, strips a leading #, and upper-cases; it is applied to placed orders, customer actions and migration ids."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "Duplicates are routed to the existing instance or closed when already recorded, so no second order is created."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "meaningOf returns info for any code not in the table."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Reports are tracked as min times and flags; delivered sets dispatch then completion, and a later collected report is ignored once completed."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "carrier() returns early for terminal or unavailable fulfilments, which covers cancelled shipments and completed or failed fulfilments."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "task() ignores the late flag and compares the answer time with the rule's own deadline."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "A migration first event rebuilds the carry from the orders, fulfilments, reservations, charges, refunds and shipments records."
+    },
+    "C-029": {
+     "verdict": "met",
+     "why": "fromRecords sets phase, statuses, committed steps and deadlines from the records, so processing continues from that point."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "Carrier messages with no ref are routed by fulfilmentRef through orders.fulfilments to the owning order."
+    },
+    "C-031": {
+     "verdict": "met",
+     "why": "Every rule's window is implemented with the stated offset (60, 120, D, D+60, first-review deadline plus 120)."
+    },
+    "C-032": {
+     "verdict": "cannot-tell",
+     "why": "The practice run gives only effect counts, not timestamps, so it cannot show whether effects land inside their windows."
+    },
+    "C-033": {
+     "verdict": "met",
+     "why": "allocate and orders.create are emitted on the first tick, well within 60 min of placement."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "feeOf returns 0 when the location is null; otherwise the location's fee is added."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor is the sum of fulfilment amountMinor values."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "editionAt reads edition.json effectiveFrom values from rulebook/<edition>/."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "editionAt picks the latest effectiveFrom on or before the Amsterdam date of placement, and the edition is stored in the carry."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition is stored in carry.ed at intake and used for policy, fees and codes, so a newer edition does not change it."
+    },
+    "C-039": {
+     "verdict": "met",
+     "why": "editionAt only accepts editions whose effectiveFrom is on or before the placement day, so future editions are ignored."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A recorded duplicate is closed with no effect; an open one is merged."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check is emitted for every new order."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass sets the clearance time to p."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "A reject sets stop=fraud, and the cancel is emitted on the next tick, inside 120 min of p."
+    },
+    "C-044": {
+     "verdict": "met",
+     "why": "A single fraudReview task is created in the first tick after recording, within 120 min of p."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "The task has kind fraudReview, role fraudAnalyst, subject equal to the order id, and an answerSchema enforcing decision approve or reject."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "The review deadline is set once from the first task and is not moved by retries."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "answerRejected and withdrawn set redo; a new task with a new id is emitted if still before the deadline."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve at or before the deadline sets the clearance time to the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject at or before the deadline sets stop=fraud and cancels on the next tick."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "After the deadline, stop=fraud-review-timeout is set, with an obligation at deadline plus 1 min, inside the 120-min window."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "Answers after the deadline are not accepted, and stop has already been set."
+    },
+    "C-052": {
+     "verdict": "unmet",
+     "why": "task() accepts a bare string answer ('approve') as the decision. The rule says an answer counts only if it carries a decision field."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "When an unavailable fulfilment exists at clearance, the order is set customerActionRequired and action-required is sent right away."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D is computed as p plus customerActionHours from the edition in force at p."
+    },
+    "C-055": {
+     "verdict": "unmet",
+     "why": "action() ignores amend (and only handles cancel) while the order is still in intake. An amend at or before D that arrives before clearance is dropped and does not count."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "Once act is set, later waiting-phase actions are ignored."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "A counted amend sets the unavailable fulfilments cancelled and moves the order to ready immediately."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "An amend leaving nothing available sets stop=nothing-available, which cancels the order."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel sets stop=customer, and the order is cancelled with reason customer on the next tick."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "After D with no counted action, all fulfilments are cancelled, the order is timedOut, and order-timed-out is sent, inside (D, D+60]."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout requires now strictly after D, and its obligation is at D+1 min."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "ready() runs when the order is cleared and there are no unavailable fulfilments."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "ready() sets the order and each available fulfilment to processing right away."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "drive() returns before any status or reservation work until the order is recorded (rec ok)."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "saga() runs reserve, then charge, then ship, and each step waits for the previous committed result."
+    },
+    "C-066": {
+     "verdict": "met",
+     "why": "Reservation batches are emitted as soon as the order is ready, inside 120 min of ready."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "Failed items are set back to no and resubmitted with their original item keys."
+    },
+    "C-068": {
+     "verdict": "met",
+     "why": "Charge is emitted right after the last reservation commits, inside the 120-min window."
+    },
+    "C-069": {
+     "verdict": "met",
+     "why": "carrier.create is emitted right after the charge commits, with location and ref."
+    },
+    "C-070": {
+     "verdict": "met",
+     "why": "An invalid-args or field-renamed error re-emits the same key with arguments rebuilt from the live schema, up to MAX_TRIES."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "Invalid-request errors re-issue instead of failing the fulfilment, until the retry limit is reached."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Collection times are not modelled; collection is inferred only from carrier reports, and no collectionTime data is used."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "collectionCutoffMinutes is never read, and collection timing is not computed; it can only be seen in carrier reports."
+    },
+    "C-074": {
+     "verdict": "met",
+     "why": "Cancellation of a shipment is only sent when no collection has been reported, and a refused cancel is recorded."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "A collected report sets cd, and drive() moves the fulfilment to dispatched."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "A delivered report sets dl and cd; the fulfilment moves to dispatched, then completed."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info produce no status change."
+    },
+    "C-078": {
+     "verdict": "cannot-tell",
+     "why": "collectionFailed fails the fulfilment only when no collection was reported before it; the rule says it always fails, so the edge case is unclear."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "When all fulfilments are terminal, the order is set completed, failed or cancelled in that precedence."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "compensate() cancels the shipment, then refunds, then releases committed reservations, in that order."
+    },
+    "C-081": {
+     "verdict": "unmet",
+     "why": "ctx.status(system, key) is never called. A step with an unknown outcome is treated as not committed, so it is never checked against the system's truth."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Each undo is guarded by its own flag (shpc, ref, rel), and only committed steps are undone."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "Declined charge, collectionFailed and a permanent non-invalid error each set fail=true."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "compensate, then set failed and send fulfilment-failed, run on the next tick after failure."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "send() never re-emits a used key, so a permanently failed step is not retried."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "A failed fulfilment only changes its own status; the others continue."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "The stop branch cancels non-terminal fulfilments, sets the order cancelled, and sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "ph is proc from ready until the order ends, which matches the processing window."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "A processing cancel is refused only if a collected, inTransit or delivered report has reportedAt at or before the cancel time."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted cancel sets stop, which halts further saga work."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "The stop branch compensates every non-terminal fulfilment and sets the order cancelled, with order-cancelled sent."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "compensate() waits for an in-flight step and then undoes what committed."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "No new reserve, charge or ship is emitted once stop is set."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "carrier.cancel is emitted in the stop branch as soon as no collection is reported."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A refused processing cancel sends cancel-refused and changes nothing else."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "action() does nothing once the order is in end phase."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "A cancel before clearance sets stop=customer, which cancels the order; a later review answer is ignored."
+    },
+    "C-098": {
+     "verdict": "met",
+     "why": "Statuses, releases, refunds and shipment cancels follow the committed steps, so the records match what happened."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "setF and setOrd only move forward through the listed statuses."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "setF and setOrd return early if the status is already set, so each status is set at most once."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Late messages hit terminal or unavailable guards and never move a status back."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "emailOf reads the customer's email from master/customers.json, and notify uses it as to."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Templates used match the table (action-required, order-cancelled, order-timed-out, fulfilment-failed, cancel-refused)."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "Notification keys are unique per template and target, so each is sent once."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "The customer deadline D is computed from p, not from when customerActionRequired was set."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Actions at or before D count; the timeout only fires after D."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "There is one review deadline, stored once from the first task."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Amends outside the waiting phase and actions after the waiting phase are ignored."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "A collection on any fulfilment makes the cancel refused, so the whole order cannot be cancelled."
+    },
+    "C-110": {
+     "verdict": "unmet",
+     "why": "If an amend and a later cancel arrive in the same tick, the cancel is ignored: the phase is still wait, the amend has set act, and the cancel is not in proc. It should be judged under R6.2."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "A cancel before clearance stops the order without setting processing or the R3.1 status and notice."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking such steps first is allowed, and the code does not forbid them."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "coll uses the report's reportedAt, and collected, inTransit and delivered all count."
+    },
+    "C-114": {
+     "verdict": "met",
+     "why": "The automation compensates on failure, so a charge is refunded rather than left in place."
+    },
+    "C-115": {
+     "verdict": "met",
+     "why": "The automation implements reverse-order compensation, the cancel right until collection, and explicit race handling."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.017798575,
+    "inputTokens": 32981,
+    "outputTokens": 27352,
+    "calls": 1
+   }
+  },
+  "b1h-e8-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement about the spec; nothing in the automation or run checks it."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "Allocation and fraud are read from sor/<instance>.json, not a system call. Whether those files hold the real reads is not shown."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Code acts only on structured fields (decision enum, action, code table), never on free text."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "Framing about the tick contract; the practice run produced no tick outputs to check."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Platform re-issues retryable calls; the automation only re-issues after non-retryable errors and cannot show the platform behaviour."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "Platform delivers only final outcomes; not observable from the automation or the run."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "outcomeOf returns 'failed' immediately for retryable:false, so permanent errors are not re-issued."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Every keyed call (create, setStatus, reserve items, charge, carrier create/cancel, refund, release, notify) carries an idempotency key."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Re-issues keep the same key and args (charge, ship, item keys); reserve batches get a new batch key but reuse item keys."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Keys embed order, fulfilment, step and status or template, so distinct effects get distinct keys."
+    },
+    "C-011": {
+     "verdict": "met",
+     "why": "Saga and compensation wait for effect.result before advancing; nothing is assumed applied in the same instant."
+    },
+    "C-012": {
+     "verdict": "cannot-tell",
+     "why": "The automation never uses the after: key, so the platform's after semantics are not exercised."
+    },
+    "C-013": {
+     "verdict": "cannot-tell",
+     "why": "Routing of new-instance messages is done by the platform; the automation only handles the first tick."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "routeNewInstance returns merge into the owning instance or close on the first tick of a message-started instance."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "ctx.query('orders.orders') for duplicates and ctx.query('orders.fulfilments') for carrier routing."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is set to the normalised order id, or null when no order applies."
+    },
+    "C-017": {
+     "verdict": "cannot-tell",
+     "why": "Amsterdam time is used only for the edition date; collection and warehouse times are not modelled."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create passes each fulfilment with location null for unavailable items; the platform sets the status."
+    },
+    "C-019": {
+     "verdict": "cannot-tell",
+     "why": "inventory.allocate is read from a sor file, not a call; the source of the plan is unverified."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "inventory.reserve is sent per fulfilment with one key per item."
+    },
+    "C-021": {
+     "verdict": "cannot-tell",
+     "why": "fraud.check is read from sor/<instance>.json, not a call; whether the verdict is real is unverified."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "normaliseId trims, strips a leading #, and upper-cases every order id read."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "A duplicate order.placed merges into or closes against the existing instance; the order is recorded once."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "carrierMeaning returns 'info' for any code missing from the table, which triggers no action."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Collected and delivered reports are applied by earliest time; delivered sets dispatched before completed."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "Carrier messages are skipped for shipCancelled fulfilments and for completed, failed or cancelled ones."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "The late flag is ignored; the review deadline in the rule decides whether an answer counts."
+    },
+    "C-028": {
+     "verdict": "unmet",
+     "why": "A migration event is not handled. Migrated instances get no order state and are silently dropped."
+    },
+    "C-029": {
+     "verdict": "unmet",
+     "why": "Migrated instances are not rebuilt from their records or messages, so they cannot continue from where they stand."
+    },
+    "C-030": {
+     "verdict": "unmet",
+     "why": "Carrier routing finds the order by fulfilmentRef, but migrated instances declare no subject, so the message is not delivered to them and is closed."
+    },
+    "C-031": {
+     "verdict": "cannot-tell",
+     "why": "Several windows (intake, reserve, charge, ship) depend on tick timing; no timers enforce them and the run produced no output."
+    },
+    "C-032": {
+     "verdict": "cannot-tell",
+     "why": "Keys stop duplicate commits, but the practice run had 0 effects, so unrequested or early effects are unverified."
+    },
+    "C-033": {
+     "verdict": "cannot-tell",
+     "why": "Intake retries every 2 min, but whether the order is recorded within 60 min depends on sor availability and timing."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "feeMinor is added only when location is not null; unavailable fulfilments get no fee."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor is the sum of the fulfilment amountMinor values."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "Editions are read from rulebook/<edition>/edition.json with id and effectiveFrom."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "editionFor picks the latest effectiveFrom on or before the Amsterdam date of placedAt."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition is stored on the order at intake and used for policy, carrier codes and fees."
+    },
+    "C-039": {
+     "verdict": "met",
+     "why": "Published editions are filtered by date only, so a future-dated edition is ignored until it takes effect."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A placed event for an already-recorded order closes the duplicate instance with no effect."
+    },
+    "C-041": {
+     "verdict": "cannot-tell",
+     "why": "The fraud verdict is read from sor, not a call, and only once the order is recorded."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass verdict sets clearedAt to placedAt."
+    },
+    "C-043": {
+     "verdict": "cannot-tell",
+     "why": "A reject cancels with reason fraud, but only after the order is recorded and the read succeeds; timing is unverified."
+    },
+    "C-044": {
+     "verdict": "cannot-tell",
+     "why": "A review task is created on the review verdict, but the 120-minute timing is not verified."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "The task has kind fraudReview, role fraudAnalyst, subject = order id, and an approve/reject answerSchema."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "The deadline is set once when the review starts and kept on re-asks."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "A re-ask issues a new task id and reuses the same deadline."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve answer at or before the deadline sets clearedAt to the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject answer before the deadline cancels the order with reason fraud in the same tick."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "Past the deadline with no usable answer, it cancels with fraud-review-timeout; a wake-up is set at deadline plus 1 minute."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "Once the order has ended, later answers are not acted on."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "An answer without decision set to approve or reject is treated as unusable and triggers a re-ask."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "Clearance with an unavailable fulfilment sets customerActionRequired and sends action-required in the same tick."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D is placedAt plus customerActionHours from the edition's policy."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "The first amend or cancel with time at or before D is taken as the counted action."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "The resolved flag is set once, so later actions change nothing."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "A counted amend cancels unavailable fulfilments and starts processing in the same tick."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "An amend that leaves nothing available cancels the order with nothing-available."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel cancels the order with reason customer."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "Past D with no counted action, it cancels fulfilments, sets timedOut and sends order-timed-out; the wake-up is D plus 1 minute."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout fires only when now is strictly after D."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "An order with no unavailable fulfilment starts processing as soon as it is cleared."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "startProcessing sets the order and each available fulfilment to processing in the same tick."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "Intake and processing are gated on recorded, so no status or reservation happens before orders.create."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "The saga issues reserve, then charge, then carrier create, each only after the previous result is ok."
+    },
+    "C-066": {
+     "verdict": "met",
+     "why": "Reserve is emitted in the same tick as processing starts."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "Partial batch results are applied per item; only failed items are resubmitted with their original keys."
+    },
+    "C-068": {
+     "verdict": "met",
+     "why": "Charge is emitted in the tick in which the last reservation commits."
+    },
+    "C-069": {
+     "verdict": "met",
+     "why": "Carrier create is emitted in the tick in which the charge commits."
+    },
+    "C-070": {
+     "verdict": "unmet",
+     "why": "A 400 invalid-args or field-renamed is re-issued with the same args and no correction; the rule's field fix is not done."
+    },
+    "C-071": {
+     "verdict": "unmet",
+     "why": "After MAX_REISSUES a 400 becomes a permanent failure, so an invalid request of ours fails the fulfilment."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Collection times are carrier-side and not modelled by the automation."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "collectionCutoffMinutes is never read; the collection timing is not modelled."
+    },
+    "C-074": {
+     "verdict": "cannot-tell",
+     "why": "Cancellation is refused after a collected report, but a late collection is not handled; the run shows nothing."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "A collected report sets dispatched when the fulfilment is processing."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "A delivered report sets dispatched if not yet set, then completed."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info codes trigger no status change."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "collectionFailed sets collFailed and fails the fulfilment with compensation, skipping the shipment cancel."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "Order outcome is computed once all fulfilments are terminal: completed, else failed, else cancelled."
+    },
+    "C-080": {
+     "verdict": "unmet",
+     "why": "Compensation emits shipment cancel, refund and releases in the same tick with no after: ordering, so the reverse order is not enforced."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "outcomeOf treats unknown as committed only when ctx.status(key) returns committed."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Compensation acts only on ok charges, ok shipments and ok reservations, and each step is marked once."
+    },
+    "C-083": {
+     "verdict": "unmet",
+     "why": "A 400 invalid request is counted as a failure after retries, breaking the rule that invalid requests are not fulfilment failures."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "failFul compensates, sets failed and sends fulfilment-failed in the same tick as the failure."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "Permanent failures are not retried; failFul is called directly."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "failFul changes only the failing fulfilment."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "cancelOrder cancels non-terminal fulfilments, sets the order cancelled, and sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "phase is processing from startProcessing until the order ends."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "A cancel is refused when any fulfilment's collectedAt is at or before the cancel time."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted processing cancel calls cancelOrder, which stops the order."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "cancelOrder compensates non-terminal fulfilments, sets them and the order cancelled, and sends order-cancelled in the same tick."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "In-flight steps are settled and compensated on later ticks once their results arrive."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "Cancelled fulfilments are marked wantComp, so the saga issues no new steps for them."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "A booked shipment is cancelled in the compensation tick, with no collection-time wait."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A refused cancel sends cancel-refused and changes nothing else."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "Cancel handling applies only in open, waiting or processing phases, so ended orders are unchanged."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "A recorded order not yet cleared is cancelled with reason customer."
+    },
+    "C-098": {
+     "verdict": "cannot-tell",
+     "why": "Compensation records are emitted, but final reservation and shipment states depend on the platform and are not shown."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "setFul and setOrd move statuses forward only, and terminal fulfilments are skipped."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "setFul and setOrd return early if the status is already set."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Late or repeated carrier messages on terminal fulfilments are skipped."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "The notification to is the customer's email from master/customers.json (falls back to customerId only if the email is missing)."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "The notify templates used match the table names."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "Notifications are deduplicated by a per-template, per-order key stored in carry."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "The customer deadline is anchored at placedAt."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "The customer action is judged at or before D; the timeout requires now strictly after D."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "One review deadline is stored per order from the first task."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Customer actions count only in the waiting phase before the counted action."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Any collectedAt at or before the cancel time blocks the whole-order cancel."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "A cancel after a counted amend is judged by the processing-cancel rule."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "Moot steps are not blocked; the code takes the notice or statuses regardless."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking the moot step is allowed and the code does so."
+    },
+    "C-113": {
+     "verdict": "unmet",
+     "why": "inTransit is not treated as proof of collection; only collected and delivered set collectedAt, so a cancel after inTransit wrongly counts."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Framing about the reference application; not an action the automation can be checked against."
+    },
+    "C-115": {
+     "verdict": "cannot-tell",
+     "why": "Framing about the spec's aims; the run did not complete, so the saga is not shown working."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.014814270000000001,
+    "inputTokens": 31581,
+    "outputTokens": 22057,
+    "calls": 1
+   }
+  },
+  "b1nh-e8-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Context statement; the automation works from the spec files it reads through ctx.files and the system responses."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Rules, editions, catalog, fees, codes and API schemas are read from ctx.files and from system results."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Message and document text is only parsed for fields (ids, decision, code); no text is acted on as an instruction."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "tick(input, ctx) handles one instance's events per call and carries state between ticks."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Retry of retryable outcomes is performed by the platform; the practice output does not show retry behaviour."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "The practice output does not show whether only final outcomes reach the automation."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "run1 returns fail for a permanent error (e.p) and does not re-issue it, except invalid-args 400s which the spec allows."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Every keyed emit carries a key (fk/ik/rl/rf/xs/sh/ch, orders keys, notify keys)."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Keys derive from ids only and emit() reuses the same key and args on re-issue."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Keys include the order, fulfilment and step/sku, so a key is never shared across effects."
+    },
+    "C-011": {
+     "verdict": "cannot-tell",
+     "why": "Result timing is platform behaviour; the code waits on effect.result and status(key) without assuming instant results."
+    },
+    "C-012": {
+     "verdict": "cannot-tell",
+     "why": "The automation does not use after:; ordering is enforced by settle() checks instead. Nothing in the run shows the platform's after handling."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "route() merges messages into open instances by subject and only starts instances otherwise."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "route() returns merge into the open instance or close on the first tick of a message-started instance."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "recs() and recorded()/orderOfFulfilment() use ctx.query on business tables."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is the normalised order id, or null when no order is identified."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "isoAms() formats all times with the Europe/Amsterdam offset; no weekday restriction is applied."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "buildFulfilments sets unavailable for location null and pending otherwise; orders.create carries them."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "inventory.allocate is called with the orderId and its plan is read from the result."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "Reserve batches carry a key per item (items[].key) and per-item results are matched."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check is emitted once per order and verdict pass/review/reject is read from the result."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "normId trims, removes leading #, and upper-cases orderId and orderRef."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "A duplicate placed order merges into the open case or is closed with no effect (R1.4)."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "codeMeaning returns info for codes missing from the table, so no action is taken."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "onCarrier records collection from any report and sets dispatched before completed, so out-of-order delivery is handled."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "onCarrier returns early for FINAL fulfilments and cancelled shipments (xs)."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "Answer acceptance uses rv.ans.t <= rv.dl; the late flag is not read."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "migration events are replayed through migrationMessages and rebuild() reconstructs the order from records."
+    },
+    "C-029": {
+     "verdict": "cannot-tell",
+     "why": "rebuild() restores state, but a migrated order in fraud phase re-runs fraud.check and could open a new review deadline. The run shows no migration case."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "Carrier messages without a ref are matched to the order through orders.fulfilments by fulfilmentId."
+    },
+    "C-031": {
+     "verdict": "cannot-tell",
+     "why": "Window timing depends on platform latency and tick times; the run does not report timings."
+    },
+    "C-032": {
+     "verdict": "cannot-tell",
+     "why": "Effects are emitted when their rule asks for them, but whether any effect falls after its window needs timing data not provided."
+    },
+    "C-033": {
+     "verdict": "cannot-tell",
+     "why": "allocate and create are issued on arrival, but the 60-minute window needs timing data not provided."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "buildFulfilments adds feeMinor only when av is true (location not null)."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "C.tot is the sum of fulfilment amt values, written as totalMinor."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "Editions are read from rulebook/<dir>/edition.json and the tables in that directory."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "pickEdition selects the latest effectiveFrom on or before the Amsterdam date of p."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition is stored in carry (C.ed) and not re-picked on later ticks."
+    },
+    "C-039": {
+     "verdict": "met",
+     "why": "Editions are picked by effectiveFrom only, so a published future edition is not used before its date."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A recorded order id returns closeOut with no effect (route, recorded())."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check is emitted for each new order in the fraud phase."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass verdict calls clearOrder(w, C.p)."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "A reject verdict calls cancelOrder with reason fraud at once, within the 120-minute window of p."
+    },
+    "C-044": {
+     "verdict": "met",
+     "why": "A review verdict opens one fraudReview task (openReview/openTask)."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "The task has kind fraudReview, role fraudAnalyst, subject oid and an answerSchema with decision approve/reject."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "rv.dl is set once at the first review task and openTask retries keep it."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "Rejected, withdrawn or unusable answers set reask, and a new task id is issued with the same deadline."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve at or before dl clears the order at the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject at or before dl cancels with reason fraud."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "After dl with no usable answer, cancelOrder runs with reason fraud-review-timeout; an obligation fires at dl+1 min."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "Once the order is ended, later answers are not processed (ph end)."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "onAnswer accepts only decision approve or reject; other answers set reask."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "clearOrder sets customerActionRequired and sends action-required when a fulfilment is unavailable."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D = p + customerActionHours from policy.json in the edition at p."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "Actions with t <= D are considered and the earliest amend or cancel counts."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "All due actions are marked used after the first counts, so later ones change nothing."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "amend cancels unavailable fulfilments and starts processing; timing is by the tick at action time."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "amend calls cancelOrder with reason nothing-available when no fulfilment is available."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel calls cancelOrder with reason customer."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "At now > D with no counted action, timeOut cancels fulfilments, sets timedOut and sends order-timed-out; obligation at D+1 min."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout test is now > D, so it does not fire at D itself."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "An order with no unavailable fulfilment goes to startProcessing when cleared."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "startProcessing sets the order and available fulfilments to processing at the ready time."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "Reservation and charge steps run only in the proc phase, after create has committed."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "forward() runs reserve, then charge only when resOk, then ship only after charge settles ok."
+    },
+    "C-066": {
+     "verdict": "cannot-tell",
+     "why": "Reserve is issued at processing start; the 120-minute window needs timing data not provided."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "stepReserve resubmits only items not ok, with their original keys."
+    },
+    "C-068": {
+     "verdict": "met",
+     "why": "charge is issued only after resOk; the 120-minute window needs timing data."
+    },
+    "C-069": {
+     "verdict": "met",
+     "why": "carrier.create is issued only after the charge settles ok; the window needs timing data."
+    },
+    "C-070": {
+     "verdict": "met",
+     "why": "invalidArgs errors are re-issued with the same key (run1 and itemResult)."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "Invalid-args 400s do not fail the fulfilment (run1 and stepReserve check invalidArgs)."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Carrier collection happens on the carrier's schedule; the automation has no collection logic to check."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "Collection cutoff is applied by the carrier; nothing in the automation or run shows it."
+    },
+    "C-074": {
+     "verdict": "met",
+     "why": "Counted cancels are refused once a shipment is collected (collectedBy), so collected fulfilments are not cancelled."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "onCarrier collected calls setFul(dispatched)."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "delivered sets dispatched then completed in the same output; the order of the two is not enforced with after:."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info only record collection evidence; no status is set."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "collectionFailed sets cfl and calls failFul."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "When all fulfilments are final, the order is set completed, failed or cancelled per the rule."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "compensate() cancels the shipment, then refunds the charge, then releases items, in that order."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "settle() treats ok results and status(key) committed as committed."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Each compensation key is emitted once (ek checks) and only settled-ok steps are undone."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "failFul is triggered by a declined charge, collectionFailed, or a permanent non-invalid reserve or ship error."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "failFul sets failed, sends fulfilment-failed, and compensation runs in the same tick; the window needs timing data."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "run1 returns fail for permanent errors and does not re-issue them."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "failFul marks only that fulfilment; order status waits for all fulfilments to be final."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "cancelOrder cancels non-final fulfilments, sets the order cancelled and sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "Processing begins at startProcessing and ends at order end (ph proc to end)."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "collectedBy uses coll <= cancel time, so a same-instant collection wins."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted cancel sets stopped and cancels the order."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "cancelOrder compensates non-final fulfilments and sets statuses and order-cancelled; the window needs timing data."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "advance() keeps compensating fulfilments whose steps commit after stopped is set."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "forward() does not reserve, charge or ship when stopped."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "compensate() emits carrier.cancel as soon as the shipment is settled ok."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A refused cancel sends cancel-refused once and changes nothing else."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "Ended orders have no active phase, so cancels change nothing (cancel-refused is not sent)."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "takeCancel in the fraud and review phases calls cancelOrder with reason customer."
+    },
+    "C-098": {
+     "verdict": "met",
+     "why": "Statuses, reservation releases, refunds and carrier cancels mirror what happened."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "setFul and setOrd use the forward status order, so statuses only move forward."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "setFul and setOrd check prior statuses and keys so each status is set once."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Out-of-order or repeated messages fail the FUL_ORDER check and are not applied."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "notify uses emailOf from master/customers.json as to."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Templates used are action-required, order-cancelled, order-timed-out, fulfilment-failed, cancel-refused."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "notify keys are recorded in nt so each notice is sent once."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "D is computed from p, not from when action-required was set."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Actions use a.t <= D and the timeout uses now > D."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "The review deadline is set once from the first review task."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Amends with no unavailable fulfilment are marked used and change nothing; actions after D are not due."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Any collected shipment makes a processing cancel refused (collectedBy checks all fulfilments)."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend the order is processing, and later cancels pass through the proc-phase check."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "Steps made moot by a counted action are skipped; the code does not block taking them early."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking the notice or processing step before stopping is allowed and the code does this."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "coll is set from reportedAt for collected, inTransit and delivered reports, as far as reports have arrived."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Background claim about the upstream application; nothing in the automation or run is needed to verify it."
+    },
+    "C-115": {
+     "verdict": "met",
+     "why": "The automation implements reverse-order compensation, a cancel right until collection, and explicit race rules."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.020675645,
+    "inputTokens": 35040,
+    "outputTokens": 32915,
+    "calls": 1
+   }
+  },
+  "b1nh-e8-3": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement that the spec is the only description; nothing in the automation or run tests it."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Code reads master, rulebook, api and calendar data via ctx.files and system results; no outside source is used."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Code treats message and document text as data (parsed fields only); free text is never executed or followed."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "tick(input, ctx) replays the events of one instance at input.now and returns one output per call."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Retry behaviour belongs to the platform; the run gives only final outcomes and no retry trace."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "Platform property; the run output shows counts only, not how retryable outcomes were delivered."
+    },
+    "C-007": {
+     "verdict": "cannot-tell",
+     "why": "Platform property. The code re-issues non-invalid errors for alloc, fraud and create, but this is not a fulfilment step, so no conclusion here."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Keyed ops (setStatus, create, charge, refund, carrier, notify, release) are sent with a key; reserve items carry keys."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Keys are built from order, step, fulfilment and sku and are stable across re-issues; the same key is reused on invalid-arg retries."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Keys encode tag, fulfilment and sub-item, so each key maps to one effect."
+    },
+    "C-011": {
+     "verdict": "cannot-tell",
+     "why": "Result timing is platform behaviour; the code applies results only on effect.result events."
+    },
+    "C-012": {
+     "verdict": "met",
+     "why": "The code does not use after:; sequencing is enforced in drive by waiting for committed results, which gives the same ordering."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "route() merges or closes non-placed messages that match an open instance, and starts new ones otherwise."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "First-tick routing returns merge into the open case, or close, for placed orders, customer actions and carrier messages."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "Code uses ctx.query on orders, fulfilments, reservations, charges, refunds and shipments."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "Every output sets decisions.subject to the normalised order id, or null when no order applies."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "isoAms and localDay format times in Europe/Amsterdam with offset."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create is keyed and sends each fulfilment as pending or unavailable from location."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "allocate is read-only and plan() reads fulfilmentId, location, items and available from it."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "Reserve sends per-item keys and reads per-item outcomes, resubmitting failed items."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check verdict pass, reject or review is read and mapped."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "norm() trims, removes a leading #, and upper-cases; it is applied to placed, action and fulfilment ids."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "A duplicate placed order is routed to the open instance or closed as recorded (R1.4)."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "meaningOf() returns info for any code not in the table."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Carrier reports are handled in any order; collection and delivery flags are set independently and the minimum time is kept."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "carrier() returns early for terminal or unavailable fulfilments, so cancelled, completed or failed ones change nothing."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "task() ignores the late flag and checks at against the R2.2 due time."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "A migration first event rebuilds the carry from orders, fulfilments, reservations, charges, refunds and shipments."
+    },
+    "C-029": {
+     "verdict": "cannot-tell",
+     "why": "fromRecords restores state from records; the migration's already-received messages are not visibly replayed, and the run does not show it."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "Carrier messages are matched via fulfilmentRef to the order's fulfilment and routed to its open instance."
+    },
+    "C-031": {
+     "verdict": "cannot-tell",
+     "why": "Comparisons are inclusive, but the run output gives only counts, so window adherence is not shown."
+    },
+    "C-032": {
+     "verdict": "cannot-tell",
+     "why": "The run reports zero refused outputs, but it does not show effect timing against windows."
+    },
+    "C-033": {
+     "verdict": "met",
+     "why": "Allocate and orders.create are emitted on the first tick of the order, well inside 60 min."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "feeOf returns 0 when loc is null, so only available fulfilments carry a fee."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor sums amt over all fulfilments, including unavailable ones at zero fee."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "editionAt reads each rulebook/<dir>/edition.json and its effectiveFrom."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "editionAt picks the latest effectiveFrom on or before the local day of placedAt."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition id is stored once in the carry (c.ed) and reused for policy, fees and codes."
+    },
+    "C-039": {
+     "verdict": "met",
+     "why": "Editions are selected by effectiveFrom only, so a published future edition is not used before its date."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "route() closes a placed order whose id is already in orders.orders, with no effect."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check is issued for every new order instance."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass verdict sets cl to p, so the order is cleared at placedAt."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "A reject verdict sets stop to fraud, and drive cancels with reason fraud on the same tick."
+    },
+    "C-044": {
+     "verdict": "cannot-tell",
+     "why": "The review task is created on the tick after the order is recorded; the run does not show that this falls within 120 min of p."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "The task has kind fraudReview, role fraudAnalyst, subject = order id, and an answerSchema accepting approve or reject."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "The due time is set once from the first task creation and is not moved on retries."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "answerRejected and withdrawn set redo, which issues a new task id with the same due time."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve at or before due sets cl to the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject before due sets stop to fraud, and drive cancels on that tick."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "After due with no usable answer, stop is set to fraud-review-timeout; the timer is at due+1 min, inside the 120-min window."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "A late answer after timeout hits the else branch and only sets redo; the stop already in place is unchanged."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "An answer without decision yields d undefined and is treated as unusable."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "An unavailable fulfilment sets customerActionRequired and sends action-required right after clearing."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D = p + customerActionHours from the edition at p."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "The first amend or cancel with at <= D in wait phase is recorded as the counted action."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "Once act is set, later actions in wait phase are ignored."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "A counted amend cancels unavailable fulfilments and moves the order to ready on the same tick."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "If no fulfilment is available after amend, stop is set to nothing-available."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel sets stop to customer and drive cancels the order on that tick."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "Timeout is scheduled at D+1 min and sets fulfilments cancelled, order timedOut, and sends order-timed-out."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout requires now > D, and the obligation is at D+1 min."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "With no unavailable fulfilment, ready() runs on clearing."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "ready() sets the order and available fulfilments to processing on the same tick."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "Saga and status steps are gated on rec being ok, so nothing happens before orders.create commits."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "saga() gates each step on the previous one, and stepPending serialises the steps."
+    },
+    "C-066": {
+     "verdict": "met",
+     "why": "Reserve is emitted on the ready tick for all items of each fulfilment."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "rsvResult marks failed items 'no' and resubmits them with the same item keys."
+    },
+    "C-068": {
+     "verdict": "met",
+     "why": "Charge is emitted only after all reservations are ok, on the tick that sees the last reserve commit."
+    },
+    "C-069": {
+     "verdict": "met",
+     "why": "carrier.create is emitted only after the charge commits, on the next tick."
+    },
+    "C-070": {
+     "verdict": "met",
+     "why": "Invalid-args and field-renamed errors delete the key and re-issue with the same key; adapt() renames fields from the live schema."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "Invalid-request 400s are retried and not counted as chg, shp or rsv failure, up to MAX_TRIES."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "No collection schedule is modelled in the code; collection is only observed via carrier reports."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "collectionCutoffMinutes is not used by the code; collection timing is not shown in the run."
+    },
+    "C-074": {
+     "verdict": "met",
+     "why": "compensate() skips carrier.cancel when coll is set, and a refused cancel (409) is recorded as refused."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "A collected report sets cd, and drive moves processing to dispatched."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "A delivered report sets dl and cd; drive sets dispatched and then completed in order."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info take no action; inTransit sets coll but not cd."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "collectionFailed before any collection sets fail, and compensation then sets failed and sends fulfilment-failed."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "Order status is set from fulfilment statuses when all are terminal: completed, failed, else cancelled."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "compensate() runs cancel shipment, then refund, then release per item, in that order."
+    },
+    "C-081": {
+     "verdict": "unmet",
+     "why": "The code never calls ctx.status(). A non-ok result with an unknown outcome is treated as uncommitted, so a committed step with an unknown outcome is not undone."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Guards: shpc, ref and rel are only sent when 'no', and each is set once."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "Declined charge, collectionFailed, and non-invalid permanent errors set fail; invalid requests are retried instead."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "On failure the code compensates, sets failed and sends fulfilment-failed on the same tick the failure is seen."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "rsv, chg and shp do not retry permanent errors; only invalid-request errors are re-issued."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "A fail only touches its own fulfilment; other fulfilments continue their own saga."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "Cancel with no committed step sets open fulfilments cancelled, the order cancelled, and sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "The processing phase is set by ready() and ends with the order status or stop."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "A processing cancel is refused when any fulfilment has coll <= cancel time, and the collection report wins at the same instant."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted processing cancel sets stop, which stops all new steps."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "Stop compensates open fulfilments, sets them cancelled and the order cancelled, and sends order-cancelled in the same drive."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "A step that commits after stop is compensated when its result arrives and drive runs again."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "The stop path returns before saga(), so no new reserve, charge or ship is emitted after stop."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "Stop calls carrier.cancel at once for any shipment not already collected."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A cancel after collection sends cancel-refused and changes nothing else."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "Cancel in end phase or for a terminal order has no effect; cancel-refused is optional."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "A cancel during the review wait sets stop to customer; the later review answer is then ignored."
+    },
+    "C-098": {
+     "verdict": "met",
+     "why": "Compensation and status steps write statuses, reservations released, refunds, and shipments cancelled, which match the flow."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "setF and setOrd only move forward through the listed statuses."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "setF and setOrd skip a status already set, so each is set at most once."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Late messages hit terminal or early-return guards and never move status back."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "notify uses the email from customers.json. Fallback to customerId exists but only if the customer is missing."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Templates used match the spec table: action-required, order-cancelled, order-timed-out, fulfilment-failed, cancel-refused."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "notify keys are per template and about, so each is sent once."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "The customer deadline is anchored at p (D = p + hours), not at the time of action-required."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Customer action counts at or before D; the timeout is at D+1 min, after D."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "Only the first review task creates a due time; redo keeps the same due."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Amend is only counted in wait phase, which only exists when an unavailable fulfilment exists."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Any collected fulfilment makes a processing cancel refused, for the whole order."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend, phase is proc and a cancel follows the processing rules."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "After a counted action the R3.1 notice still goes out (allowed), and processing statuses follow stop; skipping is allowed by S9."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking the notice and status before stopping is allowed, and the code does it."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "collected, inTransit and delivered all set coll using reportedAt, as S7 requires."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Background description of the reference application; not a behaviour of this automation."
+    },
+    "C-115": {
+     "verdict": "met",
+     "why": "The code implements reverse compensation, the processing-cancel right until collection, and explicit race handling."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.015275645000000001,
+    "inputTokens": 32988,
+    "outputTokens": 22628,
+    "calls": 1
+   }
+  },
+  "b1o-e8-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement about the spec, not a behaviour the run can show."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "Statement about where inputs live; the code reads files via ctx.files, but no behaviour is shown either way."
+    },
+    "C-003": {
+     "verdict": "cannot-tell",
+     "why": "Framing; no run evidence of text being treated as instructions."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The automation is a one-tick solver returning decisions, effects, obligations, human tasks and carry per call."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "reissuePass re-emits with the same key and args, but no retry was exercised in the practice run."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "Platform behaviour; not shown by the automation or the run."
+    },
+    "C-007": {
+     "verdict": "cannot-tell",
+     "why": "classify() marks permanent errors as fail with no reissue, but the run shows no permanent error case."
+    },
+    "C-008": {
+     "verdict": "unmet",
+     "why": "The reserve batch effect carries a top-level key, which the platform refuses ('a batch op keys its items, not the batch'), so keyed-op usage is wrong in the run."
+    },
+    "C-009": {
+     "verdict": "cannot-tell",
+     "why": "Reissue reuses the same tag key and args, but no retry is shown in the run."
+    },
+    "C-010": {
+     "verdict": "cannot-tell",
+     "why": "Keys are derived from order id plus a unique step tag; no collision is shown, but no run evidence of uniqueness across all effects."
+    },
+    "C-011": {
+     "verdict": "cannot-tell",
+     "why": "Platform timing of results; the automation waits on effect.result events, but nothing in the run shows timing."
+    },
+    "C-012": {
+     "verdict": "cannot-tell",
+     "why": "after: is set for dispatched->completed and terminal status chains, but the run never reached those effects."
+    },
+    "C-013": {
+     "verdict": "cannot-tell",
+     "why": "Routing is a platform behaviour; the automation's merge handling is not shown in the run."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "firstTick returns merge into the existing instance for placed, action and carrier messages when an open instance exists."
+    },
+    "C-015": {
+     "verdict": "cannot-tell",
+     "why": "ctx.query is used for duplicate and routing checks; no cross-case read is shown in the run."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is set to the normalised order id, or null when no order applies."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "iso() renders times with the Europe/Amsterdam CET/CEST offset."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create was issued for every order in the run with order, fulfilment and amount fields."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "inventory.allocate was read once per order (51, 82, 203 in the runs)."
+    },
+    "C-020": {
+     "verdict": "unmet",
+     "why": "The reserve effect was refused in every world: its top-level key is invalid for a batch op, so no reservation was ever made."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check was read for every order (counts match orders.create)."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "normId trims, strips leading #, and upper-cases every order id read."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "A repeated placed event is matched to the existing instance or record and does not create a second order."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "translateCode defaults unknown codes to info, which triggers no action."
+    },
+    "C-025": {
+     "verdict": "cannot-tell",
+     "why": "applyReports orders dispatched before completed, but no out-of-order carrier case appears in the run."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "applyReports and evalActions skip changes for terminal fulfilments and cancelled shipments."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "onTask decides acceptance by rv.dl and the decision field, not by the late flag."
+    },
+    "C-028": {
+     "verdict": "cannot-tell",
+     "why": "initMigration handles migration events, but no migration case appears in the practice run."
+    },
+    "C-029": {
+     "verdict": "cannot-tell",
+     "why": "Migration continuation is coded, but nothing in the run shows it."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "carrierOrder matches a pre-go-live carrier message to its order via fulfilmentRef."
+    },
+    "C-031": {
+     "verdict": "cannot-tell",
+     "why": "Window timing for order creation is not shown in the run, and reserve/charge/ship windows could not be exercised."
+    },
+    "C-032": {
+     "verdict": "unmet",
+     "why": "The run emitted effects that were refused as invalid output in every world, so the automation issued erroneous effects."
+    },
+    "C-033": {
+     "verdict": "cannot-tell",
+     "why": "The run does not show the timestamp of orders.create relative to placedAt."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "feeOf is applied only when the location is not null and the fulfilment is available."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor is computed as the sum of fulfilment amounts."
+    },
+    "C-036": {
+     "verdict": "cannot-tell",
+     "why": "editions() reads rulebook/<edition>/edition.json, but no edition layout is shown in the run."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "pickEdition selects the latest effectiveFrom on or before the date of placedAt."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition directory is stored in carry (S.ed) and reused for the order's life."
+    },
+    "C-039": {
+     "verdict": "cannot-tell",
+     "why": "Unpublished editions are not shown in the run."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A duplicate placed event produces no create or other effect (handled by merge or close)."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check runs once per new order (counts match)."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass verdict sets cleared to placedAt."
+    },
+    "C-043": {
+     "verdict": "cannot-tell",
+     "why": "A reject leads to stopOrder with reason fraud, but the 120-min cancel timing is not shown in the run."
+    },
+    "C-044": {
+     "verdict": "cannot-tell",
+     "why": "createTask is invoked on the first review tick, but no review case or timing appears in the run."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "createTask emits kind fraudReview, role fraudAnalyst, subject, and answerSchema with approve/reject."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "rv.dl is set once from the first task creation and not moved on retries."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "A new task is created only when none is open and now is before the deadline; the deadline is not moved."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve before the deadline sets cleared to the answer time."
+    },
+    "C-049": {
+     "verdict": "cannot-tell",
+     "why": "Reject handling is coded, but the 120-min timing is not shown in the run."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "A review timeout timer fires at deadline plus 20 min, within the window, and stops with reason fraud-review-timeout."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "onTask ignores answers once a decision exists or the deadline has passed, and stopped orders ignore answers."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "onTask accepts only answers carrying approve or reject as decision."
+    },
+    "C-053": {
+     "verdict": "cannot-tell",
+     "why": "action-required and customerActionRequired are coded, but the 120-min timing is not shown in the run."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "deadlineD equals placedAt plus customerActionHours from the edition."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "evalActions counts the first amend or cancel at or before D."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "Later actions are marked done and ignored once a counted action exists."
+    },
+    "C-057": {
+     "verdict": "cannot-tell",
+     "why": "Unavailable fulfilments are cancelled in the same tick as the counted amend, but the 60-min window is not shown in the run."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "An amend leaving no available fulfilment calls stopOrder with reason nothing-available."
+    },
+    "C-059": {
+     "verdict": "cannot-tell",
+     "why": "A counted cancel stops the order with reason customer, but the 60-min timing is not shown in the run."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "The customer timeout timer is set at D plus 20 min, inside (D, D+60], and sets timedOut and the notice."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout timer is at D+20 min, not at D."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "An order with no unavailable fulfilment is ready at cleared."
+    },
+    "C-063": {
+     "verdict": "cannot-tell",
+     "why": "processing is set in the same tick as ready, but the 60-min window is not shown in the run."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "plan returns before any status or reservation when the order creation is not confirmed."
+    },
+    "C-065": {
+     "verdict": "unmet",
+     "why": "Reserve was refused in every run, so the reserve, charge, ship sequence never progressed past reserve."
+    },
+    "C-066": {
+     "verdict": "cannot-tell",
+     "why": "Reserve is emitted but was always refused in the run; the 120-min timing cannot be checked."
+    },
+    "C-067": {
+     "verdict": "cannot-tell",
+     "why": "Partial-batch resubmission is coded, but no partial result is shown in the run."
+    },
+    "C-068": {
+     "verdict": "cannot-tell",
+     "why": "Charge is coded after reservation commits, but no charge appears in the run."
+    },
+    "C-069": {
+     "verdict": "cannot-tell",
+     "why": "Shipment is coded after charge commits, but no shipment appears in the run."
+    },
+    "C-070": {
+     "verdict": "cannot-tell",
+     "why": "invalid results lead to reissue with the same key and learnRename, but no invalid-args case is shown in the run."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "classify marks invalid requests as invalid (reissue), not as a fulfilment failure."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Collection is carrier-driven and no collection schedule logic exists in the automation or run."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "Cutoff logic is not in the automation; collection timing is not shown."
+    },
+    "C-074": {
+     "verdict": "cannot-tell",
+     "why": "proofAt prevents a counted cancel after collection, but no collected-then-cancel case is shown."
+    },
+    "C-075": {
+     "verdict": "cannot-tell",
+     "why": "applyReports sets dispatched on collected, but no carrier message is shown in the run."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "applyReports sets dispatched before completed on delivered when not already dispatched."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info reports are not queued for any status change."
+    },
+    "C-078": {
+     "verdict": "cannot-tell",
+     "why": "collectionFailed sets failAt, but no such carrier message is shown in the run."
+    },
+    "C-079": {
+     "verdict": "cannot-tell",
+     "why": "outcome() sets the order status from fulfilment statuses, but no completed fulfilment appears in the run."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "compensate emits carrier cancel, then billing refund, then inventory releases in that order."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "committed() treats ok as committed and consults status(key) for unknown outcomes."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Compensation checks compDone, existing cxl/rfd/rel tags, and committed state before any undo."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "detectFailures and classify treat declined, collectionFailed and permanent non-invalid errors as failure."
+    },
+    "C-084": {
+     "verdict": "cannot-tell",
+     "why": "handleFail compensates, sets failed and notifies, but the 120-min timing is not shown in the run."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "Permanent errors are set to fail and never reissued."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "Failure is tracked per fulfilment; other fulfilments are not changed."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "doStop cancels open fulfilments and sets the order cancelled with order-cancelled notice."
+    },
+    "C-088": {
+     "verdict": "cannot-tell",
+     "why": "The processing state is tracked from ready to end, but no processing cancel case appears in the run."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "evalActions refuses a cancel when proofAt shows collection at or before the cancel time."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted cancel sets stop, which halts processing."
+    },
+    "C-091": {
+     "verdict": "cannot-tell",
+     "why": "Compensation and cancellation after a counted processing cancel are coded, but the 60-min timing is not shown in the run."
+    },
+    "C-092": {
+     "verdict": "cannot-tell",
+     "why": "In-flight steps are waited on then compensated, but no in-flight case appears in the run."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "After stop, plan skips processing, so no new reserve, charge or booking is emitted."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "doStop compensates and cancels the shipment as soon as stop is set."
+    },
+    "C-095": {
+     "verdict": "cannot-tell",
+     "why": "cancel-refused is coded for collected shipments, but no such case is shown in the run."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "evalActions skips actions on terminal orders."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "A cancel before the order is cleared stops the order with reason customer."
+    },
+    "C-098": {
+     "verdict": "unmet",
+     "why": "Reservations, charges and shipments were never created in the run, so records cannot describe what happened."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "canMove enforces forward-only status ranks for orders and fulfilments."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "setSt uses a unique tag per status and refuses a repeat."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "canMove blocks any move to a lower or equal rank."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "notify uses the customer email from master/customers.json."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Notifications use only the six listed template names."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "notify checks a tag and the notification record before sending."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "deadlineD is anchored at pm (placedAt), not at the action-required time."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "The timeout is taken at D+20 min, so the action at D still counts."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "The review deadline is set once from the first task."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "evalActions ignores amend without unavailable fulfilments and actions after D."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "proofAt blocks a counted cancel once any fulfilment is collected."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend, a later cancel goes through the processing check."
+    },
+    "C-111": {
+     "verdict": "cannot-tell",
+     "why": "Moot-step handling is coded, but no case in the run shows the skip."
+    },
+    "C-112": {
+     "verdict": "cannot-tell",
+     "why": "Taking a moot step anyway is permitted by the rule; nothing in the run shows it."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "proofAt uses reportedAt and treats collected, inTransit and delivered as proof."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Context about the original application, not a behaviour of this automation."
+    },
+    "C-115": {
+     "verdict": "cannot-tell",
+     "why": "Framing about the spec's purpose, not a testable behaviour."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.01215602,
+    "inputTokens": 55715,
+    "outputTokens": 10707,
+    "calls": 1
+   }
+  },
+  "s1-state-machine": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement that the spec is the only description; not an automation behaviour that can be checked."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement about where inputs live; the automation reads files and system results as the spec describes, but this is not a checkable behaviour."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The automation acts only on structured fields (ops, statuses, codes, decisions), never on free text in messages or documents."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "tick() processes the events of one instant per call and carries state between calls, matching the case-tick model."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Platform retry behaviour; the automation reuses the same key and args on re-issue, but the retry timing is not visible in the run."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "Depends on the platform delivering only final outcomes; not observable from the automation or the run summary."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "mark() sets permanent errors to state 'x', and canEmit() never re-emits them, so permanent errors are not retried."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Every keyed op (orders.create, setStatus, reserve, charge, refund, release, carrier create/cancel, notify.send) is emitted with a key."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Keys are deterministic business keys (s1|chg|fid, s1|rsv|fid|sku, ...) reused on every re-issue via the emitted/ledger checks."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Each key encodes its effect type and target, so a key is never shared across different effects."
+    },
+    "C-011": {
+     "verdict": "met",
+     "why": "Results are only applied from effect.result events; the planner runs on the state as of the tick, not the same instant as emission."
+    },
+    "C-012": {
+     "verdict": "met",
+     "why": "Forward chains use the after field only when the predecessor was emitted, and the reverse-order compensation uses after for the cancel-then-refund chain."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "route() merges or closes only for order.placed, customer.action and carrier.status; everything else falls through as new instances per the platform routing."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "route() returns merge into the open instance on the first tick, or close when no open case exists."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "ctx.query is used for orders.orders, orders.fulfilments, carrier.shipments to route and to judge collection."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is set to the normalised order id on all paths, and null only when no order is identified."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "iso() produces ISO 8601 timestamps with the Europe/Amsterdam offset derived from the DST rule."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create is emitted with order status pending and fulfilments per allocation (unavailable when location is null)."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "inventory.allocate is read with the order id and its fulfilment plan is stored from the result."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "reserve() emits one batch with per-item keys, and the outcome is recorded per item."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check is read and its verdict drives pass, reject or review handling."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "norm() trims, strips leading #, and upper-cases order ids on placed orders, customer actions and carrier routing."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "A repeated placed order routes to the open instance or is closed when already recorded (R1.4), so it is not a second order."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "meaningOf() returns info for any code not in the carrier-codes table."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Collection evidence uses min(receipt, reportedAt) and delivered triggers dispatched before completed, so out-of-order reports are handled."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "onCarrier() returns early for cancelled shipments and completed or failed fulfilments."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "Human answers are accepted by comparing the event time with rv.dl; the late flag is not used."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "fromMigration() builds the carry from the migration records and events for each order."
+    },
+    "C-029": {
+     "verdict": "met",
+     "why": "Migrated orders continue from their recorded statuses and reservations, charges, shipments and notifications under the same planner."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "Carrier messages without the instance's ref are matched via orders.fulfilments by fulfilmentRef (orderOfCarrierMessage)."
+    },
+    "C-031": {
+     "verdict": "cannot-tell",
+     "why": "Most effects are emitted on the tick the rule triggers and timers fire at deadline+1 min, but the run gives no timestamps to confirm each window."
+    },
+    "C-032": {
+     "verdict": "met",
+     "why": "Effects are emitted only when the planner's rule conditions hold and keys are not reused, so no unrequested or second-commit effects appear in the logic."
+    },
+    "C-033": {
+     "verdict": "cannot-tell",
+     "why": "allocate and orders.create are emitted on the first tick, but the run shows no timing data to confirm the 60-minute window."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "priceAndFees() adds feeMinor only when location is not null and the fulfilment is available."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "createArgs() sets totalMinor to the sum of fulfilment amountMinor values."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "editionAt() reads rulebook/<edition>/edition.json and its effectiveFrom."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "editionAt() picks the latest effectiveFrom on or before the Amsterdam date of placedAt."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition is stored once in the carry (st.ed) and reused for the order's life."
+    },
+    "C-039": {
+     "verdict": "met",
+     "why": "Editions are read from the published rulebook files; a not-yet-effective edition is ignored until its date."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A recorded duplicate is closed with no effect (route, R1.4)."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check is read for every new order (plan step R2.1)."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass verdict calls clear(st, st.pAt), setting the order cleared at placedAt."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "A reject verdict sets a fraud cancel at the tick and the cancellation is emitted in that tick."
+    },
+    "C-044": {
+     "verdict": "met",
+     "why": "A review verdict creates one fraudReview task in the same tick."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "The task has kind fraudReview, role fraudAnalyst, subject = orderId, and the approve/reject answerSchema."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "rv.dl is set once from the first review task, and newTask on re-ask keeps the same deadline."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "answerRejected and withdrawn for the open task set reask, and a new task id is created before the deadline."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve answer at or before the deadline clears the order at the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject answer at or before the deadline sets a fraud cancel at the answer time."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "Timeout cancels with reason fraud-review-timeout at dl+1 min, and answers at the deadline still count."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "handle() ignores answers once the order is over or the review is decided."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "decisionOf() requires a decision string of approve or reject; free text is unusable."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "clear() sets car for unavailable orders and plan sets customerActionRequired and sends action-required in the same tick."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D is computed as placedAt plus customerActionHours from the edition at placedAt."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "classify() counts an amend or cancel only when its time is at or before D."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "Once st.act is set, later actions are ignored in classify()."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "A counted amend sets unavailable fulfilments cancelled in the same tick and the order becomes ready."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "An amend with no available fulfilment sets cx nothing-available and cancels the order."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel during waiting sets cx reason customer and cancels the order in that tick."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "The cad timer fires at D+1 min; if no action counted, fulfilments are cancelled, order timedOut and order-timed-out sent."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout requires P.now > D, so it is never taken at D itself."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "clear() sets ready at clearing when there are no unavailable fulfilments."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "On ready the order and available fulfilments are set processing in the same tick."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "plan() returns before any status or reservation when the order is not yet recorded."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "saga() emits reserve, then charge after its commit, then ship after its commit, one step at a time."
+    },
+    "C-066": {
+     "verdict": "met",
+     "why": "Reserve for each available fulfilment is emitted on the ready tick."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "Partial batch items are re-emitted with their original keys in the same reserve step."
+    },
+    "C-068": {
+     "verdict": "met",
+     "why": "Charge is emitted only after all reservations are committed, on the next tick."
+    },
+    "C-069": {
+     "verdict": "met",
+     "why": "carrier.create is emitted only after the charge commits."
+    },
+    "C-070": {
+     "verdict": "met",
+     "why": "400 results set state 4 and are re-issued with the same key and refitted args, up to six attempts."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "A 400 invalid request is recorded as '4' and not as a permanent failure."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "The automation does not read collectionTime; collection is learned only from carrier reports, so the schedule cannot be checked."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "collectionCutoffMinutes is not used by the automation; collection timing is carrier behaviour that the run does not show."
+    },
+    "C-074": {
+     "verdict": "met",
+     "why": "Cancel is refused once collection is known (anyCollectedBy, f.col, or the 409 already-collected path locks the fulfilment)."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "A collected report sets colRep and dispatched is emitted on the same tick."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "A delivered report sets dispatched first if not set, then completed, with after chaining."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info produce no status change in onCarrier or saga."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "collectionFailed sets cfail and the fulfilment fails through failNow."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "outcomeR45 sets completed, failed or cancelled once all fulfilments end, in the same tick."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "chain() undoes cancel of shipment, then refund, then releases, in that order."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "committed() accepts ok, or unknown with status(key) committed (settle)."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Undo is driven by committed-step state and deterministic keys with emitted checks, so no step is undone twice."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "Declined charge, collectionFailed, and permanent non-invalid errors all lead to failNow."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "failNow compensates, sets failed and sends fulfilment-failed in the same tick as the failure."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "Permanently failed steps are never re-emitted."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "Other fulfilments are not touched by failNow."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "A cancel before steps commit cancels open fulfilments, the order, and sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "processing is tracked from ready until the order ends (ready and ostat checks)."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "A cancel is refused if any collected report is at or before the cancel time, or the carrier records show collection."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted cancel sets cx R62 and stops further saga steps."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "cancelOrderR62 compensates open fulfilments and sets them and the order cancelled, then sends order-cancelled."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "Steps still pending are waited on and compensated after they commit."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "saga() returns early when a cancel is active, so nothing new is reserved, charged or booked."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "compensateCancel emits carrier.cancel as soon as the shipment is booked and not collected."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A refused cancel sets refuse, and cancel-refused is sent once; no other change."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "classify() returns early for ended or timed-out orders, so no change occurs."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "A cancel before clearing sets cx R61 and cancels the order with reason customer."
+    },
+    "C-098": {
+     "verdict": "met",
+     "why": "The run shows refunds and releases matching compensations; statuses are set via setStatus with completion outcomes."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "fstat and ostat derive statuses from base plus ranked live keys, and setF/setO never move backward."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "Each status key is emitted once and canEmit blocks re-emission of an already emitted key."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Rank checks in setF and setO prevent a late or repeated message from moving status back."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "notify takes the email from master/customers.json for the customer."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Templates used match the table: action-required, order-cancelled, order-timed-out, fulfilment-failed, cancel-refused."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "Notification keys are per about and template and are emitted once."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "D is anchored at placedAt (st.pAt), not at the time customerActionRequired is set."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Customer deadline is inclusive (a<=D) and the timeout fires only after D."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "The review deadline is set from the first task and the timer fires after it."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "amend without unavailable fulfilments and actions after D on non-waiting orders change nothing (classify early returns)."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Once any fulfilment is collected, anyCollectedBy refuses the whole-order cancel."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend the order is ready, so a later cancel goes through the R6.2 branch."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "processing is skipped when a counted cancel stops the order, and R3.1 is skipped when the customer acts first."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking the R3.1 status before stopping is permitted, and the code does not forbid it."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "Collection evidence uses reportedAt (min with receipt), and the carrier record query is used at the cancel instant."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Describes the reference application for orientation; it is not a requirement the automation can be checked against."
+    },
+    "C-115": {
+     "verdict": "met",
+     "why": "The automation implements compensation in reverse order, the cancel right until collection, and explicit race rules."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.011575269999999999,
+    "inputTokens": 40169,
+    "outputTokens": 13432,
+    "calls": 1
+   }
+  },
+  "s2-reconciler": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "Descriptive statement about the work's source; nothing in the automation or run to check."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "Descriptive statement that all inputs are in the call files; not an automation behaviour."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Parser reads only structured fields of events and files; no document or message text is treated as an instruction."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "Describes the platform's case-tick contract; no automation behaviour to verify beyond tick handling."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Retryable outcomes are not treated as failures; the code reconciles from records and status(key) instead of failing the step."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Code acts only on the final effect.result and reads committed state from records and status."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Permanent errors are recorded (c.pf or failStep) and never re-emitted under the same key."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Every keyed effect is emitted with a key (K.* helpers) and reads are issued without keys."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Keys are deterministic per logical effect (K.* functions) and reused on re-issue after 400."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Key namespaces differ per effect type and item (rsv, rel, chg, rfd, shp, shc, st, ntf, create); no reuse across effects."
+    },
+    "C-011": {
+     "verdict": "met",
+     "why": "Effects are tracked in carry as in-flight until their effect.result arrives; nothing is treated as applied earlier."
+    },
+    "C-012": {
+     "verdict": "cannot-tell",
+     "why": "The automation never uses after; the platform behaviour described is not exercised by the code or run."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "Non-order, non-carrier-match messages get subject handling and merge or close; new placed orders start their own instance."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "Customer actions and carrier messages return merge into the open instance on the first tick, or close when none is open."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "Code reads orders, fulfilments, reservations, charges, refunds, shipments and notifications via ctx.query across cases."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is the normalised order id for placed orders and matched carrier/action messages, null otherwise."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "iso() formats times with the Europe/Amsterdam offset (CET/CEST switch computed)."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create emitted with fulfilments pending or unavailable per location null."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "inventory.allocate read at once for each new order and its result is parsed as fulfilments."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "inventory.reserve is per fulfilment with per-item keys, and partial batches are resubmitted for failed items."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check read for each new order and verdict used."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "normId trims, strips leading #, upper-cases all order ids read (placed, orderRef, fulfilmentRef)."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "Duplicate placed order is detected via open instance or recorded order and closes with no effect."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "meaning() returns info for any carrier/code pair not in the edition table; info triggers nothing."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Reports are stored with min times per slot, so an out-of-order delivery report still drives the right statuses."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "Reports for cancelled shipments are ignored; completed or failed fulfilments take no further action."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "Human answers are judged by the task deadline; the late flag is not read."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "fromMigration builds a carry from the migration's records and events for each in-flight order."
+    },
+    "C-029": {
+     "verdict": "met",
+     "why": "Migrated carry is seeded from live records (cleared, ready status) and the same planner continues it."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "Carrier messages with no ref are matched to the order via orders.fulfilments by fulfilmentRef."
+    },
+    "C-031": {
+     "verdict": "met",
+     "why": "Effects are timed 10 to 45 minutes after each window opens, inside window bounds, with due times waited on."
+    },
+    "C-032": {
+     "verdict": "met",
+     "why": "Each effect is emitted only when its rule asks and its due time has come; keys prevent second commits."
+    },
+    "C-033": {
+     "verdict": "met",
+     "why": "orders.create is due at placedAt+20 min, within the 60 min intake window."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "Fee added only when location is non-null (f.location ? fee : 0)."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor computed as sum of fulfilment amountMinor values."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "Editions are read from rulebook/<id>/edition.json with effectiveFrom dates."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "editionFor picks the latest effectiveFrom on or before p's Amsterdam date and stores it in the carry."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "The edition is fixed in the carry at the first tick and used for the order's life."
+    },
+    "C-039": {
+     "verdict": "met",
+     "why": "Edition selection considers all published editions under rulebook/ and filters by effectiveFrom."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "Duplicate placed order closes without effects."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check issued for every new order that has no verdict yet."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "pass verdict sets cleared at P."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "reject verdict cancels with reason fraud at P+30, inside the 120 min window."
+    },
+    "C-044": {
+     "verdict": "met",
+     "why": "review verdict creates one fraudReview task at P+30, inside the 120 min window."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "Task has kind fraudReview, role fraudAnalyst, subject oid and answerSchema with approve/reject enum."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "Deadline derives from the first task's creation time; retries reuse that deadline."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "Re-ask issues a new task id with the same deadline after an unusable, withdrawn, rejected or timed-out task."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "approve before deadline sets cleared at the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "reject before deadline cancels with reason fraud at answer+30, within 120 min."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "Timeout cancel with reason fraud-review-timeout at deadline+30, inside deadline+120."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "Answers after the deadline are filtered out, so a later answer changes nothing."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "Only answers carrying decision approve or reject are counted."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "Unavailable order gets customerActionRequired and action-required at cleared+25 when not moot. Edge: cleared-after-D skips it (documented reading)."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D = P + customerActionHours from the edition at p."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "First amend or cancel at or before D counts; the a <= D comparison is inclusive."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "Once counted, later actions are ignored for the R3 choice."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "Counted amend cancels unavailable fulfilments at amend+20, inside 60 min."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "Amend with no available fulfilment cancels the order with reason nothing-available."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "Counted cancel cancels the order with reason customer at cancel+20."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "Timeout at D+30 cancels fulfilments, sets timedOut and sends order-timed-out, inside the window."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "Timeout is taken only when now is past D (effective flag) and at D+30."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "readyOf returns cleared when no fulfilment is unavailable."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "Order and available fulfilments set processing at ready+25, inside 60 min."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "Planner returns before any status or reservation effect when the order is not yet recorded."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "Saga steps reserve, then charge, then ship, each gated on the previous record."
+    },
+    "C-066": {
+     "verdict": "met",
+     "why": "Reserve emitted at ready+45, inside the 120 min window."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "Partial batch: only missing items are resent with their original keys."
+    },
+    "C-068": {
+     "verdict": "met",
+     "why": "Charge due at last-reservation commit+30 with the order's customerId and currency."
+    },
+    "C-069": {
+     "verdict": "met",
+     "why": "carrier.create due at charge commit+30, inside 120 min."
+    },
+    "C-070": {
+     "verdict": "met",
+     "why": "400 errors are learned (renames) and the request is re-issued with the same key within the window."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "400 invalid-request is counted in c.bad and never treated as a fulfilment failure."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Collection schedule is carrier-side; the code only reacts to reports and does not model the daily collection."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "Collection timing and cutoff are carrier-side; not modelled or observable in the run."
+    },
+    "C-074": {
+     "verdict": "met",
+     "why": "Shipments are cancelled only before a collection is reported; a refused already-collected cancel is tolerated."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "collected report sets dispatched at arrival+30 bounded by reportedAt+90."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "delivered report sets dispatched first if needed, then completed, in order."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info map to no action slot that changes status."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "collectionFailed report fails the fulfilment via R5.2 compensation."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "Order outcome set completed, failed or cancelled per precedence once all fulfilments are final, at last end+40."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "Compensation order: shipment cancel, then refund, then releases."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "Committed status uses record presence or ctx.status(key)==committed."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Refund and release skip already refunded or released items; pf and records prevent double undo."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "402 declines and permanent non-400 errors on charge or ship or reserve call failStep."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "Failure compensation due within failure+20 (bounded by reportedAt+90); fulfilment-failed notice follows."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "Permanently failed step is recorded in c.pf and not re-emitted."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "Failure is per fulfilment; other fulfilments continue their own chains."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "Pre-commit cancel sets open fulfilments cancelled, order cancelled and order-cancelled within the window."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "Processing is from ready until end; the R6.2 cancel path is keyed to it."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "Cancel refused when any shipment's collected, inTransit or delivered report is at or before the cancel."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "Counted cancel marks the stop; no new steps are issued afterwards."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "Open fulfilments compensated and cancelled, order cancelled and notified at cancel+10 (within 60 min)."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "Steps committing after the cancel are compensated on the next tick from the records."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "Reserve, charge and ship are gated by the stopped flag after a counted cancel."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "Shipment cancel is emitted at the cancel time (due at once)."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "Refused cancel sends cancel-refused at refusal+20 and changes nothing else."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "Cancels for ended orders are skipped (out.at <= a), so nothing changes."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "Cancel before clearance cancels with reason customer at cancel+20 and a later answer is ignored."
+    },
+    "C-098": {
+     "verdict": "met",
+     "why": "Orders, fulfilments, reservations, charges, refunds and shipments are driven to match the outcome."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "FRANK and ORANK enforce forward-only ordering of statuses."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "Status keys are per (order, fulfilment, status) and setF/setO skip statuses already reached."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Late or repeated messages cannot lower rank; setF and setO compare ranks before emitting."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "notify.send to is env.email(customerId) from master/customers.json."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Templates used are action-required, order-cancelled, order-timed-out, fulfilment-failed and cancel-refused."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "notify keys are deterministic and records are checked before sending."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "D is computed from p (P + customerActionHours), not from the time action-required is set."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Customer deadlines are inclusive (a <= D); timeouts start after D (D+30)."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "Review deadline from the first task's creation; shared across retries."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Amend with no unavailable fulfilment is not counted (hasUnav check); later actions after D are skipped."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Any collected, inTransit or delivered report at or before the cancel makes the cancel refused."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend the order is processing and later cancels follow the R6.2 path."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "R3.1 is skipped when a counted action happened first, and processing is skipped when a counted cancel stops the order first."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking the step before the stop is allowed by the code; it is not a violation."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "Collection proof uses reportedAt of collected, inTransit or delivered reports known at the tick."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Describes the upstream reference application, not the automation's behaviour."
+    },
+    "C-115": {
+     "verdict": "met",
+     "why": "The automation implements reverse-order compensation, the cancel-until-collection right and explicit race rules."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.014450020000000001,
+    "inputTokens": 40727,
+    "outputTokens": 19042,
+    "calls": 1
+   }
+  },
+  "s3-saga-engine": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "Framing statement about the spec. Nothing in the automation or run tests it."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Automation reads rulebook, master, api and calendar files from ctx.files and results from systems."
+    },
+    "C-003": {
+     "verdict": "cannot-tell",
+     "why": "No visible test that document or message text is treated only as data; the code does not act on free text."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "tick(input, ctx) handles one call per instance per instant from input.events."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Retries are performed by the platform; the automation keeps stable keys but its own retry behaviour is not shown."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Engine acts on final effect.result outcomes only (handleResult, classify)."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "classify marks retryable:false errors as 'x' (permanent) and they are not re-declared for retry."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Keyed ops (orders, inventory.reserve/release, billing, carrier, notify) are emitted with keys from K.*."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "Unit keys are content-addressed and reused across re-issues; states are kept in S.u."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Keys are derived from the effect type plus ids (create, st, rsv, chg, shp, cxl, rfd, rel, ntf), so no key is reused for another effect."
+    },
+    "C-011": {
+     "verdict": "cannot-tell",
+     "why": "Platform timing of results is not observable here; code waits for results before acting on them."
+    },
+    "C-012": {
+     "verdict": "met",
+     "why": "after is set only for dependencies emitted in the same output; other dependencies make the unit wait."
+    },
+    "C-013": {
+     "verdict": "met",
+     "why": "route() merges or handles messages by type; non-matching messages start new instances."
+    },
+    "C-014": {
+     "verdict": "met",
+     "why": "First-tick route returns merge:{into} for an open instance of the same subject, or closes."
+    },
+    "C-015": {
+     "verdict": "met",
+     "why": "q() calls ctx.query on orders.orders and orders.fulfilments for routing."
+    },
+    "C-016": {
+     "verdict": "met",
+     "why": "decisions.subject is S.oid on every tick and null when no order applies."
+    },
+    "C-017": {
+     "verdict": "met",
+     "why": "iso() and offMin() produce Europe/Amsterdam offsets with the EU DST rule."
+    },
+    "C-018": {
+     "verdict": "met",
+     "why": "orders.create is emitted with fulfilments; pending or unavailable statuses follow location null."
+    },
+    "C-019": {
+     "verdict": "met",
+     "why": "alloc unit calls inventory.allocate and reads fulfilments from the result."
+    },
+    "C-020": {
+     "verdict": "met",
+     "why": "Reserve is a batch per fulfilment with per-item keys; partial results are re-declared per item."
+    },
+    "C-021": {
+     "verdict": "met",
+     "why": "fraud.check verdict pass/review/reject is read and used."
+    },
+    "C-022": {
+     "verdict": "met",
+     "why": "normId trims, removes leading #, and upper-cases order ids in every read."
+    },
+    "C-023": {
+     "verdict": "met",
+     "why": "Duplicate placed orders merge into the open instance or are handled with no effect (R1.4)."
+    },
+    "C-024": {
+     "verdict": "met",
+     "why": "meaningOf returns info for codes the edition table does not list."
+    },
+    "C-025": {
+     "verdict": "met",
+     "why": "Events are sorted by time; a delivered report sets dispatched first, and collection facts are kept as minima."
+    },
+    "C-026": {
+     "verdict": "met",
+     "why": "handleCarrier returns for cancelled shipments and for ended fulfilments."
+    },
+    "C-027": {
+     "verdict": "met",
+     "why": "handleTask ignores the late flag and tests the answer time against the deadline."
+    },
+    "C-028": {
+     "verdict": "met",
+     "why": "fromMigration builds the instance from the migration records and events."
+    },
+    "C-029": {
+     "verdict": "met",
+     "why": "Migration state is restored (statuses, reservations, charges, shipments, notifications) and processing continues."
+    },
+    "C-030": {
+     "verdict": "met",
+     "why": "Route matches carrier messages by fulfilmentRef through orders.fulfilments to the order id."
+    },
+    "C-031": {
+     "verdict": "unmet",
+     "why": "World 1235 had 68 refused tick outputs (call timeout), so acts due in their window may not have been emitted in time."
+    },
+    "C-032": {
+     "verdict": "cannot-tell",
+     "why": "No visible evidence of effects emitted after their window beyond the refused ticks; timing per effect is not logged."
+    },
+    "C-033": {
+     "verdict": "met",
+     "why": "The first tick emits inventory.allocate and orders.create; counts match in all worlds (25/25, 82/82, 203/203)."
+    },
+    "C-034": {
+     "verdict": "met",
+     "why": "Fee is added only when loc !== null (the unavailable case is zero fee)."
+    },
+    "C-035": {
+     "verdict": "met",
+     "why": "totalMinor is the sum of fulfilment amt values."
+    },
+    "C-036": {
+     "verdict": "met",
+     "why": "editions() reads rulebook/<dir>/edition.json with effectiveFrom."
+    },
+    "C-037": {
+     "verdict": "met",
+     "why": "pickEdition chooses the latest effectiveFrom not after the local date of p."
+    },
+    "C-038": {
+     "verdict": "met",
+     "why": "S.ed is set once and kept in the carry for the order's life."
+    },
+    "C-039": {
+     "verdict": "met",
+     "why": "Unpublished future editions are not selected because effectiveFrom must be on or before p."
+    },
+    "C-040": {
+     "verdict": "met",
+     "why": "A recorded order returns duplicate with no effects."
+    },
+    "C-041": {
+     "verdict": "met",
+     "why": "fraud.check is declared for each new order."
+    },
+    "C-042": {
+     "verdict": "met",
+     "why": "A pass verdict calls clear(S, ..., pMs)."
+    },
+    "C-043": {
+     "verdict": "met",
+     "why": "A reject verdict calls cancelOrder with reason fraud at the tick time, which is inside the window."
+    },
+    "C-044": {
+     "verdict": "met",
+     "why": "A review verdict calls askReview, which creates one human task."
+    },
+    "C-045": {
+     "verdict": "met",
+     "why": "The task has kind fraudReview, role fraudAnalyst, subject oid, and answerSchema requiring decision approve or reject."
+    },
+    "C-046": {
+     "verdict": "met",
+     "why": "The deadline is set from the first task only (S.rv.dl is not reset)."
+    },
+    "C-047": {
+     "verdict": "met",
+     "why": "A re-ask follows answerRejected, withdrawn or unusable answers when now < deadline, under a new task id."
+    },
+    "C-048": {
+     "verdict": "met",
+     "why": "An approve at or before the deadline calls clear at the answer time."
+    },
+    "C-049": {
+     "verdict": "met",
+     "why": "A reject at or before the deadline calls cancelOrder with reason fraud."
+    },
+    "C-050": {
+     "verdict": "met",
+     "why": "Timer t-review fires at deadline+1 min and cancels with fraud-review-timeout."
+    },
+    "C-051": {
+     "verdict": "met",
+     "why": "handleTask returns when S.cx is set, so later answers change nothing."
+    },
+    "C-052": {
+     "verdict": "met",
+     "why": "Answers without a decision of approve or reject are not used and trigger a re-ask only."
+    },
+    "C-053": {
+     "verdict": "met",
+     "why": "clear() calls startWaiting, which sets customerActionRequired and sends action-required."
+    },
+    "C-054": {
+     "verdict": "met",
+     "why": "D = pMs + cah hours from the edition at p."
+    },
+    "C-055": {
+     "verdict": "met",
+     "why": "The first amend or cancel at or before D sets S.act; later ones are ignored."
+    },
+    "C-056": {
+     "verdict": "met",
+     "why": "Once S.act is set, later actions return early."
+    },
+    "C-057": {
+     "verdict": "met",
+     "why": "A counted amend cancels unavailable fulfilments at the tick and the order continues as ready."
+    },
+    "C-058": {
+     "verdict": "met",
+     "why": "An amend with no available fulfilment cancels the order with reason nothing-available."
+    },
+    "C-059": {
+     "verdict": "met",
+     "why": "A counted cancel calls cancelOrder with reason customer at a."
+    },
+    "C-060": {
+     "verdict": "met",
+     "why": "Timer t-action fires at D+1 min and triggers timeoutOrder, which cancels fulfilments and sends order-timed-out."
+    },
+    "C-061": {
+     "verdict": "met",
+     "why": "The timeout timer is D+1 min, not D."
+    },
+    "C-062": {
+     "verdict": "met",
+     "why": "clear() calls ready() when no fulfilment is unavailable."
+    },
+    "C-063": {
+     "verdict": "met",
+     "why": "ready() sets processing on the order and on available fulfilments in the same tick."
+    },
+    "C-064": {
+     "verdict": "met",
+     "why": "Effects depend on create:<order> when recorded is 'me'."
+    },
+    "C-065": {
+     "verdict": "met",
+     "why": "planSpecs gates charge on all reserves ok and ship on charge (after)."
+    },
+    "C-066": {
+     "verdict": "met",
+     "why": "The reserve batch is emitted at ready time."
+    },
+    "C-067": {
+     "verdict": "met",
+     "why": "Partial items are re-declared with their original keys."
+    },
+    "C-068": {
+     "verdict": "met",
+     "why": "Charge is emitted once all reserve items are ok."
+    },
+    "C-069": {
+     "verdict": "met",
+     "why": "Ship depends on the charge key via after."
+    },
+    "C-070": {
+     "verdict": "met",
+     "why": "A 400 is re-issued with the same key and field renames are learnt (up to 3 times)."
+    },
+    "C-071": {
+     "verdict": "met",
+     "why": "A 400 is classified r400 and is not a fulfilment failure."
+    },
+    "C-072": {
+     "verdict": "cannot-tell",
+     "why": "Collection timing is carrier-side; the automation does not model collectionTime."
+    },
+    "C-073": {
+     "verdict": "cannot-tell",
+     "why": "collectionCutoffMinutes is not used; the automation relies on carrier messages."
+    },
+    "C-074": {
+     "verdict": "cannot-tell",
+     "why": "The compensation planner issues carrier.cancel without checking collection; the carrier refuses (409) after collection, and that is handled by pivot."
+    },
+    "C-075": {
+     "verdict": "met",
+     "why": "A collected report pushes dispatched."
+    },
+    "C-076": {
+     "verdict": "met",
+     "why": "A delivered report pushes dispatched then completed."
+    },
+    "C-077": {
+     "verdict": "met",
+     "why": "inTransit and info produce no status change."
+    },
+    "C-078": {
+     "verdict": "met",
+     "why": "A collectionFailed report (before any collection) calls failF."
+    },
+    "C-079": {
+     "verdict": "met",
+     "why": "checkOutcome sets completed, failed or cancelled once all fulfilments have ended."
+    },
+    "C-080": {
+     "verdict": "met",
+     "why": "Compensation order is cancel, then refund after cancel, then release after refund."
+    },
+    "C-081": {
+     "verdict": "met",
+     "why": "commitOf uses status(key) for unknown or in-flight outcomes."
+    },
+    "C-082": {
+     "verdict": "met",
+     "why": "Only committed steps are undone, once, via key state."
+    },
+    "C-083": {
+     "verdict": "met",
+     "why": "Declined charge, collectionFailed and permanent non-invalid errors lead to failF."
+    },
+    "C-084": {
+     "verdict": "met",
+     "why": "failF compensates (planner), sets failed and sends fulfilment-failed."
+    },
+    "C-085": {
+     "verdict": "met",
+     "why": "Permanently failed steps are not re-issued (state x)."
+    },
+    "C-086": {
+     "verdict": "met",
+     "why": "failF touches only that fulfilment."
+    },
+    "C-087": {
+     "verdict": "met",
+     "why": "cancelOrder cancels open fulfilments, sets cancelled and sends order-cancelled."
+    },
+    "C-088": {
+     "verdict": "met",
+     "why": "Processing starts at ready and ends at the order outcome or cancel."
+    },
+    "C-089": {
+     "verdict": "met",
+     "why": "handleAction refuses a cancel when a fulfilment collection time is at or before the cancel time."
+    },
+    "C-090": {
+     "verdict": "met",
+     "why": "A counted cancel calls cancelOrder and stops forward work."
+    },
+    "C-091": {
+     "verdict": "met",
+     "why": "cancelOrder compensates open fulfilments and sends order-cancelled in the same tick."
+    },
+    "C-092": {
+     "verdict": "met",
+     "why": "Planner waits for in-flight units, then compensates them after commit."
+    },
+    "C-093": {
+     "verdict": "met",
+     "why": "Forward units require !S.cx, so no new effects after the cancel."
+    },
+    "C-094": {
+     "verdict": "met",
+     "why": "The shipment cancel is emitted as soon as the shipment is committed."
+    },
+    "C-095": {
+     "verdict": "met",
+     "why": "A refused cancel sends cancel-refused once and changes nothing else."
+    },
+    "C-096": {
+     "verdict": "met",
+     "why": "handleAction returns for ended orders, so nothing changes."
+    },
+    "C-097": {
+     "verdict": "met",
+     "why": "A cancel before clearance calls cancelOrder with reason customer."
+    },
+    "C-098": {
+     "verdict": "cannot-tell",
+     "why": "Final records are not inspected in the run; reservation and refund states depend on the systems."
+    },
+    "C-099": {
+     "verdict": "met",
+     "why": "pushStatus only moves forward using the rank tables."
+    },
+    "C-100": {
+     "verdict": "met",
+     "why": "Each status key is emitted once (st:<order>:<fid>:<status>)."
+    },
+    "C-101": {
+     "verdict": "met",
+     "why": "Late messages are ignored when a status cannot move forward."
+    },
+    "C-102": {
+     "verdict": "met",
+     "why": "Notifications use emailOf(customerId) from master/customers.json."
+    },
+    "C-103": {
+     "verdict": "met",
+     "why": "Templates used are the table names (action-required, order-cancelled, order-timed-out, fulfilment-failed, cancel-refused)."
+    },
+    "C-104": {
+     "verdict": "met",
+     "why": "notify() dedupes by key per about and template."
+    },
+    "C-105": {
+     "verdict": "met",
+     "why": "D is computed from p, not from the time the status is set."
+    },
+    "C-106": {
+     "verdict": "met",
+     "why": "Timers are at D+1 min; an action at D still counts."
+    },
+    "C-107": {
+     "verdict": "met",
+     "why": "The review deadline is set from the first task and kept."
+    },
+    "C-108": {
+     "verdict": "met",
+     "why": "Amends without unavailable fulfilments and actions after D on non-waiting orders are ignored."
+    },
+    "C-109": {
+     "verdict": "met",
+     "why": "Any collected fulfilment blocks the whole-order cancel."
+    },
+    "C-110": {
+     "verdict": "met",
+     "why": "After a counted amend, a cancel is judged by R6.2 (s8 path)."
+    },
+    "C-111": {
+     "verdict": "met",
+     "why": "Moot steps are skipped when the counted cancel stops the order first."
+    },
+    "C-112": {
+     "verdict": "met",
+     "why": "Taking such a step is permitted; no rule forbids it."
+    },
+    "C-113": {
+     "verdict": "met",
+     "why": "Collection is judged by reportedAt for collected, inTransit and delivered reports."
+    },
+    "C-114": {
+     "verdict": "cannot-tell",
+     "why": "Background description of the prior system; nothing to tick in the automation."
+    },
+    "C-115": {
+     "verdict": "cannot-tell",
+     "why": "Background description; the saga behaviour is covered by the items above."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.01070027,
+    "inputTokens": 40849,
+    "outputTokens": 11512,
+    "calls": 1
+   }
+  }
+ },
+ "costUsd": 0.149481
+}

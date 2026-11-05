@@ -1,0 +1,4781 @@
+{
+ "setting": "key",
+ "sample": "s1",
+ "semantics": "v3",
+ "builds": {
+  "b-h/HC1": {
+   "case": "HC1",
+   "arm": "B-H",
+   "conv": "HC1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "check-suspect",
+     "decided": 2,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to nadia@yogaflowstudio.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to nadia@yogaflowstudio.com matches",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "check-suspect": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-h/HC2": {
+   "case": "HC2",
+   "arm": "B-H",
+   "conv": "HC2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "crm#0",
+       "ok": true,
+       "why": "not in scope and not named",
+       "view": "base"
+      },
+      {
+       "item": "crm#1",
+       "ok": true,
+       "why": "row on newsletter answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   }
+  },
+  "b-h/HE1": {
+   "case": "HE1",
+   "arm": "B-H",
+   "conv": "HE1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 6,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   }
+  },
+  "b-h/HE2": {
+   "case": "HE2",
+   "arm": "B-H",
+   "conv": "HE2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 6,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 18,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   }
+  },
+  "b-h/HI1": {
+   "case": "HI1",
+   "arm": "B-H",
+   "conv": "HI1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#8",
+       "ok": true,
+       "why": "email to scenario3.practice-florist@example.org answers it",
+       "view": "targeted"
+      },
+      {
+       "item": "invoices#10",
+       "ok": true,
+       "why": "email to scenario5.practice-florist@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#10",
+       "ok": true,
+       "why": "email to scenario5.practice-florist@example.org answers it",
+       "view": "targeted"
+      },
+      {
+       "item": "invoices#11",
+       "ok": true,
+       "why": "email to scenario6.practice-florist@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-008": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-009": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-010": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-011": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   }
+  },
+  "b-h/HI2": {
+   "case": "HI2",
+   "arm": "B-H",
+   "conv": "HI2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#1",
+       "ok": true,
+       "why": "email to practice-gym@example.org answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 11,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e2",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      }
+     ]
+    },
+    "C-007": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 3,
+     "violated": 3,
+     "evidence": [
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 1,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4
+    }
+   },
+   "g3Model": [
+    "C-007"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-h/HL1": {
+   "case": "HL1",
+   "arm": "B-H",
+   "conv": "HL1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "leads#1",
+       "ok": true,
+       "why": "email to priya@sunrisesolar.energy answers it",
+       "view": "base"
+      },
+      {
+       "item": "leads#1",
+       "ok": true,
+       "why": "email to priya@sunrisesolar.energy answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 18,
+     "violated": 6,
+     "evidence": [
+      {
+       "item": "leads#3",
+       "ok": false,
+       "why": "0 row effect(s) name it; want atLeast 1",
+       "view": "base"
+      },
+      {
+       "item": "leads#4",
+       "ok": false,
+       "why": "0 row effect(s) name it; want atLeast 1",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5
+    }
+   },
+   "g3Model": [
+    "C-007"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-h/HL2": {
+   "case": "HL2",
+   "arm": "B-H",
+   "conv": "HL2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "no-check",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "no-check": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "no-check": 1
+    }
+   }
+  },
+  "b-h/HO1": {
+   "case": "HO1",
+   "arm": "B-H",
+   "conv": "HO1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #oncall matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e2",
+       "ok": null,
+       "why": "wording: chat in #oncall may say \"severity\" in other words",
+       "view": "base"
+      },
+      {
+       "item": "repeat-1:e2",
+       "ok": null,
+       "why": "wording: chat in #oncall may say \"severity\" in other words",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "repeat-1:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   }
+  },
+  "b-h/HO2": {
+   "case": "HO2",
+   "arm": "B-H",
+   "conv": "HO2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "alerts#0",
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "alerts#0",
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 12,
+     "violated": 1,
+     "evidence": [
+      {
+       "item": "alerts#6",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 1,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   },
+   "g3Model": [
+    "C-006"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-h/HS1": {
+   "case": "HS1",
+   "arm": "B-H",
+   "conv": "HS1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 3
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 3
+    }
+   }
+  },
+  "b-h/HS2": {
+   "case": "HS2",
+   "arm": "B-H",
+   "conv": "HS2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 3,
+     "violated": 3,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "needs-answer",
+     "decided": 0,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": null,
+       "why": "fails only on messages to your address mike@fitzone.com, which these words do not name",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "needs-answer": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-h/HW1": {
+   "case": "HW1",
+   "arm": "B-H",
+   "conv": "HW1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": null,
+       "why": "wording: email to rick@summitconstruction.com may say it in other words",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": null,
+       "why": "wording: email to rick@summitconstruction.com may say it in other words",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   }
+  },
+  "b-h/HW2": {
+   "case": "HW2",
+   "arm": "B-H",
+   "conv": "HW2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 13,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tracker#0",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "tracker#1",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 13,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tracker#0",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "tracker#1",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   }
+  },
+  "b-m/HC1": {
+   "case": "HC1",
+   "arm": "B-M",
+   "conv": "HC1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "check-suspect",
+     "decided": 2,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to nadia@yogaflowstudio.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to nadia@yogaflowstudio.com matches",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "check-suspect": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-m/HC2": {
+   "case": "HC2",
+   "arm": "B-M",
+   "conv": "HC2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "crm#0",
+       "ok": true,
+       "why": "not in scope and not named",
+       "view": "base"
+      },
+      {
+       "item": "crm#1",
+       "ok": true,
+       "why": "row on newsletter answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   }
+  },
+  "b-m/HE1": {
+   "case": "HE1",
+   "arm": "B-M",
+   "conv": "HE1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 6,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   }
+  },
+  "b-m/HE2": {
+   "case": "HE2",
+   "arm": "B-M",
+   "conv": "HE2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 6,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 18,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   }
+  },
+  "b-m/HI1": {
+   "case": "HI1",
+   "arm": "B-M",
+   "conv": "HI1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#8",
+       "ok": true,
+       "why": "email to scenario3.practice-florist@example.org answers it",
+       "view": "targeted"
+      },
+      {
+       "item": "invoices#10",
+       "ok": true,
+       "why": "email to scenario5.practice-florist@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#10",
+       "ok": true,
+       "why": "email to scenario5.practice-florist@example.org answers it",
+       "view": "targeted"
+      },
+      {
+       "item": "invoices#11",
+       "ok": true,
+       "why": "email to scenario6.practice-florist@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-008": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-009": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-010": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-011": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   }
+  },
+  "b-m/HI2": {
+   "case": "HI2",
+   "arm": "B-M",
+   "conv": "HI2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#1",
+       "ok": true,
+       "why": "email to practice-gym@example.org answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 11,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e2",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      }
+     ]
+    },
+    "C-007": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 3,
+     "violated": 3,
+     "evidence": [
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 1,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4
+    }
+   },
+   "g3Model": [
+    "C-007"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-m/HL1": {
+   "case": "HL1",
+   "arm": "B-M",
+   "conv": "HL1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "leads#1",
+       "ok": true,
+       "why": "email to priya@sunrisesolar.energy answers it",
+       "view": "base"
+      },
+      {
+       "item": "leads#1",
+       "ok": true,
+       "why": "email to priya@sunrisesolar.energy answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 18,
+     "violated": 6,
+     "evidence": [
+      {
+       "item": "leads#3",
+       "ok": false,
+       "why": "0 row effect(s) name it; want atLeast 1",
+       "view": "base"
+      },
+      {
+       "item": "leads#4",
+       "ok": false,
+       "why": "0 row effect(s) name it; want atLeast 1",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5
+    }
+   },
+   "g3Model": [
+    "C-007"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-m/HL2": {
+   "case": "HL2",
+   "arm": "B-M",
+   "conv": "HL2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "no-check",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "no-check": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "no-check": 1
+    }
+   }
+  },
+  "b-m/HO1": {
+   "case": "HO1",
+   "arm": "B-M",
+   "conv": "HO1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #oncall matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e2",
+       "ok": null,
+       "why": "wording: chat in #oncall may say \"severity\" in other words",
+       "view": "base"
+      },
+      {
+       "item": "repeat-1:e2",
+       "ok": null,
+       "why": "wording: chat in #oncall may say \"severity\" in other words",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "repeat-1:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   }
+  },
+  "b-m/HO2": {
+   "case": "HO2",
+   "arm": "B-M",
+   "conv": "HO2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "alerts#0",
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "alerts#0",
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 12,
+     "violated": 1,
+     "evidence": [
+      {
+       "item": "alerts#6",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 1,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   },
+   "g3Model": [
+    "C-006"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-m/HS1": {
+   "case": "HS1",
+   "arm": "B-M",
+   "conv": "HS1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 3
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 3
+    }
+   }
+  },
+  "b-m/HS2": {
+   "case": "HS2",
+   "arm": "B-M",
+   "conv": "HS2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 3,
+     "violated": 3,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "needs-answer",
+     "decided": 0,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": null,
+       "why": "fails only on messages to your address mike@fitzone.com, which these words do not name",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "needs-answer": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b-m/HW1": {
+   "case": "HW1",
+   "arm": "B-M",
+   "conv": "HW1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": null,
+       "why": "wording: email to rick@summitconstruction.com may say it in other words",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": null,
+       "why": "wording: email to rick@summitconstruction.com may say it in other words",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 1
+    }
+   }
+  },
+  "b-m/HW2": {
+   "case": "HW2",
+   "arm": "B-M",
+   "conv": "HW2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 13,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tracker#0",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "tracker#1",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 13,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tracker#0",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "tracker#1",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   }
+  },
+  "b0-h2/HC1": {
+   "case": "HC1",
+   "arm": "B0-H2",
+   "conv": "HC1",
+   "verified": false,
+   "t0": {
+    "passed": false
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "check-suspect",
+     "decided": 2,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 2,
+     "violated": 2,
+     "evidence": [
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "check-suspect": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b0-h2/HC2": {
+   "case": "HC2",
+   "arm": "B0-H2",
+   "conv": "HC2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "crm#0",
+       "ok": true,
+       "why": "not in scope and not named",
+       "view": "base"
+      },
+      {
+       "item": "crm#1",
+       "ok": true,
+       "why": "row on newsletter answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to janet@happytailsbakery.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   }
+  },
+  "b0-h2/HE1": {
+   "case": "HE1",
+   "arm": "B0-H2",
+   "conv": "HE1",
+   "verified": false,
+   "t0": {
+    "passed": false
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 6,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to dana@brightleafmarketing.com answers it",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   }
+  },
+  "b0-h2/HE2": {
+   "case": "HE2",
+   "arm": "B0-H2",
+   "conv": "HE2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 7,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 6,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#2",
+       "ok": true,
+       "why": "email to owen@evergreenlandscaping.co answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 18,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "expenses#0",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      },
+      {
+       "item": "expenses#1",
+       "ok": true,
+       "why": "row on expense-decisions answers it",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 0,
+    "waived": 0,
+    "unknownBy": {}
+   }
+  },
+  "b0-h2/HI1": {
+   "case": "HI1",
+   "arm": "B0-H2",
+   "conv": "HI1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#8",
+       "ok": true,
+       "why": "email to scenario3.practice-cafe@example.org answers it",
+       "view": "targeted"
+      },
+      {
+       "item": "invoices#10",
+       "ok": true,
+       "why": "email to scenario5.practice-cafe@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#10",
+       "ok": true,
+       "why": "email to scenario5.practice-cafe@example.org answers it",
+       "view": "targeted"
+      },
+      {
+       "item": "invoices#11",
+       "ok": true,
+       "why": "email to scenario6.practice-cafe@example.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-008": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-009": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-010": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-011": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 5,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   }
+  },
+  "b0-h2/HI2": {
+   "case": "HI2",
+   "arm": "B0-H2",
+   "conv": "HI2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "repeat"
+      },
+      {
+       "item": "invoices#5",
+       "ok": true,
+       "why": "email to practice-studio@example.org answers it",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "repeat:repeat-2:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      },
+      {
+       "item": "repeat:repeat-2:e3",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-007": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 3,
+     "violated": 2,
+     "evidence": [
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": false,
+       "why": "no email effect matches",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 1,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4
+    }
+   },
+   "g3Model": [
+    "C-007"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b0-h2/HL1": {
+   "case": "HL1",
+   "arm": "B0-H2",
+   "conv": "HL1",
+   "verified": false,
+   "t0": {
+    "passed": false
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 5,
+     "violated": 5,
+     "evidence": [
+      {
+       "item": "leads#1",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "base"
+      },
+      {
+       "item": "leads#1",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 18,
+     "violated": 6,
+     "evidence": [
+      {
+       "item": "leads#3",
+       "ok": false,
+       "why": "0 row effect(s) name it; want atLeast 1",
+       "view": "base"
+      },
+      {
+       "item": "leads#4",
+       "ok": false,
+       "why": "0 row effect(s) name it; want atLeast 1",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 0,
+    "unmet": 2,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5
+    }
+   },
+   "g3Model": [
+    "C-007"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 0,
+    "unmet": 1,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b0-h2/HL2": {
+   "case": "HL2",
+   "arm": "B0-H2",
+   "conv": "HL2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "no-check",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "no-check": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 5,
+     "no-check": 1
+    }
+   }
+  },
+  "b0-h2/HO1": {
+   "case": "HO1",
+   "arm": "B0-H2",
+   "conv": "HO1",
+   "verified": false,
+   "t0": {
+    "passed": false
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 2,
+     "violated": 2,
+     "evidence": [
+      {
+       "item": null,
+       "ok": false,
+       "why": "no chat effect matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": false,
+       "why": "no chat effect matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 0,
+    "unmet": 1,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 2
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 0,
+    "unmet": 1,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "not-exercised": 2
+    }
+   }
+  },
+  "b0-h2/HO2": {
+   "case": "HO2",
+   "arm": "B0-H2",
+   "conv": "HO2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "chat in #it-oncall matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 5,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "alerts#0",
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "alerts#0",
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to n.okafor@stmaryshospital.org matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 15,
+     "violated": 4,
+     "evidence": [
+      {
+       "item": "alerts#3",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "base"
+      },
+      {
+       "item": "alerts#3",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "targeted"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 1,
+    "unknown": 1,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1
+    }
+   },
+   "g3Model": [
+    "C-006"
+   ],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b0-h2/HS1": {
+   "case": "HS1",
+   "arm": "B0-H2",
+   "conv": "HS1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 3
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 5,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 3
+    }
+   }
+  },
+  "b0-h2/HS2": {
+   "case": "HS2",
+   "arm": "B0-H2",
+   "conv": "HS2",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to cy@customer-practice.example answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to cy@customer-practice.example answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "check-suspect",
+     "decided": 9,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "check-suspect": 1
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 1,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b0-h2/HW1": {
+   "case": "HW1",
+   "arm": "B0-H2",
+   "conv": "HW1",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to rick@summitconstruction.com matches",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 3,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 3,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   }
+  },
+  "b0-h2/HW2": {
+   "case": "HW2",
+   "arm": "B0-H2",
+   "conv": "HW2",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 13,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tracker#0",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "tracker#1",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 13,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tracker#0",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      },
+      {
+       "item": "tracker#1",
+       "ok": true,
+       "why": "email to liz@beaconcontent.co answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   },
+   "g3Model": [],
+   "poolSize": 3,
+   "tallyG3Model": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2
+    }
+   }
+  }
+ }
+}

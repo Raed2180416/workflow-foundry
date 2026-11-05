@@ -1,0 +1,49 @@
+{
+ "note": "Deviations from PREREG-TRACKER (§8) that change a frozen file. freeze.mjs --check accepts a drifted file only when its sha256 equals the one recorded here, so a later unrecorded edit still stops the paid steps.",
+ "D1": {
+  "at": "2026-10-21T23:25:00Z",
+  "why": "E8 environment faults (call timeouts, stopped worlds) excluded from judge and score, never scored; see PREREG-TRACKER.md §8 D1.",
+  "commit": "fee8f72f",
+  "files": {
+   "experiments/tracker-v2/run-e8.mjs": "501225f8484cd934df5b2047d48dc975fbd0453596bf411700d8c7259ccba454"
+  }
+ },
+ "D2": {
+  "at": "2026-10-22T02:50:00Z",
+  "why": "Check semantics v2 (app/core/tracker/semantics.mjs) beside the frozen v1; judge steps write both. v1 statuses identical on s0 (same-statuses.mjs); all journaled capture and bind requests rebuild byte for byte (verify-prompts.mjs). See PREREG-TRACKER.md §8 D2.",
+  "files": {
+   "app/core/tracker/checks.mjs": "387ff695fa97a7eb70eea8b5c7482654c74491be7a53615d81651dabcabc950b",
+   "app/core/tracker/status.mjs": "9ad327cd3ec8d739d8d5c796fbf2202646986894d8200b9917e4169dd919a91a",
+   "app/core/tracker/gates.mjs": "c5ba0665533ab6cc34fd852ccba70cee1f6f7f7895f8055fc1d8b16810c57ba1",
+   "app/core/tracker/index.mjs": "b68e8418b695f85fec5b3430665e0de9f5c5dc3f885761555d325e4f8ecba5c1",
+   "app/core/tracker/scenarios.mjs": "b8599f36f4cb87bcf3dc550dad767037a07dbd236e7c5c9f7e0a6795de69a1fd",
+   "app/core/tracker/practice.mjs": "bd4d688d10b04764204e22dff636deb41fcfebe131d047030b70771a0f9ddc25",
+   "experiments/tracker-v2/run-builder1.mjs": "450dc9ba6d27446649f35480bfe6336be8f82412ed4bf9cf20b83c9b1aea80ad",
+   "experiments/tracker-v2/run-e8.mjs": "04e16088ff75d74ead6e11041c93ab8dceded089038443453e3d55853da2bc5d"
+  }
+ },
+ "D3": {
+  "at": "2026-10-28T19:00:00Z",
+  "why": "Check semantics v3 (app/core/tracker/semantics.mjs, checks.mjs, index.mjs; E8 reversal pairs in experiments/tracker-v2/e8.mjs) beside the frozen v1 and v2; judge steps write judge-v3 files and a single-build view (t2Solo); run-e8 skips builds whose every world faulted in prepare and takes a second bind sample. v1 and v2 statuses unchanged; journaled capture and bind requests rebuild byte for byte (verify-prompts.mjs: 157 identical, 0 different). See PREREG-TRACKER.md §8 D3.",
+  "files": {
+   "app/core/tracker/checks.mjs": "ee6aed2f7f4d0da6a33ac4c72943765cc62a7a4c1d1f1533ec8ca4b8131c853b",
+   "app/core/tracker/gates.mjs": "bd586bf4064d38dba855e503af3c778ce68906eb61db133698fe83865b149a2d",
+   "app/core/tracker/scenarios.mjs": "6c1c5f3ce7f8ead32289b998b84f45c65417e2976e9bfca19908e9168943dd0a",
+   "app/core/tracker/index.mjs": "d67d50026a521737e8a387dcb08a311ed8bbee0d062a834358f22a5d92844525",
+   "experiments/tracker-v2/e8.mjs": "b6f10a75932ef66cc3fe7cf3f948dded517d1778e46f3270ea7d5a154fcd7b0b",
+   "experiments/tracker-v2/run-builder1.mjs": "e7314adb207f8f719d2ea7db7ecdf6a9483ca7cf662ba8f91acdf574b9317a6f",
+   "experiments/tracker-v2/run-e8.mjs": "74cd6afb68193b1cdb7b11a17e105af23a2215585661a9decba3e99693868fc1"
+  }
+ },
+ "D4": {
+  "at": "2026-11-04T20:00:00Z",
+  "why": "Review fixes after the held-out scoring (RESULT-TRACKER.md §11, PREREG-TRACKER-H2.md): semantics v4 = v3 + R-copy-names (scenarios.mjs fresh names that neither contain nor are contained in the original's) + R-per-run (checks.mjs: a sourceless count is counted per run on the repeat view; practice.mjs joinViews tags each effect with its run); v4 becomes the product default (semantics.mjs, index.mjs docs); model.mjs toConditions replaces a capture summary that names a routing literal (address, URL, @handle, #channel) the words never gave by the quote (review m3). v1, v2 and v3 statuses are unchanged (judge-key-v3-s0 re-derivation, same-statuses.mjs); every prompt is byte-identical.",
+  "files": {
+   "app/core/tracker/checks.mjs": "20e9999ba4027c5cebf531c8fca005c63e07783f0012425c4b96c1c7336e1258",
+   "app/core/tracker/scenarios.mjs": "ee963e329eb40853d683304b7de3b446b418bac0818e6ea32e3367d17720aa5e",
+   "app/core/tracker/practice.mjs": "716e40a4d7a4841195ca69af8039f1f7887e2ea8f0dd6d4ea0ad5fa00551bb22",
+   "app/core/tracker/model.mjs": "9736de00c24fcbda39ddf987b4bd0c5e513b68aa517f899e848879d5cb59a57e",
+   "app/core/tracker/index.mjs": "32a4f93e734640171e175d1c415ced462c50cbdb402ec4f6c5c99b204ae57f56"
+  }
+ }
+}

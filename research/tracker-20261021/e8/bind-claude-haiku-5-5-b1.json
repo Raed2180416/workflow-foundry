@@ -1,0 +1,587 @@
+{
+ "model": "claude-haiku-5-5",
+ "conditions": {
+  "C-001": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Background statement describing the spec as the only source of the work; it states no requirement on a run.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-002": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Background statement about where the information needed for the work is located; it states no requirement a run can show.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-003": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Instruction about how to treat document and message text; it describes handling for the agent and is not a business outcome an effect or record can show.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-004": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Background definition of a case-tick; it states no requirement on the automation's effects.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-005": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Describes platform retry behaviour (re-issuing the same call with the same key and backoff). No listed field records retry attempts; only the final outcome appears in result fields, so one run cannot show this.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-006": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Describes what the agent receives from the platform; it states no requirement on the automation's output.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-007": {
+   "decision": "inspection",
+   "check": null,
+   "why": "States a platform guarantee that permanent errors are never retried. Retry attempts are not recorded in any listed field, so one run cannot show it.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-008": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Describes the API convention that keyed operations take an idempotency key; it is a fact about the systems, not a requirement the run's effects must meet.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-009": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Retry behaviour of the platform (same key and arguments on every attempt) is not recorded in any listed effect field; one run cannot show attempts were reused.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-010": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Checking that no key serves two different effects needs comparing the arguments behind each key across effects; no listed template expresses that cross-effect key uniqueness.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-011": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The one-minute delay between emitting an effect and its effect.result is a platform timing property; no listed field records the emit time of an effect to compare against result.at.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-012": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The condition covers any effect with an after key across all channels. The order template needs fixed first and then channels, which the person does not name, so no single check fits without inventing one.",
+   "question": null,
+   "lint": [],
+   "retried": true,
+   "dropped": null
+  },
+  "C-013": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Instance routing (a new instance per non-ref message) is a platform behaviour; instance creation is not recorded in any effect or record field in the vocabulary.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-014": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Returning merge or close on a first tick is a return-value decision of the workflow, not an effect or record that a practice run exposes.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-015": {
+   "decision": "inspection",
+   "check": null,
+   "why": "ctx.query is a read capability available to the workflow; it does not produce an effect or outcome the run can be checked against.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-016": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The declared subject of an instance (decisions.subject) is not recorded in any listed effect, source or record field.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-017": {
+   "decision": "inspection",
+   "check": null,
+   "why": "A convention about time zones and calendars. No listed field records the time zone a run used, so one run cannot show it.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-018": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The required starting statuses (order pending, fulfilment pending or unavailable when location is null) are set by the system and are not recorded in the orders.create arguments or result fields, so no listed template can compare them.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-019": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Describes what the read-only inventory.allocate operation returns. It states no requirement on the run.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-020": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Describes the inventory.reserve API (per-item batch with keys, partial results). It states no requirement on the run.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-021": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Describes the fraud.check API output shape. It states no requirement on the run.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-022": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Requires that every order id be trimmed, stripped of a leading #, and upper-cased. No listed op tests the normalised form across all values, and the raw input text is not recorded in a comparable column.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-023": {
+   "decision": "check",
+   "check": {
+    "template": "count",
+    "channel": "orders.create",
+    "where": [],
+    "op": "atMost",
+    "n": 1,
+    "source": "inbound:order.placed",
+    "filter": [],
+    "link": {
+     "item": "payload.orderId",
+     "effect": "args.orderId",
+     "op": "eq"
+    }
+   },
+   "why": "A repeated order.placed delivery must not create a second order. Counts orders.create effects per order id from order.placed inputs and requires at most one.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-024": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Whether a carrier code is unlisted depends on the rulebook carrier-codes table, which a run does not record. Checking that no action followed an unlisted code cannot be expressed with the listed templates.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-025": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Describes how carriers deliver messages (repeats, out-of-order delivery). No template can check the arrival order of carrier messages from the effects and records.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-026": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Requires that carrier messages about cancelled or completed/failed shipments cause no change. Checking that means comparing message handling with the absence of status changes, which no single listed template expresses.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-027": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Concerns how the late flag is interpreted against the R2.2 deadline. The run does not record that interpretation, so one run cannot show it.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-028": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Requires that each in-flight order gets an instance whose first event is a migration. No listed field records instance creation or the first event of an instance.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-029": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Requires that migrated orders continue from their current state under the same rules. This is a general behaviour, not a specific effect or record that one run can show.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-030": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Requires matching pre-go-live carrier messages to their order by fulfilmentRef. No effect records the link from a carrier message without a ref to its order, so one run cannot show it.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-031": {
+   "decision": "inspection",
+   "check": null,
+   "why": "A general timing rule that applies across many rules, each with its own window and anchor. It is not one listed check and cannot be reduced to a single template.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-032": {
+   "decision": "inspection",
+   "check": null,
+   "why": "A broad prohibition covering early, unrequested, repeated and late effects. It is a combination of many rules, not one listed check, so one run cannot show it as a single template.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-033": {
+   "decision": "check",
+   "check": {
+    "template": "when-then",
+    "source": "inbound:order.placed",
+    "filter": [],
+    "channel": "orders.create",
+    "where": [],
+    "link": {
+     "item": "payload.orderId",
+     "effect": "args.orderId",
+     "op": "eq"
+    },
+    "require": [],
+    "within": {
+     "anchor": "@at",
+     "min": 0,
+     "max": 60
+    }
+   },
+   "why": "Each placed order must get its orders.create within 60 minutes of placedAt, so this is a when-then over the placed-order items.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-034": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The fee rule depends on catalog unit prices and shipping-fee tables, which no recorded effect or record exposes as a checkable field relation.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-035": {
+   "decision": "inspection",
+   "check": null,
+   "why": "totalMinor must equal the sum of fulfilment amounts; no template sums values across fulfilments.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-036": {
+   "decision": "not-a-condition",
+   "check": null,
+   "why": "Describes how edition directories are laid out; it states no behaviour a run can show.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-037": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Which edition applies is a rulebook lookup by date; no recorded effect or record shows the edition used.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-038": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Requires the same edition for the order's whole life; no recorded field shows the edition used per order.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-039": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Concerns when editions are published in the rulebook directory; a run does not record publication.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-040": {
+   "decision": "check",
+   "check": {
+    "template": "count",
+    "channel": "orders.create",
+    "where": [],
+    "op": "atMost",
+    "n": 1,
+    "source": "inbound:order.placed",
+    "filter": [],
+    "link": {
+     "item": "payload.orderId",
+     "effect": "args.orderId",
+     "op": "eq"
+    }
+   },
+   "why": "A duplicate placed order must produce no new order record, so each placed order gets at most one orders.create for its order id.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-041": {
+   "decision": "check",
+   "check": {
+    "template": "count",
+    "channel": "fraud.check",
+    "where": [],
+    "op": "atLeast",
+    "n": 1,
+    "source": "inbound:order.placed",
+    "filter": [],
+    "link": {
+     "item": "payload.orderId",
+     "effect": "args.orderId",
+     "op": "eq"
+    }
+   },
+   "why": "Every placed order must get at least one fraud.check effect; matched per order id.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-042": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Being cleared at p is an internal flow state; no listed field records a cleared time.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-043": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The fraud verdict is not a listed field of fraud.check results, and no listed cancel field records the reason fraud, so a reject-verdict cancellation cannot be selected or checked.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-044": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The fraud verdict is not recorded in any listed field, so the review verdict that triggers a fraudReview task cannot be selected for the 120-minute window check.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-045": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The task kind, role, subject and answer schema of a humanTask.create are not columns the field template can compare, so this cannot be checked from listed fields.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-046": {
+   "decision": "inspection",
+   "check": null,
+   "why": "The review window runs from the first review task's creation plus fraudReviewHours; no template compares a task's dueAt with another task's creation time.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-047": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Re-asking is permission, and keeping the deadline unchanged across retries would need comparing dueAt across tasks, which no template does.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  },
+  "C-048": {
+   "decision": "inspection",
+   "check": null,
+   "why": "Clearing the order at the answer time is an internal flow state with no listed field; the approve decision alone is not a recorded clearance.",
+   "question": null,
+   "lint": [],
+   "retried": false,
+   "dropped": null
+  }
+ },
+ "calls": [
+  {
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 4379,
+   "cacheReadTokens": 57078,
+   "cacheWriteTokens": 60395,
+   "costUsd": 0.010310055,
+   "latencyMs": 24463
+  },
+  {
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 2923,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 56950,
+   "costUsd": 0.00858045,
+   "latencyMs": 24153
+  },
+  {
+   "nodeKey": "bind-lint",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 1387,
+   "cacheReadTokens": 56503,
+   "cacheWriteTokens": 57790,
+   "costUsd": 0.00848268,
+   "latencyMs": 20759
+  },
+  {
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3255,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 57153,
+   "costUsd": 0.008771825,
+   "latencyMs": 26045
+  },
+  {
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 2683,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 56942,
+   "costUsd": 0.00845945,
+   "latencyMs": 19041
+  },
+  {
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3621,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 56965,
+   "costUsd": 0.008931325,
+   "latencyMs": 29219
+  },
+  {
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 7657,
+   "cacheReadTokens": 56896,
+   "cacheWriteTokens": 62928,
+   "costUsd": 0.01226386,
+   "latencyMs": 40663
+  }
+ ],
+ "costUsd": 0.065799
+}

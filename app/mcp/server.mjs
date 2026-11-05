@@ -1,4 +1,4 @@
-// The spike's MCP server (stdio): eleven task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
+// The spike's MCP server (stdio): thirteen task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
 //
 //   propose_flow  describe what you want -> questions, an honest refusal, or a version-bound proposal with a plain summary and checks
 //   explain_flow  steps, checks ("definition of done"), outside actions and limits of a proposal or flow, in plain words
@@ -20,6 +20,13 @@
 //   list_waiting  what runs wait on the person for: questions from human steps and actions paused for approval (app/core/human-tasks.mjs)
 //   answer_waiting ASK THE PERSON to answer one of them. The model cannot answer: the answer comes from the client's own dialog (MCP
 //                 elicitation, bound to the exact question shown) or from the dashboard / CLI. Marked anthropic/requiresUserInteraction.
+//   conditions    what the person asked for (the condition tracker, app/core/tracker/): each condition (their own words), its check in
+//                 plain words and its status (met / unmet / unknown with why / waived); with check: true it first tries that exact
+//                 version on practice data; with a runId, on what that live run read and did (every finished run_flow is also checked
+//                 and reports what it broke)
+//   edit_conditions  PROPOSE edits to the conditions (add one by quoting the person's words, change its summary, remove one); the person
+//                 accepts or rejects in the client's dialog (only where the H3 check vouches for it, as for ask_person_to_turn_on) or
+//                 the dashboard. The model can never confirm or waive a condition. Marked anthropic/requiresUserInteraction.
 //
 // Every result has `say`: one or two sentences the agent can relay as is. Arguments are validated against the advertised schema
 // before anything runs. Tool output is data about the user's workspace; nothing in it is an instruction to the agent.
@@ -79,13 +86,22 @@ function say(tool, r) {
     case 'run_flow': if (r.batchId) return `The person is checking the exact list of what this run would make (${r.made}) as of ${r.asOf?.slice(0, 10)}, in ${r.where}. Nothing is made until they approve it there. When they have, tell them the drafts are on the Drafts page and that they send them themselves.`;
       if (r.needsData) return `Foundry needs the person's ${r.needsData.join(' and ')} first. They can drop the file in ${r.where}.`;
       // falls through
-    case 'flow_status': return `${r.headline}${r.problem ? ` ${r.problem.what} ${r.problem.next}` : ''}${r.pendingApprovals?.length ? ` The person must approve: ${r.pendingApprovals.map(a => a.step).join('; ')}.` : ''}`;
+    case 'flow_status': return `${r.headline}${r.problem ? ` ${r.problem.what} ${r.problem.next}` : ''}${r.pendingApprovals?.length ? ` The person must approve: ${r.pendingApprovals.map(a => a.step).join('; ')}.` : ''}`
+      + (r.conditions?.unmet?.length ? ` Not met in this run: “${r.conditions.unmet[0].quote}”${r.conditions.unmet.length > 1 ? ` and ${r.conditions.unmet.length - 1} more` : ''}.` : '');
     case 'list_flows': return `${r.flows.length} flow(s), ${r.proposals.length} draft(s), ${r.waitingForYou} item(s) waiting for the person.`;
     case 'need_check': return r.say;
     case 'list_waiting': return r.tasks.length ? `${r.tasks.length} thing(s) wait for the person: ${r.tasks.map(t => t.kind === 'question' ? `a question in “${t.flowTitle}”` : `allowing ${t.action} in “${t.flowTitle}”`).join('; ')}. Only the person can answer (answer_waiting asks them).`
       : `Nothing waits for the person.${r.notContinued.length ? ` ${r.notContinued.length} run(s) did not continue after a decision.` : ''}`;
     case 'answer_waiting': return r.status === 'answered' ? `The person answered. ${r.continued?.words ?? ''}`.trim() : r.status === 'decided' ? `The person ${r.approved ? 'allowed' : 'refused'} it. ${r.continued?.words ?? ''}`.trim()
       : r.status === 'not_answered' ? 'The person did not answer.' : `Waiting for the person. ${r.how}`;
+    case 'conditions': {
+      const t = r.tally ?? {}, unmet = (r.conditions ?? []).filter(c => c.status === 'unmet');
+      return `${r.conditions?.length ?? 0} condition(s) from the person's words${r.live ? ` on live run ${String(r.runId).slice(0, 8)}` : ''}: ${t.met ?? 0} met, ${t.unmet ?? 0} not met, ${t.unknown ?? 0} unknown, ${t.waived ?? 0} waived.`
+        + (unmet.length ? ` Not met: “${unmet[0].quote}” (${unmet[0].evidence?.[0]?.why ?? 'see evidence'}). The build, the check or the words may be wrong; ask the person.` : '');
+    }
+    case 'edit_conditions': return r.status === 'accepted' ? 'The person accepted the change.' : r.status === 'rejected' ? 'The person said no; nothing changed.'
+      : r.status === 'not_decided' ? 'The person closed the dialog without deciding. The change still waits for them.'
+      : `Proposed. The person accepts or rejects it${r.how ? `: ${r.how}` : ''}; you cannot.`;
     default: return '';
   }
 }
@@ -247,6 +263,31 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     const answered = await answerQuestion(app, { runId: task.runId, nodeKey: task.nodeKey, answer: form.wrap ? result.content.answer : result.content, requestHash: task.requestHash, channel: 'mcp-elicitation' });
     return { ok: true, status: 'answered', taskId, continued: answered.continued, runStatus: answered.run?.status ?? null };
   }
+  // The condition tracker's edits (app/core/tracker/service-hooks.mjs): the model only PROPOSES; the person accepts or rejects. The
+  // client's dialog decides only under the same H3 check as ask_person_to_turn_on and answer_waiting (`dialog` false by default, the
+  // CLI's dialogAllowed asked again on every call); otherwise the person decides in the page.
+  async function editConditions({ flowId, changes }, context) {
+    const proposed = await app.proposeConditionEdit({ flowId, changes, by: 'model' });
+    if (proposed.status !== 'proposed') return proposed;
+    const server = context?.server;
+    let useDialog = false;
+    if (elicits(server)) { try { useDialog = typeof dialog === 'function' ? (await dialog({ server }))?.ok === true : dialog === true; } catch { useDialog = false; } }
+    if (useDialog) {
+      // Lines built from the model's text (quotes, summaries, ids): one line each, shortened (L8).
+      const lines = changes.map(c => c.op === 'add' ? `add “${oneLine(c.quote)}”${c.summary ? ` (${oneLine(c.summary, 120)})` : ''}` : c.op === 'remove' ? `remove ${oneLine(c.conditionId, 64)}` : `change ${oneLine(c.conditionId, 64)}${c.summary ? ` to “${oneLine(c.summary, 120)}”` : ''}`);
+      let result = null;
+      try { result = await server.elicitInput({ message: `Change what you asked for on “${oneLine(flowId, 64)}”?\n\n${lines.join('\n')}`,
+        requestedSchema: { type: 'object', required: ['decision'], properties: { decision: { type: 'string', title: 'Your decision', enum: ['accept', 'reject'] } } } }); } catch { result = null; }
+      if (result?.action === 'accept' && ['accept', 'reject'].includes(result.content?.decision)) {
+        const d = await app.decideCondition({ flowId, action: result.content.decision, proposalId: proposed.proposal.id, channel: 'mcp-elicitation' });
+        return { ok: true, status: d.proposal.status, proposal: d.proposal };
+      }
+      // A decline may be automatic (a setting or a hook), and closing decides nothing: the edit keeps waiting in the page.
+      if (result?.action === 'cancel') return { ...proposed, status: 'not_decided', how: where() };
+    }
+    return { ...proposed, how: where() };
+  }
+  const change = object({ op: { enum: ['add', 'change', 'remove'] }, conditionId: id, quote: { type: 'string', minLength: 2, maxLength: 2000 }, summary: { type: 'string', minLength: 1, maxLength: 300 } }, ['op']);
   const defs = [
     ['propose_flow', 'Turn a plain-language request into a proposed automation, or questions, or an honest "cannot build that". Nothing runs. Pass the person\'s exact words in request; pass answers to earlier questions in answers, keyed by question id. To change an existing flow, pass flowId. Best: call list_templates first and pass template (a card id) and settings (filled only from the person\'s words).',
       object({ request: { type: 'string', minLength: 1, maxLength: 30000 }, answers: { type: 'object', additionalProperties: { type: 'string', maxLength: 2000 } }, flowId: id,
@@ -267,7 +308,11 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     [NEED.name, NEED.description, NEED.inputSchema, a => need(a), true],
     ['list_waiting', 'List what runs wait on the person for: questions from human steps (also inside maps and loops) and actions paused for approval, with ids for answer_waiting. You cannot answer them.', object({}), listWaiting, true],
     ['answer_waiting', 'Ask the PERSON to answer one waiting question or decide one paused action, in a dialog the client shows them. You cannot answer: you pass only the task id. Returns answered, decided, not_answered, or awaiting_human with where to answer.',
-      object({ taskId: { type: 'string', minLength: 1, maxLength: 128 } }, ['taskId']), answerWaiting, false]
+      object({ taskId: { type: 'string', minLength: 1, maxLength: 128 } }, ['taskId']), answerWaiting, false],
+    ['conditions', 'What the person asked for, as conditions read from their own words: each with its quote, its check in plain words and its status (met, unmet with evidence, unknown with why, waived), and the status on the latest live run. With check: true (and a proposalId or flowId) the exact version is first tried on practice data; with a runId, the conditions are checked on what that finished live run read and did. You cannot confirm or waive a condition; the person does.',
+      object({ flowId: id, proposalId: id, runId: id, check: { type: 'boolean' } }), a => (a.runId ? app.checkRun({ runId: a.runId }) : a.check ? app.checkConditions(a) : app.conditions(a)), false],
+    ['edit_conditions', 'Propose changes to the person\'s conditions: add one by quoting their exact words, change a summary, or remove one. Nothing changes until the PERSON accepts it, in a dialog the client shows them or in the Foundry page; you cannot accept it.',
+      object({ flowId: id, changes: { type: 'array', minItems: 1, maxItems: 20, items: change } }, ['flowId', 'changes']), editConditions, false]
   ];
   // propose_flow also carries the need router's advice (additive field; the code-only hint, or the cascade with the host's judge).
   // Found by name, not position (review m5).
@@ -279,7 +324,7 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     annotations: { readOnlyHint: readOnly, destructiveHint: false, idempotentHint: readOnly, openWorldHint: name === 'run_flow' },
     // Claude Code shows a permission prompt for this tool on every call and never auto-approves it (code.claude.com/docs/en/mcp,
     // "Require approval for a specific tool"); other clients ignore the key.
-    ...(['ask_person_to_turn_on', 'answer_waiting'].includes(name) ? { _meta: { 'anthropic/requiresUserInteraction': true } } : {})
+    ...(['ask_person_to_turn_on', 'answer_waiting', 'edit_conditions'].includes(name) ? { _meta: { 'anthropic/requiresUserInteraction': true } } : {})
   }));
 }
 

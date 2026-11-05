@@ -1,0 +1,809 @@
+{
+ "arm": "B0-H+repair-t2",
+ "case": "HE1",
+ "expected": "expense-approval",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t2",
+     "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"anything $50 or more goes to dana@brightleafmarketing.com\": acted on, but no email effect names it\n- \"if there's no receipt it should go to dana too\": acted on, but no email effect names it\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.005401685,
+  "tokens": 6333,
+  "inputTokens": 2,
+  "outputTokens": 6331,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.005401685,
+   "inputTokens": 2,
+   "outputTokens": 6331
+  }
+ ],
+ "builderWallMs": 23923,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-auto-approve",
+  "version": 2,
+  "title": "Auto-approve small expense claims with receipts; route the rest to Dana by decision row and e-mail",
+  "goal": "Read submitted expense claims. Claims under $50 with a receipt are logged as approved. Claims of $50 or more, and claims without a receipt, are logged as waiting for approver in expense-decisions and e-mailed to dana@brightleafmarketing.com with the list of claims.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Amounts are numeric in one currency (USD assumed) and the receipt field is boolean.",
+    "Only claims with status 'submitted' are processed.",
+    "Dana is notified by one e-mail per routed group (amount 50 or more; no receipt under 50), sent through outbox.send only when that group is non-empty."
+   ],
+   "risks": [
+    "The expenses sheet status is not changed to approved (the flow only appends to expense-decisions), so the same claim could be reprocessed on a later run; the append step is idempotent per step, not per claim.",
+    "Claims with a missing or non-numeric amount are not routed by any branch and are left out of the decision log and the e-mails.",
+    "Each e-mail send is non-idempotent and asks a person before dispatch when live; a retry could duplicate it, so sends are capped at one attempt."
+   ],
+   "successCriteria": [
+    "Every submitted claim with amount under 50 and receipt true has an 'approved' decision row.",
+    "Every submitted claim with amount 50 or more, or receipt false, has a 'waiting for approver' decision row naming dana@brightleafmarketing.com.",
+    "An e-mail naming dana@brightleafmarketing.com is delivered for each non-empty routed group and confirmed by outbox.audit.",
+    "Each append is confirmed by sheet.audit."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 30,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all expense claims.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read_expenses"
+    ],
+    "description": "Keep only submitted claims.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approved_claims",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Submitted claims under 50 with a receipt.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "lt",
+       "value": 50
+      },
+      {
+       "field": "receipt",
+       "op": "eq",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "over_limit_claims",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Submitted claims of 50 or more.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "gte",
+       "value": 50
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "no_receipt_claims",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Submitted claims under 50 without a receipt.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "lt",
+       "value": 50
+      },
+      {
+       "field": "receipt",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decide_approved",
+    "kind": "task",
+    "needs": [
+     "approved_claims"
+    ],
+    "description": "Build approved decision rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.approved_claims.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount"
+     ],
+     "set": {
+      "decision": "approved",
+      "reason": "under 50 with receipt"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decide_over_limit",
+    "kind": "task",
+    "needs": [
+     "over_limit_claims"
+    ],
+    "description": "Build waiting rows for claims of 50 or more.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.over_limit_claims.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount"
+     ],
+     "set": {
+      "decision": "waiting for approver",
+      "reason": "amount 50 or more; routed to dana@brightleafmarketing.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decide_no_receipt",
+    "kind": "task",
+    "needs": [
+     "no_receipt_claims"
+    ],
+    "description": "Build waiting rows for claims without a receipt.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.no_receipt_claims.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount"
+     ],
+     "set": {
+      "decision": "waiting for approver",
+      "reason": "no receipt; routed to dana@brightleafmarketing.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_approved",
+    "kind": "task",
+    "needs": [
+     "decide_approved"
+    ],
+    "description": "Log approved decisions.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decide_approved.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_over_limit",
+    "kind": "task",
+    "needs": [
+     "decide_over_limit"
+    ],
+    "description": "Log claims routed to Dana for amount.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decide_over_limit.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_no_receipt",
+    "kind": "task",
+    "needs": [
+     "decide_no_receipt"
+    ],
+    "description": "Log claims routed to Dana for missing receipt.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decide_no_receipt.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "over_limit_summary",
+    "kind": "task",
+    "needs": [
+     "over_limit_claims"
+    ],
+    "description": "Render one line per claim of 50 or more for Dana's e-mail.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.over_limit_claims.rows"
+     },
+     "line": "{{id}} | {{employee}} | {{amount}}",
+     "empty": "none"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "no_receipt_summary",
+    "kind": "task",
+    "needs": [
+     "no_receipt_claims"
+    ],
+    "description": "Render one line per claim without a receipt for Dana's e-mail.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.no_receipt_claims.rows"
+     },
+     "line": "{{id}} | {{employee}} | {{amount}}",
+     "empty": "none"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "email_dana_over_limit",
+    "kind": "task",
+    "needs": [
+     "over_limit_summary",
+     "append_over_limit"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.over_limit_claims.count"
+     },
+     "right": 0
+    },
+    "description": "E-mail Dana the claims of 50 or more routed to her.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "dana@brightleafmarketing.com",
+     "subject": "Expense claims of 50 or more awaiting approval",
+     "body": {
+      "$ref": "nodes.over_limit_summary.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "email_dana_no_receipt",
+    "kind": "task",
+    "needs": [
+     "no_receipt_summary",
+     "append_no_receipt"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.no_receipt_claims.count"
+     },
+     "right": 0
+    },
+    "description": "E-mail Dana the under-50 claims without a receipt routed to her.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "dana@brightleafmarketing.com",
+     "subject": "Expense claims without a receipt awaiting approval",
+     "body": {
+      "$ref": "nodes.no_receipt_summary.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit_approved",
+    "kind": "verify",
+    "needs": [
+     "append_approved"
+    ],
+    "description": "Confirm approved decision rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_approved.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_approved"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "audit_over_limit",
+    "kind": "verify",
+    "needs": [
+     "append_over_limit"
+    ],
+    "description": "Confirm amount-based routing rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_over_limit.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_over_limit"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "audit_no_receipt",
+    "kind": "verify",
+    "needs": [
+     "append_no_receipt"
+    ],
+    "description": "Confirm no-receipt routing rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_no_receipt.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_no_receipt"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "audit_email_over_limit",
+    "kind": "verify",
+    "needs": [
+     "email_dana_over_limit"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.over_limit_claims.count"
+     },
+     "right": 0
+    },
+    "description": "Confirm the e-mail to Dana for claims of 50 or more was delivered.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      [
+       "dana@brightleafmarketing.com"
+      ]
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.email_dana_over_limit"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "audit_email_no_receipt",
+    "kind": "verify",
+    "needs": [
+     "email_dana_no_receipt"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.no_receipt_claims.count"
+     },
+     "right": 0
+    },
+    "description": "Confirm the e-mail to Dana for claims without a receipt was delivered.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      [
+       "dana@brightleafmarketing.com"
+      ]
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.email_dana_no_receipt"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_approved.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_over_limit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_no_receipt.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.over_limit_claims.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.audit_email_over_limit.pass"
+      },
+      "right": true
+     }
+    ]
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.no_receipt_claims.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.audit_email_no_receipt.pass"
+      },
+      "right": true
+     }
+    ]
+   }
+  ],
+  "oracle": {
+   "mode": "none",
+   "reason": "Decisions are rule-based and the audits only confirm rows and e-mails were written, so a person should spot-check decisions against receipts and amounts."
+  },
+  "metadata": {
+   "tags": [
+    "expenses",
+    "approval"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "inconclusive",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "VERIFY_FAILED",
+   "message": "audit_approved: gate verification failed (score 0)"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 12.4,
+      "decision": "approved",
+      "employee": "Kai Brooks",
+      "id": "BL-1",
+      "reason": "under 50 with receipt"
+     },
+     {
+      "amount": 49.5,
+      "decision": "approved",
+      "employee": "Lina Haas",
+      "id": "BL-2",
+      "reason": "under 50 with receipt"
+     },
+     {
+      "amount": 50,
+      "decision": "waiting for approver",
+      "employee": "Mo Reyes",
+      "id": "BL-3",
+      "reason": "amount 50 or more; routed to dana@brightleafmarketing.com"
+     },
+     {
+      "amount": 310,
+      "decision": "waiting for approver",
+      "employee": "Kai Brooks",
+      "id": "BL-5",
+      "reason": "amount 50 or more; routed to dana@brightleafmarketing.com"
+     },
+     {
+      "amount": 22,
+      "decision": "waiting for approver",
+      "employee": "Nell Park",
+      "id": "BL-4",
+      "reason": "no receipt; routed to dana@brightleafmarketing.com"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-t2/foundry-live-Q9cWom",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim with amount under 50 and receipt true has an 'approved' decision row.",
+    "exact": "the pass of “Confirm approved decision rows were written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every submitted claim with amount 50 or more, or receipt false, has a 'waiting for approver' decision row naming dana@brightleafmarketing.com.",
+    "exact": "the pass of “Confirm amount-based routing rows were written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "An e-mail naming dana@brightleafmarketing.com is delivered for each non-empty routed group and confirmed by outbox.audit.",
+    "exact": "the pass of “Confirm no-receipt routing rows were written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "Each append is confirmed by sheet.audit.",
+    "exact": "the count of “Submitted claims of 50 or more.” equals 0 or the pass of “Confirm the e-mail to Dana for claims of 50 or more was delivered.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.4",
+    "plain": "the count of “Submitted claims under 50 without a receipt.” equals 0 or the pass of “Confirm the e-mail to Dana for claims without a receipt was delivered.” equals true",
+    "exact": "the count of “Submitted claims under 50 without a receipt.” equals 0 or the pass of “Confirm the e-mail to Dana for claims without a receipt was delivered.” equals true",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_approved",
+    "plain": "Confirm approved decision rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": false
+   },
+   {
+    "id": "verify.audit_over_limit",
+    "plain": "Confirm amount-based routing rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_no_receipt",
+    "plain": "Confirm no-receipt routing rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_email_over_limit",
+    "plain": "Confirm the e-mail to Dana for claims of 50 or more was delivered.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_email_no_receipt",
+    "plain": "Confirm the e-mail to Dana for claims without a receipt was delivered.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Confirm approved decision rows were written."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict inconclusive): VERIFY_FAILED",
+   "outbox : missing a message to dana@brightleafmarketing.com containing \"BL-3\", \"BL-4\", \"BL-5\""
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 2,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HE1",
+  "verifiedBefore": false,
+  "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"anything $50 or more goes to dana@brightleafmarketing.com\": acted on, but no email effect names it\n- \"if there's no receipt it should go to dana too\": acted on, but no email effect names it\nFix the workflow so it meets them."
+ }
+}
