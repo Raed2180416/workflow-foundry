@@ -1,0 +1,28 @@
+{
+ "B0": {
+  "waitMissed": {
+   "question not listed": 2304,
+   "approval not listed while the run is running": 1205,
+   "approval not listed while the run is ready": 36
+  },
+  "failDeep": {
+   "names the container, not the failing item step": 45,
+   "names another step": 21
+  }
+ },
+ "B1": {
+  "state": {
+   "other: said needs_you, truth working, row pending": 172,
+   "run stopped, step still shown as waiting or working": 71,
+   "independent check disagreed, shown as still working": 86,
+   "refused action still shown as needing you (approval.decided has no nodeKey)": 22
+  },
+  "waitFalse": {
+   "listed but not waiting": 172,
+   "listed after the run stopped": 24
+  },
+  "failDeep": {
+   "names the container, not the failing item step": 54
+  }
+ }
+}

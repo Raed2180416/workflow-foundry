@@ -1,0 +1,30 @@
+{
+ "items": 50,
+ "events": 311,
+ "runWallMs": 3800,
+ "loadavg": [
+  21.61,
+  19.95,
+  16.38
+ ],
+ "T": {
+  "messages": 9,
+  "bytes": 18411,
+  "endDelayMs": 38,
+  "liveStates": true
+ },
+ "B1": {
+  "messages": 13,
+  "bytes": 122715,
+  "endDelayMs": 36,
+  "liveStates": true,
+  "tokenInUrl": true
+ },
+ "B0": {
+  "requests": 2,
+  "bytes": 27189,
+  "endDelayMs": null,
+  "liveStates": false,
+  "note": "polls every 5 s; per-step states are not in its data"
+ }
+}

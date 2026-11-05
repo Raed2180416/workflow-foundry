@@ -18,6 +18,7 @@ import { digest, errorData } from '../../src/data.mjs';
 import { explainRun, describeWorkflow, failureText } from '../core/failure-words.mjs';
 import { createGate, pageUrl, CODE_WORDS } from '../site/gate.mjs';
 import { watchPeers, peerAllowed } from '../site/peer.mjs';
+import { liveRoutes } from './live.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STATIC = { '/': ['index.html', 'text/html; charset=utf-8'], '/dashboard.js': ['dashboard.js', 'text/javascript; charset=utf-8'], '/dashboard.css': ['dashboard.css', 'text/css; charset=utf-8'] };
@@ -109,6 +110,7 @@ export async function handleDashboardApi(app, req, res, url, send) {
 /** Create (not start) the dashboard server for one FoundryApp. */
 export function createDashboard(app, { token = randomBytes(24).toString('base64url'), workspace = app.root, instance } = {}) {
   const gate = createGate({ workspace, instance, token });
+  const live = liveRoutes(app);                       // read-only run data for a visualisation + the human-task routes (live.mjs), behind the gate
   let port = null;
   const send = (res, status, body, type = 'application/json; charset=utf-8') => {
     res.writeHead(status, { ...SECURITY, 'content-type': type }); res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
@@ -133,6 +135,7 @@ export function createDashboard(app, { token = randomBytes(24).toString('base64u
       }
       if (!url.pathname.startsWith('/api/')) return send(res, 404, { error: 'not found' });
       if (!gate.check(String(req.headers['x-foundry-token'] ?? ''))) return send(res, 401, { error: 'This page needs a fresh link: run `node app/cli.mjs start` again in your own terminal.' });
+      if (await live(req, res, url, send) !== false) return;
       if (await handleDashboardApi(app, req, res, url, send)) return;
       return send(res, 404, { error: 'not found' });
     } catch (error) {
@@ -148,6 +151,6 @@ export function createDashboard(app, { token = randomBytes(24).toString('base64u
     },
     /** The address with a fresh one-time code, for the browser opener or a person's own terminal. */
     openUrl() { if (!port) throw new Error('not listening'); return pageUrl(`http://127.0.0.1:${port}/`, gate.mint()); },
-    close: () => new Promise(resolve => server.close(() => resolve()))
+    close: () => new Promise(resolve => { live.close(); server.close(() => resolve()); })
   };
 }

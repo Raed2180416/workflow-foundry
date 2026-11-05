@@ -1,0 +1,625 @@
+{
+ "generatedAt": "2026-11-04T20:46:09.821Z",
+ "evidence": "development (exports read while answering the review)",
+ "exports": [
+  {
+   "name": "records-v3-dev-d4-s108",
+   "status": "succeeded",
+   "events": 206,
+   "calls": 26,
+   "real": true,
+   "types": [
+    "context.compiled",
+    "frame.created",
+    "map.item.completed",
+    "map.item.failed",
+    "model.called",
+    "model.dispatched",
+    "model.escalated",
+    "node.completed",
+    "node.failed",
+    "node.started",
+    "run.created",
+    "run.succeeded",
+    "run.verdict",
+    "runner.acquired"
+   ],
+   "checks": [
+    {
+     "question": "run",
+     "ok": true,
+     "independent": false,
+     "detail": "done vs done"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "spec: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "prep: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "dates: chain 0.00996196 vs journal 0.00996196"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "atlas_switch: chain 0.00054829 vs journal 0.00054829"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "statuses: chain 0.00139541 vs journal 0.0013954100000000001"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "mirror: chain 0.00112699 vs journal 0.00112699"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "perspective: chain 0.00993222 vs journal 0.009932219999999999"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "vendex: chain 0.0038785 vs journal 0.0038785"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "vendex_b: chain 0.00414286 vs journal 0.00414286"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "countries: chain 0.00100912 vs journal 0.00100912"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "vendex_diff: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "adjudicate: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "merge: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "check: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "answer: chain 0 vs journal 0"
+    },
+    {
+     "question": "total",
+     "ok": true,
+     "independent": true,
+     "detail": "chain 0.03199535 vs header 0.03199534999999999"
+    },
+    {
+     "question": "escalations",
+     "ok": true,
+     "independent": true,
+     "detail": "root/dates:2/judge: 1 vs 1 decision record(s)"
+    },
+    {
+     "question": "escalations",
+     "ok": true,
+     "independent": true,
+     "detail": "root/perspective:0/judge: 1 vs 1 decision record(s)"
+    },
+    {
+     "question": "no failing step",
+     "ok": true,
+     "independent": false,
+     "detail": "null"
+    },
+    {
+     "question": "waiting",
+     "ok": true,
+     "independent": false,
+     "detail": "[]"
+    },
+    {
+     "question": "done",
+     "ok": true,
+     "independent": false,
+     "detail": "spec:done prep:done dates:handled atlas_switch:done statuses:done mirror:done perspective:done vendex:done vendex_b:done countries:done vendex_diff:done adjudicate:done merge:done check:checkdisagreed answer:done"
+    },
+    {
+     "question": "conversation",
+     "ok": true,
+     "independent": true,
+     "detail": "root/dates:2/judge: 2 prompts, 2 replies for 2 journal rows"
+    }
+   ],
+   "oneLine": "Records migration v3 (hand-written): Done. 15 of 15 steps, $0.0320, 26 model calls, 50 s."
+  },
+  {
+   "name": "zoo-envfault",
+   "status": "failed",
+   "events": 16,
+   "calls": 2,
+   "real": false,
+   "types": [
+    "context.compiled",
+    "model.called",
+    "model.dispatched",
+    "node.completed",
+    "node.failed",
+    "node.started",
+    "run.created",
+    "run.stopped",
+    "run.verdict",
+    "runner.acquired",
+    "tool.intent"
+   ],
+   "checks": [
+    {
+     "question": "run",
+     "ok": true,
+     "independent": false,
+     "detail": "problem vs problem"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "capture: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "menu_check: chain 0.00015 vs journal 0.00015"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "arena_check: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "report: chain 0 vs journal 0"
+    },
+    {
+     "question": "total",
+     "ok": true,
+     "independent": true,
+     "detail": "chain 0.00015 vs header 0.00015"
+    },
+    {
+     "question": "failing code",
+     "ok": true,
+     "independent": true,
+     "detail": "MODEL_RATE_LIMIT vs header MODEL_RATE_LIMIT"
+    },
+    {
+     "question": "failing step (weak)",
+     "ok": true,
+     "independent": true,
+     "detail": "root/arena_check vs message \"arena_check: Simulated provider rate lim\""
+    },
+    {
+     "question": "failing code (B1, first red card)",
+     "ok": true,
+     "independent": true,
+     "detail": "arena_check"
+    },
+    {
+     "question": "waiting",
+     "ok": true,
+     "independent": false,
+     "detail": "[]"
+    },
+    {
+     "question": "conversation",
+     "ok": true,
+     "independent": true,
+     "detail": "root/menu_check: 1 prompts, 1 replies for 1 journal rows"
+    }
+   ],
+   "oneLine": "Game QA hitting a provider rate limit, scripted fixture: Problem at “Arena check”: The model service failed (for example a rate limit or an outage); this is not the workflow's fault. 2 of 4 steps, $0.00015, 2 model calls, 488 ms."
+  },
+  {
+   "name": "zoo-finished",
+   "status": "succeeded",
+   "events": 80,
+   "calls": 11,
+   "real": false,
+   "types": [
+    "context.compiled",
+    "frame.created",
+    "map.item.completed",
+    "map.item.failed",
+    "model.called",
+    "model.dispatched",
+    "model.escalated",
+    "model.retry",
+    "node.completed",
+    "node.failed",
+    "node.skipped",
+    "node.started",
+    "run.created",
+    "run.succeeded",
+    "run.verdict",
+    "runner.acquired",
+    "tool.intent"
+   ],
+   "checks": [
+    {
+     "question": "run",
+     "ok": true,
+     "independent": false,
+     "detail": "done vs done"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "capture: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "visual_understanding: chain 0.011148 vs journal 0.011148"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "reproduce: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "severity: chain 0.000153 vs journal 0.000153"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "qa_judge: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "perf_pass: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "report: chain 0 vs journal 0"
+    },
+    {
+     "question": "total",
+     "ok": true,
+     "independent": true,
+     "detail": "chain 0.011301 vs header 0.011301"
+    },
+    {
+     "question": "escalations",
+     "ok": true,
+     "independent": true,
+     "detail": "root/visual_understanding:1/describe: 1 vs 1 decision record(s)"
+    },
+    {
+     "question": "escalations",
+     "ok": true,
+     "independent": true,
+     "detail": "root/visual_understanding:2/describe: 1 vs 1 decision record(s)"
+    },
+    {
+     "question": "escalations",
+     "ok": true,
+     "independent": true,
+     "detail": "root/visual_understanding:3/describe: 1 vs 1 decision record(s)"
+    },
+    {
+     "question": "no failing step",
+     "ok": true,
+     "independent": false,
+     "detail": "null"
+    },
+    {
+     "question": "waiting",
+     "ok": true,
+     "independent": false,
+     "detail": "[]"
+    },
+    {
+     "question": "done",
+     "ok": true,
+     "independent": false,
+     "detail": "capture:done visual_understanding:handled reproduce:done severity:done qa_judge:checkdisagreed perf_pass:skipped report:done"
+    },
+    {
+     "question": "conversation",
+     "ok": true,
+     "independent": true,
+     "detail": "root/visual_understanding:2/describe: 3 prompts, 3 replies for 3 journal rows"
+    }
+   ],
+   "oneLine": "Game QA, scripted fixture: Done. 7 of 7 steps, $0.0113, 11 model calls, 3.2 s."
+  },
+  {
+   "name": "zoo-nested",
+   "status": "succeeded",
+   "events": 46,
+   "calls": 0,
+   "real": false,
+   "types": [
+    "frame.created",
+    "map.item.completed",
+    "node.completed",
+    "node.started",
+    "run.created",
+    "run.succeeded",
+    "run.verdict",
+    "runner.acquired",
+    "tool.intent"
+   ],
+   "checks": [
+    {
+     "question": "run",
+     "ok": true,
+     "independent": false,
+     "detail": "done vs done"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "plan: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "cases: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "report: chain 0 vs journal 0"
+    },
+    {
+     "question": "total",
+     "ok": true,
+     "independent": true,
+     "detail": "chain 0 vs header 0"
+    },
+    {
+     "question": "no failing step",
+     "ok": true,
+     "independent": false,
+     "detail": "null"
+    },
+    {
+     "question": "waiting",
+     "ok": true,
+     "independent": false,
+     "detail": "[]"
+    },
+    {
+     "question": "done",
+     "ok": true,
+     "independent": false,
+     "detail": "plan:done cases:done report:done"
+    }
+   ],
+   "oneLine": "Game QA with a loop inside a map, scripted fixture: Done. 3 of 3 steps, $0, 318 ms."
+  },
+  {
+   "name": "zoo-paused",
+   "status": "awaiting_approval",
+   "events": 15,
+   "calls": 1,
+   "real": false,
+   "types": [
+    "approval.requested",
+    "context.compiled",
+    "human.requested",
+    "model.called",
+    "model.dispatched",
+    "node.completed",
+    "node.started",
+    "node.waiting",
+    "run.awaiting_approval",
+    "run.created",
+    "runner.acquired",
+    "tool.intent"
+   ],
+   "checks": [
+    {
+     "question": "run",
+     "ok": true,
+     "independent": false,
+     "detail": "needs_you vs needs_you"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "capture: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "triage: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "soak: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "file_bug: chain 0 vs journal 0"
+    },
+    {
+     "question": "cost",
+     "ok": true,
+     "independent": true,
+     "detail": "summarise: chain 0.000055 vs journal 0.000055"
+    },
+    {
+     "question": "total",
+     "ok": true,
+     "independent": true,
+     "detail": "chain 0.000055 vs header 0.000055"
+    },
+    {
+     "question": "no failing step",
+     "ok": true,
+     "independent": false,
+     "detail": "null"
+    },
+    {
+     "question": "waiting",
+     "ok": true,
+     "independent": false,
+     "detail": "[[\"question\",\"root/triage\"],[\"approval\",\"root/file_bug\"]]"
+    },
+    {
+     "question": "conversation",
+     "ok": true,
+     "independent": true,
+     "detail": "root/summarise: 1 prompts, 1 replies for 1 journal rows"
+    }
+   ],
+   "oneLine": "Game QA waiting on people and time, scripted fixture: Needs you (2 waiting for you). 2 of 5 steps, $0.00006, 1 model call, 392 ms."
+  }
+ ],
+ "tally": {
+  "run": {
+   "ok": 5,
+   "n": 5,
+   "independent": false
+  },
+  "cost": {
+   "ok": 34,
+   "n": 34,
+   "independent": true
+  },
+  "total": {
+   "ok": 5,
+   "n": 5,
+   "independent": true
+  },
+  "escalations": {
+   "ok": 5,
+   "n": 5,
+   "independent": true
+  },
+  "no failing step": {
+   "ok": 4,
+   "n": 4,
+   "independent": false
+  },
+  "waiting": {
+   "ok": 5,
+   "n": 5,
+   "independent": false
+  },
+  "done": {
+   "ok": 3,
+   "n": 3,
+   "independent": false
+  },
+  "conversation": {
+   "ok": 4,
+   "n": 4,
+   "independent": true
+  },
+  "failing code": {
+   "ok": 1,
+   "n": 1,
+   "independent": true
+  },
+  "failing step (weak)": {
+   "ok": 1,
+   "n": 1,
+   "independent": true
+  },
+  "failing code (B1, first red card)": {
+   "ok": 1,
+   "n": 1,
+   "independent": true
+  }
+ },
+ "recordedTypes": [
+  "approval.requested",
+  "context.compiled",
+  "frame.created",
+  "human.requested",
+  "map.item.completed",
+  "map.item.failed",
+  "model.called",
+  "model.dispatched",
+  "model.escalated",
+  "model.retry",
+  "node.completed",
+  "node.failed",
+  "node.skipped",
+  "node.started",
+  "node.waiting",
+  "run.awaiting_approval",
+  "run.created",
+  "run.stopped",
+  "run.succeeded",
+  "run.verdict",
+  "runner.acquired",
+  "tool.intent"
+ ],
+ "notProducedByScenarios": [
+  "map.item.failed",
+  "model.dispatched",
+  "model.retry",
+  "node.skipped",
+  "node.waiting"
+ ]
+}
