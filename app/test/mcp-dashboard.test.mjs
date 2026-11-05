@@ -33,10 +33,10 @@ async function withWorkspace(fn) {
   try { await fn(app, dir); } finally { await app.close(); rmSync(dir, { recursive: true, force: true }); }
 }
 
-test('tools/list: thirteen typed tools (list_templates for onboarding, need_check for ROUTER-1, list_waiting/answer_waiting for human tasks, conditions/edit_conditions for the tracker); the person-only tools demand a person in Claude Code', async () => withWorkspace(async app => {
+test('tools/list: thirteen typed tools (construction_guide for the free-form front door, need_check for ROUTER-1, list_waiting/answer_waiting for human tasks, conditions/edit_conditions for the tracker); the person-only tools demand a person in Claude Code', async () => withWorkspace(async app => {
   const { client } = await connect(app);
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(t => t.name), ['propose_flow', 'explain_flow', 'dry_run', 'ask_person_to_turn_on', 'run_flow', 'flow_status', 'list_flows', 'list_templates', 'need_check', 'list_waiting', 'answer_waiting', 'conditions', 'edit_conditions']);
+  assert.deepEqual(tools.map(t => t.name), ['construction_guide', 'propose_flow', 'explain_flow', 'dry_run', 'ask_person_to_turn_on', 'run_flow', 'flow_status', 'list_flows', 'need_check', 'list_waiting', 'answer_waiting', 'conditions', 'edit_conditions']);
   for (const name of ['ask_person_to_turn_on', 'answer_waiting', 'edit_conditions']) assert.equal(tools.find(t => t.name === name)._meta['anthropic/requiresUserInteraction'], true);
   assert.equal(Object.keys(tools.find(t => t.name === 'answer_waiting').inputSchema.properties).join(), 'taskId', 'the model passes only the task id, never an answer');
   for (const t of tools) { assert.equal(t.inputSchema.type, 'object'); assert.equal(t.inputSchema.additionalProperties, false); }

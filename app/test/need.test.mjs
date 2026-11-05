@@ -86,7 +86,7 @@ test('app MCP with a host judge: need_check runs the cascade; propose_flow notes
 
 test('toolDefinitions: propose_flow keeps its advice when found by name', () => withApp(async app => {
   const defs = toolDefinitions(app);
-  assert.deepEqual(defs.map(d => d.name), ['propose_flow', 'explain_flow', 'dry_run', 'ask_person_to_turn_on', 'run_flow', 'flow_status', 'list_flows', 'list_templates', 'need_check', 'list_waiting', 'answer_waiting', 'conditions', 'edit_conditions']);
+  assert.deepEqual(defs.map(d => d.name), ['construction_guide', 'propose_flow', 'explain_flow', 'dry_run', 'ask_person_to_turn_on', 'run_flow', 'flow_status', 'list_flows', 'need_check', 'list_waiting', 'answer_waiting', 'conditions', 'edit_conditions']);
   const propose = defs.find(d => d.name === 'propose_flow');
   const r = await propose.execute({ request: MESSY });
   assert.equal(r.status, 'proposed'); assert.ok(r.need && typeof r.need.needsWorkflow === 'boolean');

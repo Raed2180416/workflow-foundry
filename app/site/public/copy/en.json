@@ -39,7 +39,7 @@
     "and": " and ",
     "backHome": "Back to home",
     "open": "Open",
-    "seeAll": "See everything Foundry can make",
+    "seeAll": "See all the examples",
     "showDetails": "Show details",
     "tryAgain": "Try again",
     "insteadToday": "What you can do today"
@@ -67,7 +67,7 @@
   "home": {
     "h1": "Let Foundry prepare the jobs you do every week.",
     "lead": "Pick one below. Foundry tests it with pretend data first, then shows you everything it would make, in full. You check it, and you send it yourself. Nothing real happens until you say yes.",
-    "cardsTitle": "Foundry can make these today",
+    "cardsTitle": "Examples you can start from",
     "factsLabel": "About this automation",
     "usesAiNo": "Uses AI: no",
     "needs": "Needs: your {sheets} (a CSV file; Excel can save one)",
@@ -90,7 +90,7 @@
     "managedBrief": "Get a one-page brief for IT",
     "managedPractice": "Turn on practice-only mode",
     "practiceOnlyOn": "Practice-only mode is on.",
-    "aiLine": "These cards follow fixed steps, written and checked in advance. No AI reads your data.",
+    "aiLine": "These examples follow fixed steps, written and checked in advance. No AI reads your data. Your coding agent can build other automations with Foundry (Connect an agent); Foundry checks those the same way.",
     "notReadyTitle": "Not ready to install on your own yet.",
     "notReady": "Today someone technical has to install Foundry and start it again each time this computer restarts. It has been tested on Linux only; Windows and Mac are untested.",
     "notReadyLink": "What that involves",
@@ -111,14 +111,14 @@
     "useThis": "Use this",
     "notThis": "Not this, show all",
     "close": "These might be close",
-    "showAll": "Show everything Foundry can make",
-    "none": "Foundry can't make that yet. Nothing was created.",
-    "noneLead": "Here's what Foundry can make today. If one is close, pick it and change the settings.",
+    "showAll": "Show all the examples",
+    "none": "None of the examples matches that. Nothing was created.",
+    "noneLead": "Here are the examples you can start from. If one is close, pick it and change the settings. For anything else, ask your coding agent to build it with Foundry (Connect an agent): Foundry checks it the same way and says plainly what it can't do yet.",
     "aiOffer": "Want Foundry to try with AI?",
     "aiLink": "Set up an AI key",
     "aiNote": "(your words go to the AI provider)",
-    "notAMatch": "Closest cards, not a match",
-    "weakBody": "These share a common word with what you wrote, but may not do what you need. Read what each one does before you pick it. If none fits, Foundry can't make it yet."
+    "notAMatch": "Closest examples, not a match",
+    "weakBody": "These share a common word with what you wrote, but may not do what you need. Read what each one does before you pick it. If none fits, ask your coding agent to build it with Foundry (Connect an agent)."
   },
   "make": {
     "unknownTitle": "There is no automation by that name",
@@ -229,7 +229,7 @@
     "toTurnOn": "Go to Turn it on",
     "wouldShowOne": "Show it in full",
     "removed": "This draft was removed by {who} (not a checked identity) through {channel}, {when}. It can't be turned on, and nothing of it waits for your yes. Its test stays in Foundry's records.",
-    "removedAgain": "Make the automation again from its card",
+    "removedAgain": "Make the automation again",
     "wouldShowMany": "Show all {n} in full"
   },
   "turnon": {
@@ -671,7 +671,7 @@
       },
       "none": {
         "name": "No AI needed",
-        "can": "Matches your words to a card. Nothing leaves this computer.",
+        "can": "Matches your words to an example. Nothing leaves this computer.",
         "stores": "Nothing.",
         "price": "Free",
         "until": "This is the default."
@@ -803,7 +803,7 @@
     "aiTitle": "Allowed AI",
     "aiLegend": "Which AI may build from your words?",
     "ai": {
-      "none": "None (Foundry matches your words to a card)",
+      "none": "None (Foundry matches your words to an example)",
       "mercury": "Mercury 3, with your own key",
       "haiku": "Claude Haiku (Anthropic), for developers who start Foundry with it"
     },
@@ -878,7 +878,7 @@
     "allowlistLead": "For IT: the exact command, argument by argument, for an allowlist.",
     "allowlistLabel": "Command for an allowlist",
     "allowlistNote": "Claude Code matches every argument in order; a server name is not a control. This decides which command may start; it does not check Foundry's files. Without allowManagedMcpServersOnly in managed settings, a user can add servers of their own (see How this is kept safe).",
-    "cardsLead": "Foundry can make these today:",
+    "cardsLead": "Examples your agent can start from (it can build other automations too, with the capabilities Foundry has):",
     "openLead": "To open Foundry's page yourself, at any time:"
   },
   "pricing": {

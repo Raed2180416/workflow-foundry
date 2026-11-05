@@ -1,0 +1,60 @@
+{
+  "about": "Practice cases for exemplars/app/oncall-digest.json (the example's own practice data). Every address in them is a practice address.",
+  "practiceInput": [
+    {
+      "name": "oncall-digest practice data",
+      "input": {
+        "now": "2026-10-18T08:00:00Z"
+      },
+      "sheets": {
+        "alerts": [
+          {
+            "id": "PA-1",
+            "at": "2026-10-18T02:15:00Z",
+            "service": "practice-api",
+            "severity": "critical",
+            "message": "5xx above 5%",
+            "acknowledged": false,
+            "resolved": false
+          },
+          {
+            "id": "PA-2",
+            "at": "2026-10-17T20:00:00Z",
+            "service": "practice-db",
+            "severity": "warning",
+            "message": "Disk 85% full",
+            "acknowledged": true,
+            "resolved": false
+          },
+          {
+            "id": "PA-3",
+            "at": "2026-10-17T22:40:00Z",
+            "service": "practice-web",
+            "severity": "info",
+            "message": "Deploy finished",
+            "acknowledged": false,
+            "resolved": false
+          },
+          {
+            "id": "PA-4",
+            "at": "2026-10-16T09:00:00Z",
+            "service": "practice-api",
+            "severity": "critical",
+            "message": "Old outage",
+            "acknowledged": true,
+            "resolved": false
+          },
+          {
+            "id": "PA-5",
+            "at": "2026-10-18T05:00:00Z",
+            "service": "practice-queue",
+            "severity": "critical",
+            "message": "Backlog",
+            "acknowledged": true,
+            "resolved": true
+          }
+        ]
+      }
+    }
+  ]
+}

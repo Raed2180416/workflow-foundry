@@ -82,7 +82,7 @@ function flowFacts(app, flowId) {
     willNotDo: template && values ? cardPromises(template, values).willNotDo : summary.notSupported };
 }
 
-const MCP_TOOLS = [['list_templates', 'yes', 'no'], ['propose_flow', 'no (writes a draft version; nothing runs)', 'no'], ['explain_flow', 'yes', 'no'], ['dry_run', 'no (a test on pretend data, in a separate practice folder)', 'no'],
+const MCP_TOOLS = [['construction_guide', 'yes', 'no'], ['propose_flow', 'no (writes a draft version after Foundry checks it; nothing runs)', 'no'], ['explain_flow', 'yes', 'no'], ['dry_run', 'no (a test on pretend data, in a separate practice folder)', 'no'],
   ['ask_person_to_turn_on', 'no', 'always: it asks the person (dialog or page); the agent cannot answer it through Foundry'], ['run_flow', 'no', 'yes: the person approves the exact list in the page first'],
   ['flow_status', 'yes', 'no'], ['list_flows', 'yes', 'no']];
 

@@ -28,7 +28,18 @@ export class Ledger {
         dry_run_id TEXT NOT NULL, status TEXT NOT NULL, requested_at INTEGER NOT NULL, decided_at INTEGER, channel TEXT, principal TEXT, note TEXT, rev INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS turn_offs(activation_id TEXT PRIMARY KEY, flow_id TEXT NOT NULL, workflow_hash TEXT NOT NULL, at INTEGER NOT NULL,
         channel TEXT NOT NULL, principal TEXT, note TEXT);
-      CREATE TABLE IF NOT EXISTS withdrawn(proposal_id TEXT PRIMARY KEY, flow_id TEXT NOT NULL, at INTEGER NOT NULL, channel TEXT NOT NULL, principal TEXT);`);
+      CREATE TABLE IF NOT EXISTS withdrawn(proposal_id TEXT PRIMARY KEY, flow_id TEXT NOT NULL, at INTEGER NOT NULL, channel TEXT NOT NULL, principal TEXT);
+      CREATE TABLE IF NOT EXISTS freeform(proposal_id TEXT PRIMARY KEY, workflow_hash TEXT NOT NULL, body TEXT NOT NULL, at INTEGER NOT NULL);`);
+  }
+  /** A free-form proposal (app/FRONT-DOOR.md): who built it, its practice cases and outside effects, as checked when it was proposed. Written once. */
+  recordFreeform({ proposalId, workflowHash, body }) {
+    this.db.prepare('INSERT INTO freeform VALUES(?,?,?,?)').run(proposalId, workflowHash, JSON.stringify(body), this.now());
+    return this.freeform(proposalId);
+  }
+  freeform(proposalId) {
+    if (typeof proposalId !== 'string') return null;
+    const r = this.db.prepare('SELECT * FROM freeform WHERE proposal_id=?').get(proposalId);
+    return r ? { proposalId: r.proposal_id, workflowHash: r.workflow_hash, body: JSON.parse(r.body), at: r.at } : null;
   }
   close() { try { this.db.close(); } catch { /* closed */ } }
   recordDryRun({ proposalId, workflowHash, registryHash, practiceRunId, passed, body }) {

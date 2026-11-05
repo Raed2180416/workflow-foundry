@@ -1,6 +1,13 @@
-// The spike's MCP server (stdio): thirteen task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
+// The spike's MCP server (stdio): thirteen task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3), with ONE free-form
+// front door (app/FRONT-DOOR.md, 2026-11-05): the calling agent builds a typed workflow for whatever the person needs and Foundry checks it.
 //
-//   propose_flow  describe what you want -> questions, an honest refusal, or a version-bound proposal with a plain summary and checks
+//   construction_guide  how to build one (read-only): the construction skill's core, this app's rules and its capability catalogue; one
+//                 reference or worked example by name, on demand (skills/foundry-construct/). It replaced list_templates: the seven
+//                 examples are worked examples an agent may start from, never the only things Foundry can build.
+//   propose_flow  the person's exact words plus, best, a typed `workflow` the agent built (and `practiceInput` cases) -> a version-bound
+//                 proposal, or a refusal that names each blocker (a capability this app lacks, a target the person never wrote, a
+//                 workflow that does not validate or lint clean); with words alone, Foundry's own builder tries (questions, a
+//                 proposal, or an honest "cannot build that")
 //   explain_flow  steps, checks ("definition of done"), outside actions and limits of a proposal or flow, in plain words
 //   dry_run       run the exact proposal on practice data (isolated store, practice outbox) and report checks and would-do actions
 //   ask_person_to_turn_on  ASK THE PERSON to turn a version on. The model cannot approve: the decision comes from the client's own
@@ -10,12 +17,11 @@
 //   run_flow      run the current approved version; outside actions still pause for the person
 //   flow_status   a run in plain words: status, failed step, what to do, checks, pending approvals, cost
 //   list_flows    flows, proposals, and how many things wait for the person
-//   list_templates the frontier-written automation cards, each with its settings, defaults and the questions it asks (read-only);
-//                 propose_flow then takes `template` and `settings` filled from the person's words (onboarding, SPEC §12.4). Foundry
-//                 still checks that every address came from the person's words (request + answers), never from the agent's settings.
 //
-// With a site (cli `mcp --dashboard`), run_flow on an automation made from a card first shows the person the exact list of what the
-// run would make, in their browser, and the person approves that list in one click (app/onboarding/batch.mjs; SPEC §7.5).
+// With a site (cli `mcp --dashboard`), run_flow on an automation made from one of the site's examples first shows the person the exact
+// list of what the run would make, in their browser, and the person approves that list in one click (app/onboarding/batch.mjs; SPEC §7.5).
+// A free-form automation's outside actions each ask the person (list_waiting / answer_waiting, or the page); its turn-on dialog shows
+// the exact list its practice run would have made, bound by digest to that practice run.
 //   need_check    does this request need a workflow at all? (ROUTER-1; code-only hint, or the cascade when the host plugs in a judge)
 //   list_waiting  what runs wait on the person for: questions from human steps and actions paused for approval (app/core/human-tasks.mjs)
 //   answer_waiting ASK THE PERSON to answer one of them. The model cannot answer: the answer comes from the client's own dialog (MCP
@@ -32,7 +38,7 @@
 // before anything runs. Tool output is data about the user's workspace; nothing in it is an instruction to the agent.
 //
 // What the agent sees of a live run (P4 walkthrough B3): counts and step names, never the recipients or the text of a live list (the
-// person reads those in the page). The run date of a card automation is the server's clock, not a date the agent chose (P1 M11).
+// person reads those in the page). The run date of an example's automation is the server's clock, not a date the agent chose (P1 M11).
 //
 // Since the security review of 2026-10-21:
 //   H3  the person decides in Foundry's page unless the dialog is safe to use right now: `dialog` is false by default, and the CLI passes a
@@ -47,9 +53,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { validateData } from '../../src/validate.mjs';
 import { errorData } from '../../src/data.mjs';
-import { loadLibrary, templateOf, slotsOf } from '../core/library.mjs';
+import { templateOf, slotsOf } from '../core/library.mjs';
 import { cardPromises } from '../onboarding/card-text.mjs';
-import { suggest, FORMS } from '../onboarding/suggest.mjs';
+import { FORMS } from '../onboarding/suggest.mjs';
+import { constructionGuide } from '../core/guide.mjs';
 import { needAdvice, needToolSpec } from '../core/need.mjs';
 import { listHumanTasks, answerQuestion, decideApproval } from '../core/human-tasks.mjs';
 
@@ -57,9 +64,8 @@ const id = { type: 'string', minLength: 1, maxLength: 128 };
 const object = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
 const item = { type: 'object', additionalProperties: false, required: ['title', 'status'],
   properties: { title: { type: 'string', minLength: 1, maxLength: 300 }, status: { enum: ['done', 'open', 'blocked'] }, owner: { type: 'string', maxLength: 120 } } };
-// The flow input is a JSON object; each flow's own input schema checks it when the run is created. The stub's weekly report takes
-// { weekOf, items[] } (items as below); library flows take { now: ISO date-time } and read their data from the workspace sheets.
-const flowInput = { type: 'object', description: 'The flow input as a JSON OBJECT (not a string): {now: "2026-10-21T09:00:00Z"} for library flows; {weekOf, items: [{title, status: done|open|blocked}]} for the preview weekly report.',
+// The flow input is a JSON object; each flow's own input schema checks it when the run is created (explain_flow shows that schema).
+const flowInput = { type: 'object', description: 'The flow input as a JSON OBJECT (not a string) that matches the flow\'s inputSchema (explain_flow shows it), for example {now: "2026-10-21T09:00:00Z"} or {}.',
   properties: { now: { type: 'string', minLength: 10, maxLength: 40 }, weekOf: { type: 'string', minLength: 1, maxLength: 40 }, items: { type: 'array', maxItems: 500, items: item } } };
 const DID = { send: w => `drafted “${w.subject}” to ${w.to}`, post: w => `written a post for ${w.to}`, append: w => `added ${w.subject} to the ${w.to} list` };
 const kinds = items => { const n = k => items.filter(i => i.action === k).length; return [n('send') ? `${n('send')} e-mail draft(s)` : null, n('post') ? `${n('post')} chat post(s)` : null].filter(Boolean).join(' and ') || `${items.length} item(s)`; };
@@ -69,20 +75,21 @@ function say(tool, r) {
   switch (tool) {
     case 'propose_flow':
       if (r.status === 'needs_answers') return `${r.notWritten?.length ? 'You filled an address the person never wrote, so it was not used. ' : ''}I need one answer first: ${r.questions.map(q => q.question).join(' ')}`;
-      if (r.status === 'unsupported') return `${r.reply} Tell the person what Foundry can make, and if one is close, call propose_flow with that template and settings from their words.`;
+      if (r.status === 'unsupported') return `${r.reply} If a workflow can do it with this app's capabilities, build it yourself (construction_guide) and pass it as workflow; otherwise tell the person plainly what Foundry cannot do.`;
+      if (r.status === 'refused') return `${r.reply} ${r.blockers?.[0]?.next ?? ''}`.trim();
       if (r.status === 'no_change' || r.status === 'build_failed') return r.reply;
       // The need note is shown only when a judged decision says no workflow is needed (review M3): the code-only router misses about
       // a third of the requests that do need one, so on its word alone the note would mislead.
       return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: test it on pretend data (dry_run).${r.need && r.need.basis === 'cascade' && !r.need.needsWorkflow ? ` Note: ${r.need.say}` : ''}`;
     case 'explain_flow': return `“${r.summary.title}” has ${r.summary.steps.length} steps and ${r.summary.checks.length} checks that define done.`;
-    case 'dry_run': return r.passed ? `Practice run passed all ${r.checks.length} checks. On pretend data it would have ${r.wouldDo.map(w => (DID[w.action] ?? DID.send)(w)).join('; ') || 'made nothing'}. Nothing real was sent: a real run makes drafts the person sends themselves.`
-      : `Practice run did not pass: ${r.headline}`;
-    case 'ask_person_to_turn_on': return r.status === 'approved' ? `The person turned on version ${r.version ?? ''} (${r.workflowHash?.slice(0, 8)}). Before each run makes anything, they see the full list and approve it once.`
+    case 'dry_run': return r.passed ? `Practice run passed all ${r.checks.length} checks${r.cases?.length > 1 ? ` in ${r.cases.length} cases` : ''}. On pretend data it would have ${r.wouldDo.map(w => (DID[w.action] ?? DID.send)(w)).join('; ') || 'made nothing'}.${r.standInAnswers?.length ? ` Practice answered ${r.standInAnswers.length} question(s) with stand-in answers.` : ''} Nothing real was sent: a real run makes drafts the person sends themselves.`
+      : `Practice run did not pass: ${r.headline}${r.problem?.next ? ` ${r.problem.next}` : ''}`;
+    case 'ask_person_to_turn_on': return r.status === 'approved' ? `The person turned on version ${r.version ?? ''} (${r.workflowHash?.slice(0, 8)}). ${r.eachRun === 'each action' ? 'Each send or post still asks them first.' : 'Before each run makes anything, they see the full list and approve it once.'}`
       : r.status === 'rejected' ? `The person said no${r.channel === 'mcp-elicitation' ? ' in the dialog' : ''}. Nothing was turned on.`
       : r.status === 'not_decided' ? 'The person closed the dialog without deciding. Nothing was turned on; ask again when they are ready.'
       : r.status === 'declined_by_client' ? `Your client declined the dialog. That may have been automatic (a setting or a hook), so it is not recorded as the person's no. Nothing was turned on. ${r.how}`
       : `Waiting for the person to decide. ${r.how}`;
-    case 'list_templates': return `${r.templates.length} automation cards. Pick the one that does the main thing the person asked for, fill its settings only from their words, and call propose_flow with template and settings. If none fits, say so.`;
+    case 'construction_guide': return r.name ? `Loaded ${r.name}.` : `The construction guide: the skill's core, this app's ${r.rules.length} rules and ${r.capabilities.length} capabilities. Build a typed workflow for what the person asked, then call propose_flow with their exact words, the workflow and practiceInput. Load a reference or example by name only when a step needs it.`;
     case 'run_flow': if (r.batchId) return `The person is checking the exact list of what this run would make (${r.made}) as of ${r.asOf?.slice(0, 10)}, in ${r.where}. Nothing is made until they approve it there. When they have, tell them the drafts are on the Drafts page and that they send them themselves.`;
       if (r.needsData) return `Foundry needs the person's ${r.needsData.join(' and ')} first. They can drop the file in ${r.where}.`;
       // falls through
@@ -125,33 +132,13 @@ export function elicitationForm(schema) {
 const elicits = server => { const caps = server?.getClientCapabilities?.()?.elicitation; return !!caps && (!!caps.form || Object.keys(caps).length === 0); };
 
 /** Tool definitions bound to one FoundryApp. `context.server` is the MCP Server (for elicitation); `options.dashboardUrl()` names where a person approves. */
-// Settings an agent passes for a card: text, numbers, yes/no, or rows (routing rules, canned answers). The card's own slot types are
-// checked by the form builder (app/onboarding/form-builder.mjs).
-const scalar = { anyOf: [{ type: 'string', maxLength: 2000 }, { type: 'number' }, { type: 'boolean' }] };
-const settingsSchema = { type: 'object', maxProperties: 20, description: 'The card\'s settings by name (from list_templates), filled only from the person\'s words. Leave out what they did not say: the card\'s default is shown to them.',
-  additionalProperties: { anyOf: [...scalar.anyOf, { type: 'array', maxItems: 20, items: { type: 'object', maxProperties: 8, additionalProperties: scalar } }] } };
-
-/** The card list an agent sees: id, title, when to use, not for, settings with defaults, which ones are questions and why, the data it reads. */
-export function templateCatalog(library = loadLibrary()) {
-  return library.map(t => ({ id: t.id, title: t.title, whenToUse: t.whenToUse, notFor: t.notFor, data: t.data,
-    settings: t.slots.map(s => ({ name: s.name, type: s.type, ...(s.values ? { values: s.values } : {}), ...(s.default !== undefined ? { default: s.default } : {}), description: s.description,
-      ...(s.ask ? { askThePerson: s.question, why: s.askWhy, harm: s.ask, ...(s.askWhen ? { onlyWhen: s.askWhen } : {}) } : {}),
-      ...(s.fields ? { rowFields: s.fields.map(f => ({ name: f.name, type: f.type, ...(f.values ? { values: f.values } : {}) })) } : {}) })) }));
-}
-
 // dialog: may the client's own dialog decide? false (the default: the person decides in the page), true (a caller that vouches for the
 // client, tests), or a function ({ server }) => { ok } asked on every ask_person_to_turn_on (the CLI: app/onboarding/detect.mjs).
 // A line for the dialog from text Foundry did not write itself (settings, titles): one line, no control characters, at most 160 characters.
 const oneLine = (text, max = 160) => { const t = String(text ?? '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > max ? `${t.slice(0, max - 1)}…` : t; };
-// The cards in one sentence, for an honest "cannot build that" (P1 walkthrough M10: the stub's refusal named one old card).
-function cardsReply(request) {
-  const titles = FORMS.order.map(id => FORMS.templates[id]?.card).filter(Boolean);
-  const s = typeof request === 'string' ? suggest(request) : { candidates: [] };
-  const close = s.candidates[0] ? ` The closest by keywords is "${s.candidates[0].title}" (template ${s.candidates[0].id}).` : '';
-  return { reply: `Foundry can't make that yet. It can make ${titles.length} kinds of automation today: ${titles.join('; ')}.${close} Nothing was created.`,
-    cards: FORMS.order.map(id => ({ id, title: FORMS.templates[id]?.card })) };
-}
-
+// Words alone that Foundry's own builder could not turn into a flow: the honest answer names no examples (they are not the limit of
+// what Foundry can build); the agent can build the workflow itself.
+const WORDS_ONLY = 'Foundry\'s own builder could not make that from words alone. Nothing was created.';
 // needJudge: the host's optional, capped need judge (src/need/router.mjs modelJudge + cappedJudge); without one, need_check is a labelled
 // code-only hint (ROUTER-1).
 export function toolDefinitions(app, { dashboardUrl = () => null, batches = null, dialog = false, openCommand = 'node app/cli.mjs open', needJudge = null } = {}) {
@@ -174,16 +161,22 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
       const s = request.summary, proposal = app.foundry.store.proposal(proposalId), t = templateOf(proposal.workflow);
       const will = (t ? cardPromises(t, slotsOf(proposal.workflow)).willDo : s.steps.map(x => x.text)).slice(0, 12).map(w => oneLine(w));
       const passed = (request.practice?.checks ?? []).filter(c => c.passed === true).length, total = (request.practice?.checks ?? []).length;
+      // A free-form version: the exact list its practice run would have made (bound by digest to that practice run), one line each (L8).
+      const listed = (request.practice?.wouldDo ?? []).slice(0, 8).map(w => oneLine(`${w.action === 'send' ? `e-mail “${w.subject}” to` : w.action === 'post' ? 'post to' : `add ${w.subject} to`} ${w.to}`, 120));
+      const more = Math.max(0, (request.practice?.wouldDo ?? []).length - listed.length);
+      const standIns = (request.practice?.standIns ?? []).length;
       let result;
       try {
         result = await server.elicitInput({ message: `Turn on “${oneLine(t ? FORMS.templates[t.id]?.card ?? s.title : s.title, 80)}”, version ${request.version}?\n\n` +
           // Fix round 2026-10-21 (review:honesty, older defect): say which data the practice ran on; it can be the person's own list.
-          `Practice run on ${request.practice?.dataSource === 'your-data' ? 'your own list (nothing was made or sent)' : 'pretend data'}: passed ${passed} of ${total} checks. Turning it on makes and sends nothing.\n\nEach time you run it, it will:\n- ${will.join('\n- ')}`,
+          `Practice run on ${request.practice?.dataSource === 'your-data' ? 'your own list (nothing was made or sent)' : 'pretend data'}: passed ${passed} of ${total} checks. Turning it on makes and sends nothing.` +
+          (listed.length ? `\n\nOn practice data it would have made${standIns ? ` (with ${standIns} stand-in answer(s) to its questions)` : ''}:\n- ${listed.join('\n- ')}${more ? `\n- and ${more} more` : ''}\nEach real send or post asks you first.` : '') +
+          `\n\nEach time you run it, it will:\n- ${will.join('\n- ')}`,
           requestedSchema: { type: 'object', required: ['decision'], properties: { decision: { type: 'string', title: 'Your decision', enum: ['approve', 'reject'] }, note: { type: 'string', title: 'Note (optional)', maxLength: 500 } } } });
       } catch { result = null; }
       if (result?.action === 'accept' && ['approve', 'reject'].includes(result.content?.decision)) {
         const decided = app.decideActivation(request.approvalId, result.content.decision === 'approve', { channel: 'mcp-elicitation', note: result.content.note ?? null });
-        return decided.ok === false ? decided : { ...decided, workflowHash: request.workflowHash, version: request.version };
+        return decided.ok === false ? decided : { ...decided, workflowHash: request.workflowHash, version: request.version, eachRun: t && batches ? 'list' : 'each action' };
       }
       // "Decline" comes from the client, and need not be the person (honesty review M2): Codex rejects a dialog by itself when its
       // approval_policy does not allow MCP elicitations, and a hook can decline one. So it is not recorded as the person's no: the
@@ -198,7 +191,8 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     }
     return { ...request, how: where() };
   }
-  // With batches (the site), a run of a card automation starts with the exact list the person approves in their browser.
+  // With batches (the site), a run of an automation made from one of the site's examples starts with the exact list the person approves
+  // in their browser; a free-form automation's outside actions each ask the person.
   async function runFlow(a) { return strip(await runFlowInner(a)); }
   async function runFlowInner(a) {
     if (!batches) return app.run(a);
@@ -221,9 +215,12 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
   // A live run's pending sends carry real recipients and text: the agent gets the step names only (P4 walkthrough B3).
   const strip = r => r && Array.isArray(r.pendingApprovals) ? { ...r, pendingApprovals: r.pendingApprovals.map(({ args, ...rest }) => rest) } : r;
   async function propose(a) {
-    const r = await app.propose({ ...a, ...(a.template ? { origin: 'agent' } : {}) });
-    return r.status === 'unsupported' && !a.template ? { ...r, ...cardsReply(a.request) } : r;
+    const r = await app.propose({ request: a.request, answers: a.answers, flowId: a.flowId, ...(a.workflow !== undefined ? { workflow: a.workflow, practiceInput: a.practiceInput } : {}) });
+    if (r.status === 'unsupported' && a.workflow === undefined) { const { supported, ...rest } = r; return { ...rest, reply: r.builder?.startsWith?.('freeform-builder') ? r.reply : WORDS_ONLY }; }
+    return r;
   }
+  const practiceCase = object({ name: { type: 'string', minLength: 1, maxLength: 80 }, input: { type: 'object' }, sheets: { type: 'object', maxProperties: 20, additionalProperties: { type: 'array', maxItems: 2000, items: { type: 'object' } } },
+    answers: { type: 'object', maxProperties: 50 } });
   // What waits for the person. Approvals carry the engine's facts and argument names, not the argument values (those are for the person's
   // dialog); a question carries its text, fenced. Nothing here lets the model answer.
   function listWaiting() {
@@ -289,21 +286,21 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
   }
   const change = object({ op: { enum: ['add', 'change', 'remove'] }, conditionId: id, quote: { type: 'string', minLength: 2, maxLength: 2000 }, summary: { type: 'string', minLength: 1, maxLength: 300 } }, ['op']);
   const defs = [
-    ['propose_flow', 'Turn a plain-language request into a proposed automation, or questions, or an honest "cannot build that". Nothing runs. Pass the person\'s exact words in request; pass answers to earlier questions in answers, keyed by question id. To change an existing flow, pass flowId. Best: call list_templates first and pass template (a card id) and settings (filled only from the person\'s words).',
+    ['construction_guide', 'How to build a Foundry automation for ANY request: the construction skill\'s core, this app\'s rules, and every capability a workflow may use (with its schemas). Pass name (e.g. "references/patterns.md" or "exemplars/invoice-chase.json") to load one reference or worked example on demand. Read-only.',
+      object({ name: { type: 'string', minLength: 1, maxLength: 120 } }), a => constructionGuide(app, a), true],
+    ['propose_flow', 'Propose an automation. Pass the person\'s exact words in request, and best a typed workflow you built for it (construction_guide) in workflow, with practiceInput cases. Foundry checks it (capabilities, that every address it sends to is in the person\'s words or data, strict validation and lint) and returns a version-bound proposal or a refusal naming each blocker. With words alone, Foundry\'s own builder tries. Pass answers to earlier questions in answers; to change a flow, pass flowId (and version + 1). Nothing runs.',
       object({ request: { type: 'string', minLength: 1, maxLength: 30000 }, answers: { type: 'object', additionalProperties: { type: 'string', maxLength: 2000 } }, flowId: id,
-        template: { type: 'string', minLength: 1, maxLength: 64 }, settings: settingsSchema }, ['request']),
+        workflow: { type: 'object', description: 'A typed Workflow Foundry workflow (construction_guide).' }, practiceInput: { type: 'array', minItems: 1, maxItems: 5, items: practiceCase } }, ['request']),
       propose, false],
     ['explain_flow', 'Explain a proposal or flow in plain words: its steps, the checks that define done, the outside actions it can take and its limits.', object({ proposalId: id, flowId: id }), a => app.explain(a), true],
     ['dry_run', 'Try the exact proposed version on practice data, with outside actions replaced by a practice stand-in. Reports which checks passed and what it would have done. Required before approval.',
       object({ proposalId: id, practiceInput: flowInput }, ['proposalId']), a => app.dryRun({ proposalId: a.proposalId, input: a.practiceInput }), false],
     ['ask_person_to_turn_on', 'Ask the PERSON to turn on a proposed version after a passing practice run. You cannot turn it on: the person decides in a dialog or in the Foundry page. Returns approved, rejected, not_decided (they closed the dialog), declined_by_client (the client declined the dialog, perhaps automatically; not the person\'s no), or awaiting_human with where they decide.',
       object({ proposalId: id }, ['proposalId']), approve, false],
-    ['run_flow', 'Run the current, person-approved version of a flow with an input OBJECT. Unapproved or changed versions are refused. Outside actions (sending) pause until the person approves them; for an automation made from a card, the person first sees the exact list of what the run would make and approves that list.',
+    ['run_flow', 'Run the current, person-approved version of a flow with an input OBJECT. Unapproved or changed versions are refused. Outside actions (sending, posting) pause until the person approves them; for an automation made from one of the site\'s examples, the person first sees the exact list of what the run would make and approves that list.',
       object({ flowId: id, input: flowInput }, ['flowId', 'input']), runFlow, false],
     ['flow_status', 'Status of one run in plain words: what happened, which step failed and what to do, checks, the steps waiting for the person, cost.', object({ runId: id }, ['runId']), a => strip(app.status(a)), true],
     ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true],
-    ['list_templates', 'List the automation cards Foundry can build today: what each does and never does, its settings and defaults, which settings must come from the person (with why), and the data it reads. Read-only.',
-      object({}), () => ({ ok: true, templates: templateCatalog() }), true],
     // ROUTER-1 need router (app/core/need.mjs): read-only, $0 without a judge.
     [NEED.name, NEED.description, NEED.inputSchema, a => need(a), true],
     ['list_waiting', 'List what runs wait on the person for: questions from human steps (also inside maps and loops) and actions paused for approval, with ids for answer_waiting. You cannot answer them.', object({}), listWaiting, true],
@@ -316,7 +313,7 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
   ];
   // propose_flow also carries the need router's advice (additive field; the code-only hint, or the cascade with the host's judge).
   // Found by name, not position (review m5).
-  // It wraps the onboarding propose (card origin, the honest "cannot build that" reply), never replaces it.
+  // It wraps the front door's propose (the honest "cannot build that" reply), never replaces it.
   const proposeDef = defs.find(d => d[0] === 'propose_flow'), proposeBase = proposeDef[3];
   proposeDef[3] = async a => { const r = await proposeBase(a); return r && r.ok !== false ? { ...r, need: await need({ request: a.request }) } : r; };
   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
@@ -330,7 +327,7 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
 
 export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, batches = null, dialog = false, openCommand, needJudge = null } = {}) {
   const server = new Server({ name: 'workflow-foundry-surface', version: '0.0.1' }, { capabilities: { tools: {} },
-    instructions: 'Workflow Foundry builds small automations that are checked before they run. Call list_templates first, then propose_flow with a template and settings from the person\'s words, dry_run before ask_person_to_turn_on, and relay `say` to the person. Only the person can turn things on or approve what a run makes.' });
+    instructions: 'Workflow Foundry turns what a person needs into an automation that is checked before it runs. Call construction_guide, build a typed workflow for their request, then propose_flow with their exact words, the workflow and practiceInput; dry_run before ask_person_to_turn_on; relay `say` to the person. Only the person can turn things on or approve what a run makes.' });
   const defs = toolDefinitions(app, { dashboardUrl, batches, dialog, ...(openCommand ? { openCommand } : {}), needJudge });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: defs.map(({ execute, ...spec }) => spec) }));
   server.setRequestHandler(CallToolRequestSchema, async request => {

@@ -1,0 +1,75 @@
+{
+  "about": "Practice cases for exemplars/app/lead-triage.json (the example's own practice data). Every address in them is a practice address.",
+  "practiceInput": [
+    {
+      "name": "lead-triage practice data",
+      "input": {
+        "now": "2026-10-12T08:00:00Z"
+      },
+      "sheets": {
+        "leads": [
+          {
+            "name": "Practice Pat",
+            "email": "pat@practice-a.example",
+            "company": "Practice A",
+            "region": "EMEA",
+            "country": "France",
+            "source": "website",
+            "companySize": 40,
+            "budget": 5000,
+            "message": "Need a quote",
+            "status": "new"
+          },
+          {
+            "name": "Practice Lou",
+            "email": "lou@practice-b.example",
+            "company": "Practice B",
+            "region": "NA",
+            "country": "USA",
+            "source": "referral",
+            "companySize": 900,
+            "budget": 60000,
+            "message": "Enterprise plan?",
+            "status": "new"
+          },
+          {
+            "name": "Practice Ray",
+            "email": "ray@practice-c.example",
+            "company": "Practice C",
+            "region": "APAC",
+            "country": "Japan",
+            "source": "event",
+            "companySize": 12,
+            "budget": 800,
+            "message": "Demo please",
+            "status": "new"
+          },
+          {
+            "name": "Practice Spam",
+            "email": "win@prize.example",
+            "company": "Prize",
+            "region": "NA",
+            "country": "USA",
+            "source": "website",
+            "companySize": 1,
+            "budget": 0,
+            "message": "You won",
+            "status": "spam"
+          },
+          {
+            "name": "Practice Old",
+            "email": "old@practice-d.example",
+            "company": "Practice D",
+            "region": "EMEA",
+            "country": "Spain",
+            "source": "website",
+            "companySize": 30,
+            "budget": 2000,
+            "message": "Hi again",
+            "status": "contacted"
+          }
+        ]
+      }
+    }
+  ]
+}

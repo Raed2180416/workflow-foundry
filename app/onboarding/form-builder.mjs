@@ -56,7 +56,7 @@ export class TemplateFormBuilder {
     if (answers === null || typeof answers !== 'object' || Array.isArray(answers)) throw new FoundryError('ANSWERS', 'answers is an object of question id to text');
     const t = typeof template === 'string' ? templateById(template, this.library) : null;
     if (!t) return { status: 'unsupported', builder: this.id, supported: catalog(this.library).map(c => ({ id: c.id, title: c.title })),
-      reply: `There is no automation card called ${String(template ?? '').slice(0, 60) || '(none)'}. Call list_templates, pick the closest, and fill its settings from the person's words. Nothing was created.` };
+      reply: `There is no example called ${String(template ?? '').slice(0, 60) || '(none)'}. Nothing was created. To build something else, use construction_guide and pass the workflow to propose_flow.` };
     if (base?.template && base.template !== t.id) return { status: 'build_failed', builder: this.id, template: t.id,
       reply: `This automation was made from the "${base.template}" card, not "${t.id}". Start a new automation instead. Nothing was changed.`, problems: ['template differs from the existing automation'] };
     const settings = normaliseSettings(t, given);

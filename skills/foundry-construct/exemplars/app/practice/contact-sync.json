@@ -1,0 +1,70 @@
+{
+  "about": "Practice cases for exemplars/app/contact-sync.json (the example's own practice data). Every address in them is a practice address.",
+  "practiceInput": [
+    {
+      "name": "contact-sync practice data",
+      "input": {
+        "now": "2026-10-13T07:30:00Z"
+      },
+      "sheets": {
+        "crm": [
+          {
+            "email": "a@practice-co.example",
+            "name": "Practice Ada",
+            "company": "Co A",
+            "tags": "customer",
+            "unsubscribed": false
+          },
+          {
+            "email": "b@practice-co.example",
+            "name": "Practice Bo",
+            "company": "Co B",
+            "tags": "lead",
+            "unsubscribed": false
+          },
+          {
+            "email": "c@practice-co.example",
+            "name": "Practice Cy",
+            "company": "Co C",
+            "tags": "customer; vip",
+            "unsubscribed": true
+          },
+          {
+            "email": "d@practice-co.example",
+            "name": "Practice Di",
+            "company": "Co D",
+            "tags": "customer",
+            "unsubscribed": false
+          },
+          {
+            "email": "e@practice-co.example",
+            "name": "Practice Eve",
+            "company": "Co E",
+            "tags": "customer",
+            "unsubscribed": false
+          }
+        ],
+        "newsletter": [
+          {
+            "email": "a@practice-co.example",
+            "name": "Practice Ada",
+            "source": "website",
+            "addedAt": "2026-01-01"
+          },
+          {
+            "email": "D@practice-co.example",
+            "name": "Practice Dina",
+            "source": "website",
+            "addedAt": "2026-02-01"
+          },
+          {
+            "email": "z@practice-co.example",
+            "name": "Practice Zed",
+            "source": "event",
+            "addedAt": "2026-03-01"
+          }
+        ]
+      }
+    }
+  ]
+}

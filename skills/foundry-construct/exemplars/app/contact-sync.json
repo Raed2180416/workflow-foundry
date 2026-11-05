@@ -1,0 +1,421 @@
+{
+  "schemaVersion": "1.0",
+  "id": "contact-sync",
+  "version": 1,
+  "title": "Newsletter list sync",
+  "goal": "Each run, compare the newsletter list with the CRM (contacts tagged \"customer\") by e-mail, Added the missing subscribed contacts, and e-mail owner@practice.example a report of the differences after a person approves the send.",
+  "domain": "general",
+  "envelope": {
+    "assumptions": [
+      "The crm sheet holds one row per contact with email, name, company, tags and unsubscribed; the newsletter sheet holds email, name, source and addedAt",
+      "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+    ],
+    "risks": [
+      "Adding someone who unsubscribed",
+      "Overwriting or deleting list entries"
+    ],
+    "successCriteria": [
+      "No unsubscribed contact was added",
+      "Exactly the missing contacts were added (or none, in report-only mode)",
+      "The report reached the one address you named (checked by re-reading the outbox)"
+    ],
+    "unsupported": [
+      "Deleting or editing list entries",
+      "Two-way sync",
+      "Running on a schedule by itself"
+    ]
+  },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "now"
+    ],
+    "properties": {
+      "now": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 40
+      }
+    }
+  },
+  "budget": {
+    "maxSteps": 200,
+    "maxConcurrency": 2,
+    "maxDurationMs": 300000,
+    "maxCost": 0
+  },
+  "nodes": [
+    {
+      "id": "crm",
+      "kind": "task",
+      "needs": [],
+      "description": "Read the CRM",
+      "tool": "sheet.read",
+      "args": {
+        "sheet": "crm"
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "list",
+      "kind": "task",
+      "needs": [],
+      "description": "Read the newsletter list",
+      "tool": "sheet.read",
+      "args": {
+        "sheet": "newsletter"
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "eligible",
+      "kind": "task",
+      "needs": [
+        "crm"
+      ],
+      "description": "Keep subscribed contacts with an e-mail address (contacts tagged \"customer\")",
+      "tool": "rows.filter",
+      "args": {
+        "rows": {
+          "$ref": "nodes.crm.rows"
+        },
+        "where": [
+          {
+            "field": "unsubscribed",
+            "op": "ne",
+            "value": true
+          },
+          {
+            "field": "email",
+            "op": "exists"
+          },
+          {
+            "field": "tags",
+            "op": "contains",
+            "value": "customer"
+          }
+        ]
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "unsubscribed",
+      "kind": "task",
+      "needs": [
+        "crm"
+      ],
+      "description": "The unsubscribed contacts (never added)",
+      "tool": "rows.filter",
+      "args": {
+        "rows": {
+          "$ref": "nodes.crm.rows"
+        },
+        "where": [
+          {
+            "field": "unsubscribed",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "rec",
+      "kind": "task",
+      "needs": [
+        "eligible",
+        "list"
+      ],
+      "description": "Compare the CRM with the list by e-mail",
+      "tool": "rows.reconcile",
+      "args": {
+        "left": {
+          "$ref": "nodes.eligible.rows"
+        },
+        "right": {
+          "$ref": "nodes.list.rows"
+        },
+        "key": "email",
+        "compare": [
+          "name"
+        ]
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "toAdd",
+      "kind": "task",
+      "needs": [
+        "rec"
+      ],
+      "description": "Prepare the list rows for the missing contacts",
+      "tool": "rows.select",
+      "args": {
+        "rows": {
+          "$ref": "nodes.rec.missing"
+        },
+        "fields": [
+          "email",
+          "name"
+        ],
+        "set": {
+          "source": "crm-sync",
+          "addedAt": {
+            "$ref": "input.now"
+          }
+        }
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "leak",
+      "kind": "task",
+      "needs": [
+        "toAdd",
+        "unsubscribed"
+      ],
+      "description": "Cross-check: unsubscribed contacts among the rows to add (must be none)",
+      "tool": "rows.reconcile",
+      "args": {
+        "left": {
+          "$ref": "nodes.unsubscribed.rows"
+        },
+        "right": {
+          "$ref": "nodes.toAdd.rows"
+        },
+        "key": "email"
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "append",
+      "kind": "task",
+      "needs": [
+        "toAdd",
+        "leak"
+      ],
+      "when": {
+        "op": "eq",
+        "left": {
+          "$ref": "nodes.leak.matched"
+        },
+        "right": 0
+      },
+      "description": "Add the missing contacts to the newsletter list",
+      "tool": "sheet.append",
+      "args": {
+        "sheet": "newsletter",
+        "rows": {
+          "$ref": "nodes.toAdd.rows"
+        }
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "addLines",
+      "kind": "task",
+      "needs": [
+        "rec"
+      ],
+      "description": "List the missing contacts",
+      "tool": "rows.lines",
+      "args": {
+        "rows": {
+          "$ref": "nodes.rec.missing"
+        },
+        "line": "- {{email}} ({{name}})",
+        "empty": "- none"
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "changedLines",
+      "kind": "task",
+      "needs": [
+        "rec"
+      ],
+      "description": "List the names that differ",
+      "tool": "rows.lines",
+      "args": {
+        "rows": {
+          "$ref": "nodes.rec.changed"
+        },
+        "line": "- {{key}}: \"{{left}}\" in the CRM, \"{{right}}\" on the list",
+        "empty": "- none"
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "report",
+      "kind": "task",
+      "needs": [
+        "addLines",
+        "changedLines",
+        "unsubscribed",
+        "rec"
+      ],
+      "description": "Write the sync report",
+      "tool": "core.template",
+      "args": {
+        "text": "Newsletter list compared with your CRM (contacts tagged \"customer\").\n\nAdded {{n}} contact(s) missing from the list:\n{{added}}\n\nNames that differ ({{c}}), left as they are:\n{{changed}}\n\nOn the list but not in the CRM: {{extra}} (left alone). Unsubscribed contacts are never added ({{blocked}} in the CRM).",
+        "variables": {
+          "n": {
+            "$ref": "nodes.addLines.count"
+          },
+          "added": {
+            "$ref": "nodes.addLines.text"
+          },
+          "c": {
+            "$ref": "nodes.changedLines.count"
+          },
+          "changed": {
+            "$ref": "nodes.changedLines.text"
+          },
+          "extra": {
+            "$ref": "nodes.rec.counts.extra"
+          },
+          "blocked": {
+            "$ref": "nodes.unsubscribed.count"
+          }
+        }
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "send",
+      "kind": "task",
+      "needs": [
+        "report",
+        "append"
+      ],
+      "description": "E-mail the report to owner@practice.example (asks you first)",
+      "tool": "outbox.send",
+      "args": {
+        "to": "owner@practice.example",
+        "subject": "Newsletter sync report",
+        "body": {
+          "$ref": "nodes.report.text"
+        }
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 1
+      }
+    },
+    {
+      "id": "audit",
+      "kind": "verify",
+      "needs": [
+        "send"
+      ],
+      "description": "Re-read the outbox: only the report went out, intact",
+      "method": "capability",
+      "tool": "outbox.audit",
+      "args": {
+        "to": [
+          "owner@practice.example"
+        ]
+      },
+      "subject": {
+        "$ref": "nodes.send"
+      },
+      "independence": "execution",
+      "gate": true,
+      "timeoutMs": 10000
+    },
+    {
+      "id": "sheetAudit",
+      "kind": "verify",
+      "needs": [
+        "send",
+        "rec"
+      ],
+      "description": "Re-read the newsletter list: exactly the missing contacts were added (none in report-only mode)",
+      "method": "capability",
+      "tool": "sheet.audit",
+      "args": {
+        "sheet": "newsletter",
+        "rows": {
+          "$ref": "nodes.rec.counts.missing"
+        }
+      },
+      "subject": {
+        "$ref": "nodes.rec"
+      },
+      "independence": "execution",
+      "gate": true,
+      "timeoutMs": 10000
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.leak.matched"
+      },
+      "right": 0
+    },
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.send.delivered"
+      },
+      "right": true
+    },
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.audit.pass"
+      },
+      "right": true
+    },
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.sheetAudit.pass"
+      },
+      "right": true
+    }
+  ],
+  "metadata": {
+    "sources": [
+      "app/core/templates/contact-sync.json (example \"contact-sync\", filled with its own sample settings)"
+    ],
+    "rationale": "Worked example for the free-form front door, generated by tools/skillpack/gen-exemplars.mjs from the frontier-written example \"contact-sync\" (claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Shows: Someone wants their mailing or newsletter list kept in step with their CRM or customer sheet: add the contacts that are missing, or only find out who is missing without changing anything, and get a report of what differs. Never: Sending the newsletter itself, deleting or editing contacts, syncing orders, invoices or payments, or two-way sync."
+  }
+}
