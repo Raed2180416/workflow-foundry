@@ -230,7 +230,7 @@ export const strangerTarget = {
   name: 'An outside-effect target the person never wrote',
   request: 'Every month, compare my bank sheet with the ledger sheet by transaction id and amount, and e-mail the differences to finance@acme.example.',
   // The agent "helpfully" copies the CFO, an address the person never gave.
-  workflow: JSON.parse(JSON.stringify(reconciliation.workflow).replaceAll('finance@acme.example', 'cfo@acme.example')),
+  workflow: { ...JSON.parse(JSON.stringify(reconciliation.workflow).replaceAll('finance@acme.example', 'cfo@acme.example')), id: 'bank-ledger-for-the-cfo' },
   practiceInput: reconciliation.practiceInput
 };
 

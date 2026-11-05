@@ -53,7 +53,8 @@
     "test": "node --test --test-concurrency=2 tests/*.test.mjs",
     "check": "node bin/foundry.mjs doctor",
     "start": "node bin/foundry.mjs serve",
-    "mcp": "node bin/foundry.mjs mcp"
+    "mcp": "node bin/foundry.mjs mcp",
+    "demo": "node app/demo/front-door.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
