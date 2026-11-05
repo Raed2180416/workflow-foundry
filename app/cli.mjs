@@ -6,8 +6,11 @@
 //        [--builder templates|mercury] [--token-cap N]                   on 127.0.0.1 only; one Foundry window per workspace (<ws>/.lock)
 //   node app/cli.mjs start   [--workspace DIR] [--port N] [--no-open]   check this machine, open the older dashboard, print how to connect agents
 //   node app/cli.mjs mcp     [--workspace DIR] [--dashboard] [--consent]  stdio MCP server for Claude Code, Codex, Cursor, ...
-//        [--builder stub|haiku|mercury] [--token-cap N]                    who builds flows from words alone: the $0 stub (default), or a cheap
-//                                                                           model over the template library, only if Settings allow it
+//        [--builder stub|haiku|mercury|freeform] [--token-cap N]           who builds flows from words alone: the $0 stub (default), a cheap
+//                                                                           model over the example library, or `freeform` (Haiku 5.5 writes a
+//                                                                           whole workflow from the construction skill: app/core/builder-freeform.mjs),
+//                                                                           only if Settings allow that model. An agent can always pass its own
+//                                                                           workflow to propose_flow (the free-form front door, app/FRONT-DOOR.md)
 //        [--need-judge haiku|mercury] [--need-cap-usd 0.5]                 need_check asks a cheap model unless the code clears the request
 //                                                                           (capped per call and per server process; only the model Settings allow); default: code-only hint
 //   node app/cli.mjs doctor  [--workspace DIR] [--json] [--consent]     what works here and what does not, in plain words (--json: for IT)
@@ -44,11 +47,18 @@ import { listHumanTasks, answerQuestion, decideApproval } from './core/human-tas
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const CLI = path.join(here, 'cli.mjs');
 // Builder choice: model ids come from the owner policy only (policy/models.json); the stub calls no model.
-export const BUILDERS = Object.freeze({ stub: null, haiku: 'claude-haiku-5-5', mercury: 'mercury-3' });
+export const BUILDERS = Object.freeze({ stub: null, haiku: 'claude-haiku-5-5', mercury: 'mercury-3', freeform: 'claude-haiku-5-5' });
+// The Allowed AI setting a builder needs: the free-form builder calls Haiku.
+const AI_OF = Object.freeze({ haiku: 'haiku', mercury: 'mercury', freeform: 'haiku' });
 export async function makeBuilder(name = 'stub', { workspace, tokenCap = 200000 } = {}) {
   if (!Object.hasOwn(BUILDERS, name)) throw Object.assign(new Error(`--builder is one of ${Object.keys(BUILDERS).join(', ')}`), { code: 'BUILDER_CHOICE' });
   if (name === 'stub') return (await import('./core/builder.mjs')).stubBuilder;
   const { ModelBuilder, createBuilderPort } = await import('./core/builder-model.mjs');
+  if (name === 'freeform') {
+    const { FreeformBuilder } = await import('./core/builder-freeform.mjs');
+    const { port } = await createBuilderPort({ model: BUILDERS.freeform, journalFile: path.join(workspace, 'builder-journal.sqlite'), maxBudgetUsdPerCall: 0.5 });
+    return new FreeformBuilder({ port, model: BUILDERS.freeform, maxTotalTokens: tokenCap });
+  }
   const { port } = await createBuilderPort({ model: BUILDERS[name], journalFile: path.join(workspace, 'builder-journal.sqlite'), ...(name === 'mercury' ? { tokenCap } : {}) });
   return new ModelBuilder({ port, model: BUILDERS[name] });
 }
@@ -57,7 +67,7 @@ export async function builderAllowed(name, workspace) {
   if (!name || name === 'stub' || name === 'templates') return null;
   const { loadSettings } = await import('./onboarding/settings.mjs');
   const s = loadSettings(workspace);
-  return s.allowedAI === name ? null : `Settings say no AI may build from your words with ${name} (Allowed AI: ${s.allowedAI}${s.managed?.allowedAI ? ', set by your organisation' : ''}). Change Allowed AI in Settings first, or start without --builder.`;
+  return s.allowedAI === (AI_OF[name] ?? name) ? null : `Settings say no AI may build from your words with ${name} (Allowed AI: ${s.allowedAI}${s.managed?.allowedAI ? ', set by your organisation' : ''}). Change Allowed AI in Settings first, or start without --builder.`;
 }
 // The need judge (ROUTER-1 cascade): a policy model over the builder's ModelPort, $0.05 per call at most and maxUsd per process.
 // Output caps per model (reliability.json judgeOutputCap). Mercury 3 reasons on every call: at 1,000 tokens 13 of 193 ROUTER-1 test

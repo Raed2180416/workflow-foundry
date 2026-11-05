@@ -137,7 +137,7 @@ export function checkFreeform(workflow, { registry, words = '', validate }) {
       const entry = { step: path.join('/'), description: node.description, tool, kind: spec.kind, verb: spec.verb };
       if (typeof arg === 'string') {
         if (!groundedIn(words, spec.kind, arg)) blockers.push(blocker('UNGROUNDED_TARGET', `The ${spec.kind} “${short(arg, 120)}” (step “${short(node.description, 60)}”) is not in the person's words.`,
-          `Ask the person where it should go and pass their answer in answers, or take it from their own data. Never fill in a ${spec.kind} they did not give.`, { value: arg, step: entry.step }));
+          `Ask the person where it should go and pass their answer in answers, or take it from their own data. Never fill in ${spec.kind === 'e-mail' ? 'an' : 'a'} ${spec.kind} they did not give.`, { value: arg, step: entry.step }));
         effects.push({ ...entry, target: arg, source: 'your words' });
       } else if (arg && typeof arg === 'object') {
         const refs = references(arg);
