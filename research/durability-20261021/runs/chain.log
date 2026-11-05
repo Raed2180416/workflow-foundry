@@ -1,0 +1,16 @@
+2026-11-04T20:20:31Z start Z-stagez: node experiments/durability/run.mjs stagez
+20:21:35 V-11 b1lh-e8-1: 1022/1022
+20:22:10 V-11 b1lh-e8-2: 1022/1022
+20:22:44 V-11 b1lh-e8-3: 1022/1022
+20:23:34 V-11 ch-e8-1: 1022/1022
+20:24:39 V-11 ch-e8-2: 1022/1022
+20:25:26 V-11 ch-e8-3: 1022/1022
+20:26:23 V-11 cht-e8-1: 1022/1022
+20:27:37 V-11 cht-e8-2: 1022/1022
+20:29:06 V-11 cht-e8-3: 1022/1022
+Error: DUR1_STOP: Stage Z: V-3 s1-W2: E1 8 completed exposed < floor 10 | V-3 s1-W4: L1 2 completed exposed < floor 8 | V-1 s1-W5: earliest fails o0021 (outside-allowed )
+    at stop (file:///home/user/workflow-foundry/.claude/worktrees/wf_bd674a6e-71f-11/experiments/durability/run.mjs:323:139)
+    at stageZ (file:///home/user/workflow-foundry/.claude/worktrees/wf_bd674a6e-71f-11/experiments/durability/run.mjs:343:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (file:///home/user/workflow-foundry/.claude/worktrees/wf_bd674a6e-71f-11/experiments/durability/run.mjs:373:37)
+2026-11-04T20:32:08Z STOP: Z-stagez: a stop rule fired (see the step's log and runs/stagez/STOP.json) 5

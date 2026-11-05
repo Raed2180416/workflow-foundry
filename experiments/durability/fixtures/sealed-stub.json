@@ -1,0 +1,41 @@
+{
+ "schema": "dur1-sealed/1",
+ "stub": true,
+ "note": "DRY-RUN STUB written by the build agent (designer-known), never the sealed changes of the real run. The real bundle is written by the blind Opus author after freeze F-A (AUTHOR-BRIEF.md) and lives outside the repository until the run ends.",
+ "changes": {
+  "R2s": {
+   "label": "a fraud-review approval also sends the customer a review-cleared notice",
+   "prediction": "programs that hard-code the notice list miss the new notice; the contracts flag the correct new behaviour until C-O updates them",
+   "onset": { "day": 5 },
+   "publish": { "day": 2, "time": "09:00" },
+   "transition": [
+    { "from": "    else cleared = ans.at;", "to": "    else { cleared = ans.at; if (p >= __durEff(world, 'R2s')) ntf(O, 'review-cleared', 'R2.2', ans.at, ans.at + 120 * MIN); }" }
+   ],
+   "spec": [
+    { "from": "- `approve` before the deadline: the order is **cleared** at the time of the answer.", "to": "- `approve` before the deadline: the order is **cleared** at the time of the answer, and you send `review-cleared`\n  (§4.8) within **120 min** of the answer." },
+    { "from": "| `cancel-refused` | R6.3 |", "to": "| `cancel-refused` | R6.3 |\n| `review-cleared` | R2.2 |" }
+   ],
+   "worldOp": "function (W, api) { const r = api.rng('convert'); const lo = api.eff, hi = api.eff + 4 * 86400000; let n = 0; for (const [c, t] of Object.entries(W.truth.cases)) { if (n >= 12) break; if (!t.subject || t.class !== 'straight') continue; const p = Date.parse(t.placedAt); if (p < lo || p >= hi) continue; const alloc = W.sor['inventory.allocations'].find(a => a.orderId === t.subject); if (!alloc.fulfilments.every(f => f.available)) continue; t.verdict = 'review'; t.class = 'review-approve'; t.tail = true; t.review = { decision: 'approve', delay: r.int(30, 300) }; W.sor['fraud.verdicts'].push({ orderId: t.subject, verdict: 'review' }); n += 1; } return W; }"
+  },
+  "E2s": {
+   "label": "notify.send renames its text argument to message (unannounced; the API schema file shows it)",
+   "prediction": "every notification after the onset is refused with 400 field-renamed until a program follows the API file",
+   "onset": { "day": 4 },
+   "renames": [ { "system": "notify", "op": "send", "from": "text", "to": "message" } ]
+  },
+  "U1s": {
+   "label": "a cancel the customer asked for is confirmed with cancel-confirmed instead of order-cancelled",
+   "prediction": "silent to the contracts and the programs; only complaints reveal it",
+   "onset": { "day": 3 },
+   "transition": [
+    { "from": "    ntf(O, 'order-cancelled', rule, e, l);", "to": "    ntf(O, counted && p >= __durEff(world, 'U1s') ? 'cancel-confirmed' : 'order-cancelled', rule, e, l);" }
+   ],
+   "complaintTemplates": [
+    "I cancelled order {order} but never received a confirmation of my cancellation.",
+    "Order {order}: I asked to cancel and only got a generic message that the order was cancelled, not the confirmation of my request.",
+    "Can someone confirm that my cancellation of {order} went through? I have no confirmation."
+   ],
+   "complaintTopic": "notice"
+  }
+ }
+}

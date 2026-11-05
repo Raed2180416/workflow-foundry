@@ -119,6 +119,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     for (const r of res) console.log(`${r.label}: ${r.ok ? 'ok' : `FAIL ${r.error ?? r.digest}`}`);
     const bad = res.filter(r => !r.ok);
     if (bad.length) { console.error(`${bad.length} patch(es) do not rebuild to the recorded digest; nothing pruned`); process.exit(1); }
-    if (mode === 'prune') for (const r of res) { const d = path.join(RUN_DIR, r.label, 'program'); if (existsSync(d)) { rmSync(d, { recursive: true, force: true }); console.log(`${r.label}: program/ copy removed`); } }
+    // DUR-1 (experiments/durability/arms.mjs, frozen 2026-11-04) runs eight kept programs from their full copies; prune keeps those.
+    const durability = readFileSync(path.join(ROOT, 'experiments/durability/arms.mjs'), 'utf8');
+    if (mode === 'prune') for (const r of res) { const d = path.join(RUN_DIR, r.label, 'program'); if (durability.includes(`fh1/runs/${r.label}/program`)) continue; if (existsSync(d)) { rmSync(d, { recursive: true, force: true }); console.log(`${r.label}: program/ copy removed`); } }
   } else { console.error('usage: lean.mjs write|verify|prune'); process.exit(2); }
 }

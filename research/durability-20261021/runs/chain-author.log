@@ -1,0 +1,278 @@
+2026-11-04T18:57:23Z K-5: disk 1199776 KB < 1258291 KB; pausing 30 min
+2026-11-04T19:27:23Z K-5: disk 1098936 KB < 1258291 KB; pausing 30 min
+2026-11-04T19:57:23Z start Z0-dry: node experiments/durability/run.mjs dry --light --out /var/tmp/foundry-work/dur1-chain-dry
+19:57:24 -- seeds
+19:57:24 -- author-stub
+19:57:36 author attempt 1: gates fail
+19:57:38 author attempt 2: gates fail
+19:57:38 -- stagez-gates
+19:57:57 -- exposure
+19:57:58 -- static-arms
+19:57:58 co-R1-a1: C-O stub; output {"rules":{"reviewTimeout":"clear"},"module":null}
+19:58:01 C-O R1: certified (drifted flags 0, exposed share 1.00, precision 1.00)
+19:58:02 S-Hstar.b1lh-e8-1.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+19:58:02 co-R2s-a1: C-O stub; output {"rules":null,"module":"capabilities-co-R2s-a1-64164e0fe4e9.mjs"}
+19:58:05 C-O R2s: certified (drifted flags 0, exposed share 1.00, precision 1.00)
+19:58:24 S-Hstar.b1lh-e8-1.r1 r1-W2: 1 run(s), promotions 0, open incidents 0
+19:58:25 S-Hstar.ch-e8-1.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+19:58:44 S-Hstar.ch-e8-1.r1 r1-W2: 1 run(s), promotions 0, open incidents 0
+19:58:46 REF-S.S1.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+19:59:03 REF-S.S1.r1 r1-W2: 1 run(s), promotions 0, open incidents 0
+19:59:03 R-static.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+19:59:05 R-static.r1 r1-W2: 1 run(s), promotions 0, open incidents 0
+19:59:06 R-maint2.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+19:59:07 R-maint2.r1 r1-W2: 1 run(s), promotions 0, open incidents 0
+19:59:07 R-ceil.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+19:59:09 R-ceil.r1 r1-W2: 1 run(s), promotions 0, open incidents 0
+19:59:09 -- heal-arm
+19:59:13 MH-H.b1lh-e8-1.r1.W1d1.s1: session stub $0; candidate 837f2255e912809d (unchanged)
+19:59:13 MH-H.b1lh-e8-1.r1.W1d1.s2: session stub $0; candidate 837f2255e912809d (unchanged)
+19:59:21 MH-H.b1lh-e8-1.r1.W1d14.s1: session stub $0; candidate 837f2255e912809d (unchanged)
+19:59:21 MH-H.b1lh-e8-1.r1.W1d14.s2: session stub $0; candidate 837f2255e912809d (unchanged)
+19:59:21 MH-H.b1lh-e8-1.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+19:59:39 MH-H.b1lh-e8-1.r1.W2d2.s1: session stub $0; candidate 3fada9ae5787b566
+19:59:50 MH-H.b1lh-e8-1.r1.W2d2.s2: session stub $0; candidate 3fada9ae5787b566
+20:00:32 MH-H.b1lh-e8-1.r1.W2d4.s1: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:00:32 MH-H.b1lh-e8-1.r1.W2d4.s2: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:00:32 co-vb-r1-W2-notice: C-O stub; output null
+20:00:32 C-O verifier-blind r1 (W2 notice): no-update
+20:00:32 MH-H.b1lh-e8-1.r1.W2d14.s1: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:00:32 MH-H.b1lh-e8-1.r1.W2d14.s2: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:00:32 MH-H.b1lh-e8-1.r1 r1-W2: 2 run(s), promotions 1, open incidents 0
+20:00:35 MH-H.ch-e8-1.r1.W1d1.s1: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:00:35 MH-H.ch-e8-1.r1.W1d1.s2: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:00:38 MH-H.ch-e8-1.r1.W1d4.s1: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:00:38 MH-H.ch-e8-1.r1.W1d4.s2: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:00:40 MH-H.ch-e8-1.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+20:01:10 MH-H.ch-e8-1.r1.W2d2.s1: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:10 MH-H.ch-e8-1.r1.W2d2.s2: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:10 MH-H.ch-e8-1.r1.W2d3.s1: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:10 MH-H.ch-e8-1.r1.W2d3.s2: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:10 MH-H.ch-e8-1.r1.W2d6.s1: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:10 MH-H.ch-e8-1.r1.W2d6.s2: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:10 MH-H.ch-e8-1.r1.W2d8.s1: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:10 MH-H.ch-e8-1.r1.W2d8.s2: session stub $0; candidate 51c858a0ed7b189e (unchanged)
+20:01:11 MH-H.ch-e8-1.r1 r1-W2: 1 run(s), promotions 0, open incidents 0
+20:01:11 -- mh-stale-fork
+20:01:15 MH-stale.b1lh-e8-1.r1 r1-W1: 1 run(s), promotions 0, open incidents 0
+20:01:31 MH-stale.b1lh-e8-1.r1.W2d2.s1: session stub $0; candidate 3fada9ae5787b566
+20:01:41 MH-stale.b1lh-e8-1.r1.W2d2.s2: session stub $0; candidate 3fada9ae5787b566
+20:02:21 MH-stale.b1lh-e8-1.r1.W2d4.s1: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:02:21 MH-stale.b1lh-e8-1.r1.W2d4.s2: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:02:21 MH-stale.b1lh-e8-1.r1.W2d14.s1: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:02:21 MH-stale.b1lh-e8-1.r1.W2d14.s2: session stub $0; candidate 3fada9ae5787b566 (unchanged)
+20:02:21 MH-stale.b1lh-e8-1.r1 r1-W2: 2 run(s), promotions 1, open incidents 0
+20:02:21 -- attribution
+20:08:29 -- certification
+20:09:14 -- windows-stub-agent
+20:09:15 -- ld-h-stub
+20:09:32 LD-H.ld-k0.W1d7.s1: session stub $0; candidate bd5e610ae60b63de
+20:09:56 LD-H.ld-k0 ld-ld-k0-W1: 2 run(s), promotions 1, open incidents 0
+20:10:10 LD-H ld-k0: healed true, durable true, regressions 0, false-complaint harm 0
+20:10:10 -- wc1-search
+20:10:31 WC-1 b1lh-e8-1: 4/4 evaluations, 0 bed findings, HT failure 0.098 (ESS 3.6), top score 16
+20:10:33 -- redteam-stub
+20:10:36 dry-rt: 2 probes, 2 scenarios, 2 valid, 0 bed findings
+20:10:44 WC-1 blind-b1lh-e8-1: 2/2 evaluations, 0 bed findings, HT failure 0.000 (ESS 2.0), top score 0
+20:10:45 -- sweep
+20:11:18 -- shield-ablation
+20:11:48 -- m6-analysis
+20:11:50 m6 s1: 0 alarms (W1 0)
+20:11:50 -- m6-detector
+20:12:10 -- power
+20:12:14 -- report
+{
+ "allStepsOk": true,
+ "ms": 890836,
+ "steps": {
+  "seeds": "ok",
+  "author-stub": "ok",
+  "stagez-gates": "ok",
+  "exposure": "ok",
+  "static-arms": "ok",
+  "heal-arm": "ok",
+  "mh-stale-fork": "ok",
+  "attribution": "ok",
+  "certification": "ok",
+  "windows-stub-agent": "ok",
+  "ld-h-stub": "ok",
+  "wc1-search": "ok",
+  "redteam-stub": "ok",
+  "sweep": "ok",
+  "shield-ablation": "ok",
+  "m6-analysis": "ok",
+  "m6-detector": "ok",
+  "power": "ok",
+  "report": "ok"
+ },
+ "owner": [
+  {
+   "q": "Q1 good enough in the worst case?",
+   "rule": "D-5, D-11",
+   "verdict": "PARTIAL"
+  },
+  {
+   "q": "Q2 adapts and heals as it does real work?",
+   "rule": "D-1 (primary), D-6, D-10",
+   "verdict": "FALSIFIED; detection FAIL; unknown NOT SHOWN"
+  },
+  {
+   "q": "Q3 performance tested as it changes?",
+   "rule": "reported",
+   "verdict": "curves per arm (see below)"
+  },
+  {
+   "q": "Q4 durable state >= a human's?",
+   "rule": "D-4",
+   "verdict": "NOT RUN"
+  },
+  {
+   "q": "Q5 versus a per-tick agent; beat Opus at a fraction of the cost?",
+   "rule": "D-3 (primary), D-2, D-7",
+   "verdict": "SUPPORTED; cost PASS"
+  },
+  {
+   "q": "Q6 runs expose flaws in a hand-crafted workflow?",
+   "rule": "D-8",
+   "verdict": "NOT SHOWN"
+  },
+  {
+   "q": "Q7 every failure figured out?",
+   "rule": "§14.3",
+   "verdict": "LEDGER INCOMPLETE (0/36 records analyst-reviewed): no result text"
+  }
+ ]
+}
+2026-11-04T20:12:14Z done Z0-dry
+2026-11-04T20:12:15Z start P1-author: node experiments/durability/run.mjs author --paid
+20:19:50 author attempt 1: gates pass
+{
+ "ok": true,
+ "sha256": "e12137a9130d4ae8bf76c05cbb868a8c4dd032a00e9c85cd5a4815a4b03cc6c3",
+ "counts": {
+  "structural": [],
+  "worlds": [
+   {
+    "seed": 1223,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 81,
+    "exposure": {
+     "R2s": {
+      "completed": 32,
+      "floor": 10,
+      "undriftedFails": 31
+     },
+     "E2s": {
+      "completed": 60,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 15,
+      "floor": 6,
+      "undriftedFails": 15
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   },
+   {
+    "seed": 1224,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 81,
+    "exposure": {
+     "R2s": {
+      "completed": 43,
+      "floor": 10,
+      "undriftedFails": 41
+     },
+     "E2s": {
+      "completed": 68,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 20,
+      "floor": 6,
+      "undriftedFails": 20
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   },
+   {
+    "seed": 1225,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 83,
+    "exposure": {
+     "R2s": {
+      "completed": 42,
+      "floor": 10,
+      "undriftedFails": 39
+     },
+     "E2s": {
+      "completed": 71,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 26,
+      "floor": 6,
+      "undriftedFails": 26
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   },
+   {
+    "seed": 1226,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 84,
+    "exposure": {
+     "R2s": {
+      "completed": 40,
+      "floor": 10,
+      "undriftedFails": 40
+     },
+     "E2s": {
+      "completed": 72,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 24,
+      "floor": 6,
+      "undriftedFails": 24
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   }
+  ]
+ }
+}
+2026-11-04T20:19:51Z done P1-author

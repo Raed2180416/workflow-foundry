@@ -1,0 +1,144 @@
+{
+ "status": "sealed",
+ "sha256": "e12137a9130d4ae8bf76c05cbb868a8c4dd032a00e9c85cd5a4815a4b03cc6c3",
+ "at": "2026-11-04T20:19:50.985Z",
+ "file": "/var/tmp/foundry-work/dur1-sealed/bundle.json",
+ "records": [
+  {
+   "attempt": 1,
+   "session": {
+    "kind": "paid",
+    "model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "costUsd": 1.4885872000000004,
+    "error": null
+   },
+   "wrote": true
+  }
+ ],
+ "counts": {
+  "structural": [],
+  "worlds": [
+   {
+    "seed": 1223,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 81,
+    "exposure": {
+     "R2s": {
+      "completed": 32,
+      "floor": 10,
+      "undriftedFails": 31
+     },
+     "E2s": {
+      "completed": 60,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 15,
+      "floor": 6,
+      "undriftedFails": 15
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   },
+   {
+    "seed": 1224,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 81,
+    "exposure": {
+     "R2s": {
+      "completed": 43,
+      "floor": 10,
+      "undriftedFails": 41
+     },
+     "E2s": {
+      "completed": 68,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 20,
+      "floor": 6,
+      "undriftedFails": 20
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   },
+   {
+    "seed": 1225,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 83,
+    "exposure": {
+     "R2s": {
+      "completed": 42,
+      "floor": 10,
+      "undriftedFails": 39
+     },
+     "E2s": {
+      "completed": 71,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 26,
+      "floor": 6,
+      "undriftedFails": 26
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   },
+   {
+    "seed": 1226,
+    "problems": [],
+    "referenceOk": true,
+    "completed": 84,
+    "exposure": {
+     "R2s": {
+      "completed": 40,
+      "floor": 10,
+      "undriftedFails": 40
+     },
+     "E2s": {
+      "completed": 72,
+      "floor": 10
+     },
+     "U1s": {
+      "completed": 24,
+      "floor": 6,
+      "undriftedFails": 24
+     }
+    },
+    "controls": {
+     "noop": "fails",
+     "echo": "fails",
+     "declare-every-obligation": "fails",
+     "escalate-everything": "fails",
+     "charge-twice": "fails",
+     "hold-everything": "fails"
+    }
+   }
+  ]
+ }
+}

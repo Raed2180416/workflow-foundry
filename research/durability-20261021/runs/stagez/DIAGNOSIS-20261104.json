@@ -1,0 +1,44 @@
+{
+ "label": "DUR-1 Stage Z stop: $0 diagnosis, made after the stop at 2026-11-04T20:32:08Z. Diagnostic only, never a DUR-1 result. The frozen code was not changed: counterfactuals ran under a temporary patch that read two environment variables and was reverted with git checkout. Both freezes pass afterwards (freeze.mjs check A and check B: ok). For sealed changes, only counts are recorded.",
+ "stop": {
+  "rule": "PREREG-DUR-1 §13.2: Stage Z V-1, V-2, V-3 or V-11 fails -> stop (exit 5, runs/stagez/STOP.json); a dated amendment is required before any paid step",
+  "why": "V-3 s1-W2: E1 8 completed exposed < floor 10 | V-3 s1-W4: L1 2 completed exposed < floor 8 | V-1 s1-W5: earliest fails o0021 (outside-allowed)",
+  "stageZReached": "V-11 9/9 lineages 1022/1022; s1 gates; stopped before exposure, static arms and K-0 (K0.json not written)"
+ },
+ "gatesFrozenCode": {
+  "note": "gatesOfWorld on all 18 stream worlds with the frozen code (Stage Z itself stopped after s1). v3 = completed exposed / floor on the change's onset world. V-2: every bad control fails every changed world (15 worlds x 6 controls).",
+  "s1": { "W1": "ok", "W2": { "v3": { "P1": "38/10", "E1": "8/10 MISS" } }, "W3": { "v3": { "R1": "10/10" } }, "W4": { "v3": { "R2s": "38/10", "L1": "2/8 MISS" } }, "W5": { "v1": "FAIL (1 case)", "v3": { "E2s": "65/10" } }, "W6": { "v3": { "E1r": "98/10", "U1s": "36/6" } } },
+  "s2": { "W1": "ok", "W2": { "v3": { "P1": "41/10", "E1": "17/10" } }, "W3": { "v3": { "R1": "11/10" } }, "W4": { "v3": { "R2s": "37/10", "L1": "2/8 MISS" } }, "W5": { "v3": { "E2s": "68/10" } }, "W6": { "v3": { "E1r": "110/10", "U1s": "37/6" } } },
+  "s3": { "W1": "ok", "W2": { "v3": { "P1": "45/10", "E1": "11/10" } }, "W3": { "v3": { "R1": "13/10" } }, "W4": { "v3": { "R2s": "35/10", "L1": "4/8 MISS" } }, "W5": { "v3": { "E2s": "67/10" } }, "W6": { "v3": { "E1r": "98/10", "U1s": "33/6" } } },
+  "failures": ["V-1 s1-W5", "V-3 E1 s1-W2", "V-3 L1 s1-W4", "V-3 L1 s2-W4", "V-3 L1 s3-W4"]
+ },
+ "v1_s1W5": {
+  "referenceControlByTwin": { "all changes": "FAIL (1 problem, 84 completed)", "twin0 (no DUR change)": "ok (83)", "without P1": "FAIL", "without E1": "FAIL", "without R1": "FAIL", "without R2s": "FAIL", "without L1": "ok (83)", "without F": "FAIL", "without E2s": "FAIL", "without ADV": "ok (83)" },
+  "case": { "id": "o0021", "subject": "ORD-1175-0021", "class": "l1-f6-reserve", "epoch": "ep0", "placedAt": "2026-03-04T02:17:00+01:00", "fulfilment": "one fulfilment, WH-AMS, 3 items (SKU-1003 x1, SKU-1015 x2, SKU-1019 x2)" },
+  "mechanism": "L1 (changes.mjs failureLoad:245, same rule as beds/ebed/e8/metamorphic.mjs:450) puts the F6 reserve fault on ordinal 2 whenever there is more than 1 item. The reference (earliest) emits all three reserves in one emission (em-0000198). Reserve #2 fails (F6). The grader then finds no allowed effect for reserve #3 (SKU-1019, uncommitted) and records a layer-2 outside-allowed divergence (grade.mjs:154). The case is not critical. MR11's ordinal-2 rule has only been validated where reserve #2 is the last one. On 3 or more items, the reference and the grader disagree: this is a bed/operator defect (K-1 class), not an arm outcome.",
+  "whyOnlyWithADV": "ADV sets generateWorld({injection: true}), which changes the world id to '...-inj' (world.mjs:335). L1's draw is rng('dur1/L1', salt, W.id) (changes.mjs:218), so with ADV the 15% draw picks o0021, and without ADV o0021 stays 'straight'."
+ },
+ "twinDefect_ADV": {
+  "finding": "twin(W, ADV) is not an incremental twin. Removing ADV changes W.id, which re-seeds R1's world operator (changes.mjs:200), L1's selection (:218) and F's duplicate placements (:262). ADV's exposure and attribution in W5 and W6 therefore mix in L1, F and R1 re-draws. This is why the frozen s1 gates show ADV exposure of 78 of 84 completed cases on W5 and 144 on W6, although the reference reads no documents.",
+  "perWorld": [
+   { "world": "s1-W5", "L1 touched all/xADV/symdiff": [8, 3, 9], "F touched all/xADV/symdiff": [10, 10, 16], "casesWhoseClassDiffers": 10, "arrivals": [134, 128] },
+   { "world": "s1-W6", "L1 touched all/xADV/symdiff": [11, 14, 21], "F touched all/xADV/symdiff": [0, 0, 0], "casesWhoseClassDiffers": 22, "arrivals": [228, 231] },
+   { "world": "s2-W5", "L1 touched all/xADV/symdiff": [3, 4, 5], "F touched all/xADV/symdiff": [5, 13, 18], "casesWhoseClassDiffers": 5, "arrivals": [120, 128] },
+   { "world": "s2-W6", "L1 touched all/xADV/symdiff": [11, 9, 16], "F touched all/xADV/symdiff": [0, 0, 0], "casesWhoseClassDiffers": 18, "arrivals": [237, 237] },
+   { "world": "s3-W5", "L1 touched all/xADV/symdiff": [2, 7, 7], "F touched all/xADV/symdiff": [4, 8, 10], "casesWhoseClassDiffers": 8, "arrivals": [115, 122] },
+   { "world": "s3-W6", "L1 touched all/xADV/symdiff": [7, 5, 12], "F touched all/xADV/symdiff": [0, 0, 0], "casesWhoseClassDiffers": 12, "arrivals": [228, 226] }
+  ]
+ },
+ "v3_L1": {
+  "finding": "The L1 floor of 8 on W4 cannot be reached in expectation with share 0.15 on 80-order worlds. About 27-31 straight orders per world means about 4.5 injected cases, and only some of them complete exposed. This is a design calibration defect.",
+  "injectedAtFrozenShare": { "W4": { "s1": 2, "s2": 2, "s3": 5 }, "W5": { "s1": 8, "s2": 3, "s3": 2 }, "W6": { "s1": 11, "s2": 11, "s3": 7 } },
+  "straightOrdersW4": { "s1": 31, "s2": 27, "s3": 30 },
+  "s1CompletedExposedByWorld (frozen gates)": { "W4": 2, "W5": 8, "W6": 10 }
+ },
+ "v3_E1": { "finding": "Only s1-W2 misses (8/10): E1 starts on W2 d9, so about 5 days of W2 remain. E1 stays in force through W5, with completed exposed counts on s1 of W3 48, W4 55 and W5 51." },
+ "counterfactuals": {
+  "A1_lastOrdinal": { "change": "f6-reserve fault on the LAST reserve (ordinal = nItems) instead of ordinal 2. This is identical for 2 items.", "result": "V-1 ok on all 18 worlds; V-2 unchanged; L1 W4 floors unchanged (2/8, 2/8, 4/8 MISS)" },
+  "A1_plus_share0.35": { "result": "V-1 ok on W4-W6 of every stream; L1 W4 6/8 MISS, 5/8 MISS, 10/8. A share of 0.35 is still not enough on s1 and s2, and E1r and U1s exposure drops (for example s1-W6 E1r 98 -> 91)." }
+ },
+ "spendAtStop": { "usd": 1.4886, "rows": { "P1": 1.4886 }, "mercuryTokens": 0 }
+}
