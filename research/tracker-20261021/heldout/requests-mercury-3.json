@@ -1,0 +1,96 @@
+{
+ "prompt": "tracker-h-author/1",
+ "model": "mercury-3",
+ "at": "2026-10-28T18:18:27.133Z",
+ "system": "You write realistic requests that owners and staff of small businesses type into a chat box to get an automation set up.\nEach request is in the person's own voice: casual, sometimes terse or messy (typos, arrows, lowercase, run-on sentences), never a spec.\nEach request states two to five concrete things the person cares about, in their own words: who receives what, which items are in or out, limits and amounts, timing, what a message must say or how it is signed, what must never happen.\nUse made-up but realistic business names, people's first names and e-mail addresses on the business's own domain. Never use example.com.\nVary the industry, the tone and the length (one line to a short paragraph). In some requests leave out one detail the automation would need (for example an e-mail address), the way people do.\nReply with JSON only.",
+ "userPrompt": "The automations people can ask for:\n- contact-sync: Sync the newsletter list from the CRM and report the differences. Use it when: Someone wants their mailing or newsletter list kept in step with their CRM or customer sheet: add the contacts that are missing, or only find out who is missing without changing anything, and get a report of what differs. Not for: Sending the newsletter itself, deleting or editing contacts, syncing orders, invoices or payments, or two-way sync. Data it reads: crm (one row per contact: email, name, company, tags (text, e.g. 'customer; vip'), unsubscribed (true | false)); newsletter (the mailing list: email, name, source, addedAt; the flow appends missing contacts).\n- expense-approval: Approve small expenses automatically; send bigger ones to an approver. Use it when: Someone wants submitted expense claims up to a limit (with a receipt) approved automatically and recorded, and everything over the limit sent to one approver by e-mail. Not for: Paying people, reimbursing, payroll, invoices from suppliers, or approvals by more than one approver. Data it reads: expenses (one row per claim: id, employee, email, amount, category, description, receipt (true | false), status (submitted | approved | rejected | paid)); expense-decisions (the flow appends one row per submitted claim: id, employee, amount, decision ('approved' or 'waiting for approver'), reason, at).\n- invoice-chase: Chase unpaid invoices with a reminder cadence (dunning). Use it when: Someone wants customers with overdue unpaid invoices reminded by e-mail, politely first and firmer later, from their invoice sheet; optionally a summary to themselves. Not for: Sending invoices, taking payments, charging cards, paying suppliers or contractors, or chasing anything that is not an invoice in the invoices sheet. Data it reads: invoices (one row per invoice: invoice (id), customer, email, amount, due (YYYY-MM-DD), status (open | paid | disputed)).\n- lead-triage: Route new leads to the right salesperson. Use it when: Someone wants each new lead (from a web form or leads sheet) sent to the right person on their team by simple rules (region, country, source, company size, budget), with a log of who got what. Not for: Replying to the leads themselves, scoring leads with AI, adding leads to a CRM, cold outreach or newsletters. Data it reads: leads (one row per lead: name, email, company, region, country, source, companySize (number of employees), budget (number), message, status (new | contacted | spam)); lead-log (the flow appends one row per routed lead: name, email, company, assignTo, assignedAt).\n- oncall-digest: On-call digest of unresolved alerts to a chat channel, with optional paging. Use it when: Someone wants a regular summary of recent unresolved alerts (from their monitoring export) posted to a team chat channel, and optionally an e-mail page for critical alerts nobody acknowledged. Not for: Restarting or fixing services, phone calls or SMS, creating incidents in PagerDuty/Opsgenie, or reports about tasks, sales or money. Data it reads: alerts (one row per alert: id, at (ISO date-time), service, severity (info | warning | critical), message, acknowledged (true | false), resolved (true | false)).\n- support-deflection: Answer common support questions with your own replies; send the rest to a person. Use it when: Someone wants open support tickets that ask a common question (matched by a keyword) answered with a reply they wrote, and every other ticket, and every urgent one, sent to a person in one digest. Not for: AI-written or translated answers, closing or editing tickets, refunds, live chat, or answering every ticket automatically. Data it reads: tickets (one row per ticket: id, from (customer e-mail), subject, body, priority (normal | urgent), status (open | closed)).\n- weekly-report: Weekly progress report from a tracker export. Use it when: Someone wants a regular summary of what a team finished (and optionally what is open or blocked), taken from their task tracker export, e-mailed to one person. Not for: Status pages, dashboards, reading Jira/Linear/Asana live, sending to a whole team list, or reports about money, sales or alerts. Data it reads: tracker (one row per work item: title, status (done | open | blocked), owner).\n\nWrite 2 different requests for each automation (14 in all), each from a different business. A request must be something that automation can do.",
+ "usage": {
+  "inputTokens": 1473,
+  "outputTokens": 3470,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0
+ },
+ "tokenMeter": {
+  "inception": {
+   "cap": 40000,
+   "callCap": 30000,
+   "spent": 4943,
+   "reserved": 0,
+   "calls": 1,
+   "refused": 0,
+   "unknown": 0
+  }
+ },
+ "requests": [
+  {
+   "automation": "contact-sync",
+   "business": "YogaFlow Studio",
+   "request": "Hey can u sync my newsletter list with my customer sheet? We use Mindbody for crm. I wanna see who's missing from Mailchimp before adding anyone. don't change anything yet just tell me the diff. if someone unsubscribed leave em alone."
+  },
+  {
+   "automation": "contact-sync",
+   "business": "Happy Tails Bakery",
+   "request": "Our mailing list is always behind our google sheet of customers. add anyone on the sheet that isn't on the list, and send me a report of who got added. skip anybody who's unsubscribed in the sheet. my email is janet@happytailsbakery.com"
+  },
+  {
+   "automation": "expense-approval",
+   "business": "Bright Leaf Marketing",
+   "request": "Auto approve any expense claim under $50 if there's a receipt, log it as approved. anything $50 or more goes to dana@brightleafmarketing.com. if there's no receipt it should go to dana too. can you do that?"
+  },
+  {
+   "automation": "expense-approval",
+   "business": "Evergreen Landscaping",
+   "request": "for our expensify file: claims under 100 bucks get approved automatically when they have a photo. over that send to Owen. also if no receipt send to owen. keep a record of what u did."
+  },
+  {
+   "automation": "invoice-chase",
+   "business": "Pixel & Pixel Web Design",
+   "request": "Our invoice spreadsheet has clients who are late. send a polite reminder at 30 days past due, a firmer one at 60, and a final one at 90. also email me a summary every monday of who still owes. don't send anything to clients who disputed."
+  },
+  {
+   "automation": "invoice-chase",
+   "business": "Midwest Pipe Supply",
+   "request": "chase any open invoice that's overdue from our sheet. start 3 days after due date, remind again after 10, then 17. bcc me on the 2nd one. use the emails in the sheet."
+  },
+  {
+   "automation": "lead-triage",
+   "business": "SunRise Solar",
+   "request": "new leads come in on our website form. if they're in california send to Marcus else send to priya. actually if company size is over 200 people also send to priya. log who got what."
+  },
+  {
+   "automation": "lead-triage",
+   "business": "Nimbus Consulting",
+   "request": "route leads: west coast to ellen, east coast to rajesh, everyone else to sarah. if budget is above 25k also cc me. keep a log."
+  },
+  {
+   "automation": "oncall-digest",
+   "business": "CoreStack IT",
+   "request": "every morning at 8 post a digest of all unresolved alerts to our #oncall slack channel. include severity and service. if any critical alert isnt acknowledged within an hour email me directly."
+  },
+  {
+   "automation": "oncall-digest",
+   "business": "St. Mary's Hospital IT",
+   "request": "at 9am put up a summary of unresolved warnings and criticals in our teams channel. for critical alerts nobody has acknowledged, send me an email. don't email for warnings. thanks"
+  },
+  {
+   "automation": "support-deflection",
+   "business": "Widgetly",
+   "request": "tickets that mention 'refund' get our standard refund reply (I'll paste the text below). urgent tickets go to zara@widgetly.app. everything else also goes to zara in one digest each morning."
+  },
+  {
+   "automation": "support-deflection",
+   "business": "FitZone Equipment",
+   "request": "if a ticket mentions 'shipping' answer with our shipping faq answer. anything urgent goes to mike at mike@fitzone.com, and all other tickets also go to mike in a single daily digest."
+  },
+  {
+   "automation": "weekly-report",
+   "business": "Summit Construction",
+   "request": "every friday at 4 email me a report of what got done this week from the tracker export, plus what's open and blocked. send it to rick@summitconstruction.com"
+  },
+  {
+   "automation": "weekly-report",
+   "business": "Beacon Content Co.",
+   "request": "monday mornings email me just the tasks marked done last week. no open or blocked needed. short list is fine."
+  }
+ ]
+}

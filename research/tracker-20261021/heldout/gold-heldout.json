@@ -1,0 +1,95 @@
+{
+ "schema": "tracker-gold/1",
+ "bed": "TRACKER-H held-out set (research/tracker-20261021/heldout/cases.json; requests by mercury-3)",
+ "author": "Claude Opus 5.5 in worktree wf_6d3b90c9-c30-6, 2026-10-28, written from the 14 requests and the answer key BEFORE any build, capture, bind or tracker status on them",
+ "words": "Per case: turn 0 is the request; turns 1.. are the answer key's answers in the order of the case's questions (the person's later words).",
+ "rule": "A gold condition is something the person stated or clearly implied by their own words that the result can be judged against. Context (where the data lives, greetings, umbrella sentences restated by later rules) is not a condition. testable: one practice run (or two consecutive runs) of a flow could show it. A captured condition covers a gold condition when its located span overlaps any of the gold anchors' spans in the same turn; each captured condition covers at most one gold condition (maximum one-to-one matching).",
+ "cases": {
+  "HC1": [
+   { "id": "HC1.1", "anchors": [[0, "I wanna see who's missing from Mailchimp"]], "kind": "must", "testable": true },
+   { "id": "HC1.2", "anchors": [[0, "don't change anything yet"], [0, "before adding anyone"]], "kind": "never", "testable": true },
+   { "id": "HC1.3", "anchors": [[0, "just tell me the diff"], [1, "send it to me, nadia@yogaflowstudio.com"]], "kind": "must", "testable": true },
+   { "id": "HC1.4", "anchors": [[0, "if someone unsubscribed leave em alone"]], "kind": "never", "testable": true }
+  ],
+  "HC2": [
+   { "id": "HC2.1", "anchors": [[0, "add anyone on the sheet that isn't on the list"]], "kind": "must", "testable": true },
+   { "id": "HC2.2", "anchors": [[0, "send me a report of who got added"], [0, "my email is janet@happytailsbakery.com"]], "kind": "must", "testable": true },
+   { "id": "HC2.3", "anchors": [[0, "skip anybody who's unsubscribed in the sheet"]], "kind": "never", "testable": true }
+  ],
+  "HE1": [
+   { "id": "HE1.1", "anchors": [[0, "Auto approve any expense claim under $50 if there's a receipt"]], "kind": "when-then", "testable": true },
+   { "id": "HE1.2", "anchors": [[0, "log it as approved"]], "kind": "must", "testable": true },
+   { "id": "HE1.3", "anchors": [[0, "anything $50 or more goes to dana@brightleafmarketing.com"]], "kind": "when-then", "testable": true },
+   { "id": "HE1.4", "anchors": [[0, "if there's no receipt it should go to dana too"]], "kind": "when-then", "testable": true }
+  ],
+  "HE2": [
+   { "id": "HE2.1", "anchors": [[0, "claims under 100 bucks get approved automatically when they have a photo"]], "kind": "when-then", "testable": true },
+   { "id": "HE2.2", "anchors": [[0, "over that send to Owen"], [1, "Owen is owen@evergreenlandscaping.co"]], "kind": "when-then", "testable": true },
+   { "id": "HE2.3", "anchors": [[0, "also if no receipt send to owen"]], "kind": "when-then", "testable": true },
+   { "id": "HE2.4", "anchors": [[0, "keep a record of what u did"]], "kind": "must", "testable": true }
+  ],
+  "HI1": [
+   { "id": "HI1.1", "anchors": [[0, "send a polite reminder at 30 days past due"]], "kind": "when-then", "testable": true },
+   { "id": "HI1.2", "anchors": [[0, "a firmer one at 60"]], "kind": "when-then", "testable": true },
+   { "id": "HI1.3", "anchors": [[0, "a final one at 90"]], "kind": "when-then", "testable": true },
+   { "id": "HI1.4", "anchors": [[0, "also email me a summary"], [0, "of who still owes"], [1, "maria@pixelandpixel.com"]], "kind": "must", "testable": true },
+   { "id": "HI1.5", "anchors": [[0, "every monday"]], "kind": "schedule", "testable": false },
+   { "id": "HI1.6", "anchors": [[0, "don't send anything to clients who disputed"]], "kind": "never", "testable": true }
+  ],
+  "HI2": [
+   { "id": "HI2.1", "anchors": [[0, "chase any open invoice that's overdue from our sheet"]], "kind": "must", "testable": true },
+   { "id": "HI2.2", "anchors": [[0, "start 3 days after due date"]], "kind": "when-then", "testable": true },
+   { "id": "HI2.3", "anchors": [[0, "remind again after 10"]], "kind": "when-then", "testable": true },
+   { "id": "HI2.4", "anchors": [[0, "then 17"]], "kind": "when-then", "testable": true },
+   { "id": "HI2.5", "anchors": [[0, "bcc me on the 2nd one"], [1, "dave@midwestpipesupply.com"]], "kind": "must", "testable": true },
+   { "id": "HI2.6", "anchors": [[0, "use the emails in the sheet"]], "kind": "must", "testable": true }
+  ],
+  "HL1": [
+   { "id": "HL1.1", "anchors": [[0, "if they're in california send to Marcus"], [1, "Marcus is marcus@sunrisesolar.energy"]], "kind": "when-then", "testable": true },
+   { "id": "HL1.2", "anchors": [[0, "else send to priya"], [1, "Priya is priya@sunrisesolar.energy"], [2, "everything else goes to Priya, priya@sunrisesolar.energy"]], "kind": "when-then", "testable": true },
+   { "id": "HL1.3", "anchors": [[0, "actually if company size is over 200 people also send to priya"]], "kind": "when-then", "testable": true },
+   { "id": "HL1.4", "anchors": [[0, "log who got what"]], "kind": "must", "testable": true }
+  ],
+  "HL2": [
+   { "id": "HL2.1", "anchors": [[0, "west coast to ellen"], [1, "ellen@nimbusconsulting.io"]], "kind": "when-then", "testable": true },
+   { "id": "HL2.2", "anchors": [[0, "east coast to rajesh"], [1, "rajesh@nimbusconsulting.io"]], "kind": "when-then", "testable": true },
+   { "id": "HL2.3", "anchors": [[0, "everyone else to sarah"], [1, "sarah@nimbusconsulting.io"], [2, "sarah@nimbusconsulting.io"]], "kind": "when-then", "testable": true },
+   { "id": "HL2.4", "anchors": [[0, "if budget is above 25k also cc me"], [1, "and me: tom@nimbusconsulting.io"]], "kind": "when-then", "testable": true },
+   { "id": "HL2.5", "anchors": [[0, "keep a log"]], "kind": "must", "testable": true }
+  ],
+  "HO1": [
+   { "id": "HO1.1", "anchors": [[0, "every morning at 8"]], "kind": "schedule", "testable": false },
+   { "id": "HO1.2", "anchors": [[0, "post a digest of all unresolved alerts to our #oncall slack channel"]], "kind": "must", "testable": true },
+   { "id": "HO1.3", "anchors": [[0, "include severity and service"]], "kind": "must", "testable": true },
+   { "id": "HO1.4", "anchors": [[0, "if any critical alert isnt acknowledged within an hour email me directly"], [1, "jordan@corestackit.com"]], "kind": "when-then", "testable": true }
+  ],
+  "HO2": [
+   { "id": "HO2.1", "anchors": [[0, "at 9am"]], "kind": "schedule", "testable": false },
+   { "id": "HO2.2", "anchors": [[0, "put up a summary of unresolved warnings and criticals in our teams channel"], [1, "#it-oncall"]], "kind": "must", "testable": true },
+   { "id": "HO2.3", "anchors": [[0, "for critical alerts nobody has acknowledged, send me an email"], [2, "n.okafor@stmaryshospital.org"]], "kind": "when-then", "testable": true },
+   { "id": "HO2.4", "anchors": [[0, "don't email for warnings"]], "kind": "never", "testable": true }
+  ],
+  "HS1": [
+   { "id": "HS1.1", "anchors": [[0, "tickets that mention 'refund' get our standard refund reply"], [1, "Refunds are processed within 5 business days of approval"]], "kind": "when-then", "testable": true },
+   { "id": "HS1.2", "anchors": [[0, "urgent tickets go to zara@widgetly.app"]], "kind": "when-then", "testable": true },
+   { "id": "HS1.3", "anchors": [[0, "everything else also goes to zara in one digest"]], "kind": "must", "testable": true },
+   { "id": "HS1.4", "anchors": [[0, "each morning"]], "kind": "schedule", "testable": false }
+  ],
+  "HS2": [
+   { "id": "HS2.1", "anchors": [[0, "if a ticket mentions 'shipping' answer with our shipping faq answer"], [1, "Orders ship within 2 business days and arrive in 3-5 days"]], "kind": "when-then", "testable": true },
+   { "id": "HS2.2", "anchors": [[0, "anything urgent goes to mike at mike@fitzone.com"]], "kind": "when-then", "testable": true },
+   { "id": "HS2.3", "anchors": [[0, "all other tickets also go to mike in a single daily digest"]], "kind": "must", "testable": true }
+  ],
+  "HW1": [
+   { "id": "HW1.1", "anchors": [[0, "every friday at 4"]], "kind": "schedule", "testable": false },
+   { "id": "HW1.2", "anchors": [[0, "email me a report of what got done this week from the tracker export"], [0, "send it to rick@summitconstruction.com"]], "kind": "must", "testable": true },
+   { "id": "HW1.3", "anchors": [[0, "plus what's open and blocked"]], "kind": "must", "testable": true }
+  ],
+  "HW2": [
+   { "id": "HW2.1", "anchors": [[0, "monday mornings"]], "kind": "schedule", "testable": false },
+   { "id": "HW2.2", "anchors": [[0, "email me just the tasks marked done last week"], [1, "liz@beaconcontent.co"]], "kind": "must", "testable": true },
+   { "id": "HW2.3", "anchors": [[0, "no open or blocked needed"]], "kind": "never", "testable": true },
+   { "id": "HW2.4", "anchors": [[0, "short list is fine"]], "kind": "style", "testable": false }
+  ]
+ }
+}

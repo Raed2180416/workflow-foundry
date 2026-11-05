@@ -1,0 +1,1312 @@
+{
+ "setting": "own",
+ "sample": "s2",
+ "semantics": "v3",
+ "builds": {
+  "b-h/HI2": {
+   "case": "HI2",
+   "arm": "B-H",
+   "conv": "HI2~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#1",
+       "ok": true,
+       "why": "email to practice-gym@example.org answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 11,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e2",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4
+    }
+   }
+  },
+  "b-h/HL1": {
+   "case": "HL1",
+   "arm": "B-H",
+   "conv": "HL1~063fbc73",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 6,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "leads#0",
+       "ok": true,
+       "why": "row on lead-log answers it",
+       "view": "base"
+      },
+      {
+       "item": "leads#1",
+       "ok": true,
+       "why": "row on lead-log answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-008": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 7,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 7
+    }
+   }
+  },
+  "b-h/HS1": {
+   "case": "HS1",
+   "arm": "B-H",
+   "conv": "HS1~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "needs-answer",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "needs-answer": 1,
+     "unverifiable": 1
+    }
+   }
+  },
+  "b-h/HS2": {
+   "case": "HS2",
+   "arm": "B-H",
+   "conv": "HS2~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "needs-answer",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 13,
+     "violated": 8,
+     "evidence": [
+      {
+       "item": "tickets#0",
+       "ok": false,
+       "why": "0 email effect(s) name it; want exactly 1",
+       "view": "base"
+      },
+      {
+       "item": "tickets#4",
+       "ok": false,
+       "why": "0 email effect(s) name it; want exactly 1",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "needs-answer": 1,
+     "unverifiable": 1
+    }
+   }
+  },
+  "b-m/HI2": {
+   "case": "HI2",
+   "arm": "B-M",
+   "conv": "HI2~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 10,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#1",
+       "ok": true,
+       "why": "email to practice-gym@example.org answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 11,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e2",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 4
+    }
+   }
+  },
+  "b-m/HS1": {
+   "case": "HS1",
+   "arm": "B-M",
+   "conv": "HS1~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "needs-answer",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "needs-answer": 1,
+     "unverifiable": 1
+    }
+   }
+  },
+  "b-m/HS2": {
+   "case": "HS2",
+   "arm": "B-M",
+   "conv": "HS2~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "needs-answer",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 13,
+     "violated": 8,
+     "evidence": [
+      {
+       "item": "tickets#0",
+       "ok": false,
+       "why": "0 email effect(s) name it; want exactly 1",
+       "view": "base"
+      },
+      {
+       "item": "tickets#4",
+       "ok": false,
+       "why": "0 email effect(s) name it; want exactly 1",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 2,
+    "waived": 0,
+    "unknownBy": {
+     "needs-answer": 1,
+     "unverifiable": 1
+    }
+   }
+  },
+  "b0-h2/HC1": {
+   "case": "HC1",
+   "arm": "B0-H2",
+   "conv": "HC1~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": false
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching row effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "check-suspect",
+     "decided": 2,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 2,
+     "check-suspect": 1
+    }
+   }
+  },
+  "b0-h2/HI1": {
+   "case": "HI1",
+   "arm": "B0-H2",
+   "conv": "HI1~46b67239",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "base"
+      },
+      {
+       "item": "invoices#2",
+       "ok": true,
+       "why": "email to practice-florist@example.org answers it",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "no matching email effect",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to maria@pixelandpixel.com matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 3,
+    "unmet": 0,
+    "unknown": 4,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 2
+    }
+   }
+  },
+  "b0-h2/HI2": {
+   "case": "HI2",
+   "arm": "B0-H2",
+   "conv": "HI2~0b195a9f",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "repeat"
+      },
+      {
+       "item": "invoices#5",
+       "ok": true,
+       "why": "email to practice-studio@example.org answers it",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "repeat"
+      },
+      {
+       "item": "invoices#5",
+       "ok": true,
+       "why": "email to practice-studio@example.org answers it",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "invoices#0",
+       "ok": true,
+       "why": "email to practice-cafe@example.org answers it",
+       "view": "repeat"
+      },
+      {
+       "item": "invoices#5",
+       "ok": true,
+       "why": "email to practice-studio@example.org answers it",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-008": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "repeat:repeat-2:e2",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      },
+      {
+       "item": "repeat:repeat-2:e3",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-009": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-010": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 4,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   }
+  },
+  "b0-h2/HL1": {
+   "case": "HL1",
+   "arm": "B0-H2",
+   "conv": "HL1~4f53cda1",
+   "verified": false,
+   "t0": {
+    "passed": false
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unmet",
+     "reason": null,
+     "decided": 5,
+     "violated": 5,
+     "evidence": [
+      {
+       "item": "leads#1",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "base"
+      },
+      {
+       "item": "leads#1",
+       "ok": false,
+       "why": "acted on, but no email effect names it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 12,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "leads#0",
+       "ok": true,
+       "why": "row on lead-log answers it",
+       "view": "base"
+      },
+      {
+       "item": "leads#1",
+       "ok": true,
+       "why": "row on lead-log answers it",
+       "view": "base"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 1,
+    "unmet": 1,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 3
+    }
+   }
+  },
+  "b0-h2/HL2": {
+   "case": "HL2",
+   "arm": "B0-H2",
+   "conv": "HL2~c06128c4",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "row on lead-log matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "repeat-1:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-007": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-008": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 6,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 6
+    }
+   }
+  },
+  "b0-h2/HS1": {
+   "case": "HS1",
+   "arm": "B0-H2",
+   "conv": "HS1~a762cff7",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "not-exercised",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "met",
+     "reason": null,
+     "decided": 9,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#0",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#1",
+       "ok": true,
+       "why": "email to zara@widgetly.app answers it",
+       "view": "base"
+      }
+     ]
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 2,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "not-exercised": 2,
+     "unverifiable": 1
+    }
+   }
+  },
+  "b0-h2/HS2": {
+   "case": "HS2",
+   "arm": "B0-H2",
+   "conv": "HS2~230c9acb",
+   "verified": false,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to cy@customer-practice.example answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to cy@customer-practice.example answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-002": {
+     "status": "met",
+     "reason": null,
+     "decided": 9,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e3",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "base:e4",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      }
+     ]
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 4,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "base"
+      },
+      {
+       "item": "tickets#2",
+       "ok": true,
+       "why": "email to mike@fitzone.com answers it",
+       "view": "targeted"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-006": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    }
+   },
+   "tallySolo": {
+    "met": 3,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 3
+    }
+   }
+  },
+  "b0-h2/HW2": {
+   "case": "HW2",
+   "arm": "B0-H2",
+   "conv": "HW2~9b83ed82",
+   "verified": true,
+   "t0": {
+    "passed": true
+   },
+   "t2Solo": {
+    "C-001": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-002": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-003": {
+     "status": "met",
+     "reason": null,
+     "decided": 3,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": "base:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "base"
+      },
+      {
+       "item": "repeat-1:e1",
+       "ok": true,
+       "why": "holds",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-004": {
+     "status": "unknown",
+     "reason": "unverifiable",
+     "decided": 0,
+     "violated": 0,
+     "evidence": []
+    },
+    "C-005": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "repeat"
+      }
+     ]
+    },
+    "C-006": {
+     "status": "met",
+     "reason": null,
+     "decided": 2,
+     "violated": 0,
+     "evidence": [
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "base"
+      },
+      {
+       "item": null,
+       "ok": true,
+       "why": "email to liz@beaconcontent.co matches",
+       "view": "repeat"
+      }
+     ]
+    }
+   },
+   "tallySolo": {
+    "met": 3,
+    "unmet": 0,
+    "unknown": 3,
+    "waived": 0,
+    "unknownBy": {
+     "unverifiable": 3
+    }
+   }
+  }
+ }
+}

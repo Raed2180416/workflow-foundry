@@ -1,0 +1,603 @@
+{
+ "arm": "CONTROL",
+ "case": "HO1",
+ "expected": "oncall-digest",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "oncall-digest",
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 0,
+  "unknown": 0
+ },
+ "callLog": [],
+ "builderWallMs": 1,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "oncall-digest",
+ "slots": {
+  "channel": "#oncall",
+  "windowHours": 168,
+  "minSeverity": "warning",
+  "page": true,
+  "pageTo": "jordan@corestackit.com"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "oncall-digest",
+  "version": 1,
+  "title": "On-call digest for #oncall",
+  "goal": "Each run, post one digest of the unresolved alerts of the last 168 hours (warning and above) to #oncall after a person approves the post.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The alerts sheet holds one row per alert with id, at, service, severity, message, acknowledged and resolved",
+    "The channel is a local file standing in for chat and the outbox stands in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Posting to the wrong channel",
+    "Missing a critical alert",
+    "Paging the wrong person or paging for nothing"
+   ],
+   "successCriteria": [
+    "One digest was posted to the channel you named",
+    "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)"
+   ],
+   "unsupported": [
+    "Fixing anything",
+    "Phone or SMS paging",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the alerts sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Work out how many hours ago each alert was raised",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "field": "at",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "hours",
+     "as": "hoursAgo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recent",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Keep unresolved alerts in the window at the chosen severity or above",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "hoursAgo",
+       "op": "lte",
+       "value": 168
+      },
+      {
+       "field": "hoursAgo",
+       "op": "gte",
+       "value": 0
+      },
+      {
+       "field": "resolved",
+       "op": "ne",
+       "value": true
+      },
+      {
+       "field": "severity",
+       "op": "in",
+       "value": [
+        "warning",
+        "critical"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "recent"
+    ],
+    "description": "List the alerts",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recent.rows"
+     },
+     "line": "- [{{severity}}] {{service}}: {{message}} (alert {{id}}, {{hoursAgo}}h ago, acknowledged: {{acknowledged}})",
+     "empty": "- nothing unresolved. A quiet shift."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "lines"
+    ],
+    "description": "Write the digest",
+    "tool": "core.template",
+    "args": {
+     "text": "On-call digest: {{n}} unresolved alert(s) in the last 168 hours (warning and above)\n{{lines}}",
+     "variables": {
+      "n": {
+       "$ref": "nodes.lines.count"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post",
+    "kind": "task",
+    "needs": [
+     "digest"
+    ],
+    "description": "Post the digest to #oncall (asks you first)",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#oncall",
+     "text": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "critical",
+    "kind": "task",
+    "needs": [
+     "recent"
+    ],
+    "description": "Critical alerts nobody acknowledged",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recent.rows"
+     },
+     "where": [
+      {
+       "field": "severity",
+       "op": "eq",
+       "value": "critical"
+      },
+      {
+       "field": "acknowledged",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pages",
+    "kind": "map",
+    "needs": [
+     "critical",
+     "post"
+    ],
+    "description": "Page jordan@corestackit.com about each one",
+    "items": {
+     "$ref": "nodes.critical.rows"
+    },
+    "maxItems": 200,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the page",
+       "tool": "core.template",
+       "args": {
+        "text": "CRITICAL alert {{id}} on {{service}}: {{message}}\nRaised {{hours}}h ago and not acknowledged.",
+        "variables": {
+         "id": {
+          "$ref": "item.id"
+         },
+         "service": {
+          "$ref": "item.service"
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         },
+         "hours": {
+          "$ref": "item.hoursAgo"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject",
+       "tool": "core.template",
+       "args": {
+        "text": "Page: {{service}} critical (alert {{id}})",
+        "variables": {
+         "service": {
+          "$ref": "item.service"
+         },
+         "id": {
+          "$ref": "item.id"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the page (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": "jordan@corestackit.com",
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "pageList",
+    "kind": "task",
+    "needs": [
+     "critical"
+    ],
+    "description": "One expected page per critical alert",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.critical.rows"
+     },
+     "fields": [
+      "id"
+     ],
+     "set": {
+      "to": "jordan@corestackit.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pageExpected",
+    "kind": "task",
+    "needs": [
+     "pageList"
+    ],
+    "description": "Who should have been paged",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.pageList.rows"
+     },
+     "field": "to"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "chatAudit",
+    "kind": "verify",
+    "needs": [
+     "post"
+    ],
+    "description": "Re-read the channel: exactly one digest from this run, intact",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#oncall",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "mailAudit",
+    "kind": "verify",
+    "needs": [
+     "pages",
+     "pageExpected",
+     "post"
+    ],
+    "description": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.pageExpected.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.post.posted"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.chatAudit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.mailAudit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.pages.count"
+    },
+    "right": {
+     "$ref": "nodes.critical.count"
+    }
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P01 linear pipeline, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (messaging automations: schedules 44%, failure notification 15%)",
+    "app/core/templates/oncall-digest.json sha256 afa75d3e3383ace11cd449670ddd50672249841a86722860e8b6f293b7930486"
+   ],
+   "tags": [
+    "template:oncall-digest",
+    "builder:control 1: warnings and up only: the info alert is left out of 'all unresolved alerts'",
+    "slots:{\"channel\":\"#oncall\",\"minSeverity\":\"warning\",\"page\":true,\"pageTo\":\"jordan@corestackit.com\",\"windowHours\":168}"
+   ],
+   "rationale": "Frontier-written template \"oncall-digest\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by control 1: warnings and up only: the info alert is left out of 'all unresolved alerts'; every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 3,
+   "approved": 3,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "jordan@corestackit.com",
+     "subject": "Page: db critical (alert K-2)",
+     "body": "CRITICAL alert K-2 on db: Replica lag 90s\nRaised 0h ago and not acknowledged."
+    },
+    {
+     "to": "jordan@corestackit.com",
+     "subject": "Page: api critical (alert K-1)",
+     "body": "CRITICAL alert K-1 on api: Error rate 12%\nRaised 2h ago and not acknowledged."
+    }
+   ],
+   "chat": {
+    "#oncall": [
+     "On-call digest: 5 unresolved alert(s) in the last 168 hours (warning and above)\n- [critical] api: Error rate 12% (alert K-1, 2h ago, acknowledged: false)\n- [critical] db: Replica lag 90s (alert K-2, 0h ago, acknowledged: false)\n- [warning] web: Slow page loads (alert K-3, 10h ago, acknowledged: false)\n- [critical] queue: Queue stuck (alert K-5, 5h ago, acknowledged: true)\n- [warning] auth: Token refresh slow (alert K-6, 71h ago, acknowledged: false)"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/control/foundry-live-duQPWP",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "One digest was posted to the channel you named",
+    "exact": "the posted of “Post the digest to #oncall (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)",
+    "exact": "the pass of “Re-read the channel: exactly one digest from this run, intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "exact": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "the count of “Page jordan@corestackit.com about each one” equals the count of “Critical alerts nobody acknowledged”",
+    "exact": "the count of “Page jordan@corestackit.com about each one” equals the count of “Critical alerts nobody acknowledged”",
+    "passed": true
+   },
+   {
+    "id": "verify.chatAudit",
+    "plain": "Re-read the channel: exactly one digest from this run, intact",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.mailAudit",
+    "plain": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : unexpected or wrong message to jordan@corestackit.com (\"Page: db critical (alert K-2)\")",
+   "chat #oncall: missing an expected item containing \"Error rate 12%\", \"Replica lag 90s\", \"Slow page loads\", \"Cache purge done\", \"Queue stuck\", \"Token refresh slow\", \"critical\", \"warning\", \"auth\", \"cdn\" without Old outage",
+   "chat #oncall: unexpected or wrong item {\"text\":\"On-call digest: 5 unresolved alert(s) in the last 168 hours (warning and above)\\n- [critical] api: Error rate 12% (alert K-1, 2h ago, acknowledged: fal"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 4,
+  "slotChecksOk": 3
+ }
+}

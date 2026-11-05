@@ -14,7 +14,7 @@ export const FAILURE_WORDS = Object.freeze({
   SHEET_NOT_FOUND: ['Foundry couldn\'t find the list this automation reads.', 'Nothing was made. Give it the list again on the automation\'s page (developers: a JSON list of rows in the workspace world/sheets folder).'],
   PRACTICE_ONLY: ['Practice-only mode is on, so nothing runs for real here.', 'Foundry can still show what a run would make on your list, without making it. Ask whoever set up the pilot before turning it off.'],
   TURNED_OFF: ['This automation is turned off, so it does not run.', 'Turn it on again on its page in Foundry if you want it to run.'],
-  DRAFT_REMOVED: ['This draft was removed, so it cannot be turned on.', 'Make the automation again from its card if you want it.'],
+  DRAFT_REMOVED: ['This draft was removed, so it cannot be turned on.', 'Make the automation again if you want it.'],
   NOT_ON: ['This automation is not on.', 'Nothing needed turning off.']
 });
 

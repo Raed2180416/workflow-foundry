@@ -1,0 +1,16 @@
+{
+ "note": "Deviations from PREREG-TRACKER-H that change a frozen file (freeze-h.mjs --check accepts a drifted file only when its sha256 equals the one recorded here).",
+ "HD1": {
+  "at": "2026-11-04T20:00:00Z",
+  "why": "Review fixes after the held-out scoring (RESULT-TRACKER.md §11, PREREG-TRACKER-H2.md): semantics v4 = v3 + R-copy-names (scenarios.mjs fresh names that neither contain nor are contained in the original's) + R-per-run (checks.mjs: a sourceless count is counted per run on the repeat view; practice.mjs joinViews tags each effect with its run); v4 becomes the product default (semantics.mjs, index.mjs docs); model.mjs toConditions replaces a capture summary that names a routing literal (address, URL, @handle, #channel) the words never gave by the quote (review m3). v1, v2 and v3 statuses are unchanged (judge-key-v3-s0 re-derivation, same-statuses.mjs); every prompt is byte-identical.",
+  "prereg": "research/tracker-20261021/PREREG-TRACKER-H2.md",
+  "files": {
+   "app/core/tracker/checks.mjs": "20e9999ba4027c5cebf531c8fca005c63e07783f0012425c4b96c1c7336e1258",
+   "app/core/tracker/index.mjs": "32a4f93e734640171e175d1c415ced462c50cbdb402ec4f6c5c99b204ae57f56",
+   "app/core/tracker/model.mjs": "9736de00c24fcbda39ddf987b4bd0c5e513b68aa517f899e848879d5cb59a57e",
+   "app/core/tracker/practice.mjs": "716e40a4d7a4841195ca69af8039f1f7887e2ea8f0dd6d4ea0ad5fa00551bb22",
+   "app/core/tracker/scenarios.mjs": "ee963e329eb40853d683304b7de3b446b418bac0818e6ea32e3367d17720aa5e",
+   "app/core/tracker/semantics.mjs": "5371107c36084279826e4f50c1b62b8ff7f30395a1de083b7988e4bbaffb2dad"
+  }
+ }
+}

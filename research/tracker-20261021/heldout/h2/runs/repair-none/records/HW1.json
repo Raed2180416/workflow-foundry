@@ -1,0 +1,421 @@
+{
+ "arm": "B0-H2+repair-none",
+ "case": "HW1",
+ "expected": "weekly-report",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00365081,
+  "tokens": 3112,
+  "inputTokens": 2,
+  "outputTokens": 3110,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00365081,
+   "inputTokens": 2,
+   "outputTokens": 3110
+  }
+ ],
+ "builderWallMs": 12648,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "weekly-tracker-report",
+  "version": 1,
+  "title": "Weekly tracker report to Rick",
+  "goal": "Read the tracker export, summarise what got done, and list open and blocked items, then e-mail the report to rick@summitconstruction.com and verify the delivered message.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The tracker sheet is the current week's export; rows carry no dates, so the whole export is reported as this week's work.",
+    "Friday 16:00 scheduling is handled by an external scheduler that starts this workflow; the workflow itself runs on demand.",
+    "Each outbox.send asks a person before dispatch when run live."
+   ],
+   "risks": [
+    "Rows with an empty owner may have a null owner, which could fail the report.tally input check.",
+    "Recipient address is taken from the request and not verified."
+   ],
+   "successCriteria": [
+    "Report counts match the tracker rows (done, open, blocked).",
+    "The report is delivered to rick@summitconstruction.com once.",
+    "The independent outbox check passes against the saved report hash."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_tracker",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the tracker export.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "select_fields",
+    "kind": "task",
+    "needs": [
+     "read_tracker"
+    ],
+    "description": "Keep only title, status and owner.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tracker.rows"
+     },
+     "fields": [
+      "title",
+      "status",
+      "owner"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "tally",
+    "kind": "task",
+    "needs": [
+     "select_fields"
+    ],
+    "description": "Count done, open and blocked items and list the finished ones.",
+    "tool": "report.tally",
+    "args": {
+     "items": {
+      "$ref": "nodes.select_fields.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_items",
+    "kind": "task",
+    "needs": [
+     "select_fields"
+    ],
+    "description": "Keep open items.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.select_fields.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked_items",
+    "kind": "task",
+    "needs": [
+     "select_fields"
+    ],
+    "description": "Keep blocked items.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.select_fields.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "blocked"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_lines",
+    "kind": "task",
+    "needs": [
+     "open_items"
+    ],
+    "description": "Render open items as lines.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_items.rows"
+     },
+     "line": "- {{title}} (owner: {{owner}})",
+     "empty": "None"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked_lines",
+    "kind": "task",
+    "needs": [
+     "blocked_items"
+    ],
+    "description": "Render blocked items as lines.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.blocked_items.rows"
+     },
+     "line": "- {{title}} (owner: {{owner}})",
+     "empty": "None"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "compose",
+    "kind": "task",
+    "needs": [
+     "tally",
+     "open_lines",
+     "blocked_lines"
+    ],
+    "description": "Write the report body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Weekly tracker report as of {{now}}\n\nDone ({{done}} of {{total}}):\n{{doneLines}}\n\nOpen ({{open}}):\n{{openLines}}\n\nBlocked ({{blocked}}):\n{{blockedLines}}\n",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "done": {
+       "$ref": "nodes.tally.done"
+      },
+      "total": {
+       "$ref": "nodes.tally.total"
+      },
+      "open": {
+       "$ref": "nodes.tally.open"
+      },
+      "blocked": {
+       "$ref": "nodes.tally.blocked"
+      },
+      "doneLines": {
+       "$ref": "nodes.tally.doneLines"
+      },
+      "openLines": {
+       "$ref": "nodes.open_lines.text"
+      },
+      "blockedLines": {
+       "$ref": "nodes.blocked_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_report",
+    "kind": "task",
+    "needs": [
+     "compose"
+    ],
+    "description": "E-mail the report to Rick (asks a person before dispatch).",
+    "tool": "outbox.send",
+    "args": {
+     "to": "rick@summitconstruction.com",
+     "subject": "Weekly tracker report",
+     "body": {
+      "$ref": "nodes.compose.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_send",
+    "kind": "verify",
+    "needs": [
+     "send_report"
+    ],
+    "description": "Independently re-read the delivered message and compare its hash.",
+    "method": "capability",
+    "tool": "outbox.check",
+    "args": {
+     "messageId": {
+      "$ref": "nodes.send_report.messageId"
+     },
+     "sha256": {
+      "$ref": "nodes.send_report.sha256"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.send_report"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_report.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_send.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "rick@summitconstruction.com",
+     "subject": "Weekly tracker report",
+     "body": "Weekly tracker report as of 2026-10-30T16:00:00Z\n\nDone (3 of 6):\n- Pour foundation at Elm St (Gus)\n- Frame second floor at Oak Ave (Rita)\n- Order windows for Birch Ct (Gus)\n\nOpen (2):\n- Electrical rough-in at Oak Ave (owner: Hal)\n- Final walkthrough at Maple Rd (owner: Rita)\n\nBlocked (1):\n- City permit for Pine St (owner: Hal)\n"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair2-none/foundry-live-xOi4oh",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Report counts match the tracker rows (done, open, blocked).",
+    "exact": "the delivered of “E-mail the report to Rick (asks a person before dispatch).” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The report is delivered to rick@summitconstruction.com once.",
+    "exact": "the pass of “Independently re-read the delivered message and compare its hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_send",
+    "plain": "Independently re-read the delivered message and compare its hash.",
+    "exact": "outbox.check (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 3,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h2/HW1",
+  "verifiedBefore": true,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

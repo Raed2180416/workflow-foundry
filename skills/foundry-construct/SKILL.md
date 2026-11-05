@@ -70,7 +70,7 @@ other than the step that produced it. Build it, practise it, then stop on eviden
 | A run failed, or a workflow is reused elsewhere | `references/heal-reuse.md` |
 | Failure modes seen in our runs, with counts | `references/antipatterns.md` |
 | A complete scale example that validates and lints clean | `exemplars/partitioned-audit.json` |
-| Complete procedure examples with approvals and re-read checks | `app/core/templates/*.json` |
+| Everyday automations with approvals and re-read checks (worked examples to learn from, not a menu) | `exemplars/app/invoice-chase.json`, `exemplars/app/oncall-digest.json` and five more in `exemplars/app/`, practice cases in `exemplars/app/practice/` |
 
 Evidence levels used in the references: **sealed** (held out, separate author), **held-out** (frozen
 preregistration), **dev** (development data), **design** (not yet measured). Weigh rules accordingly.

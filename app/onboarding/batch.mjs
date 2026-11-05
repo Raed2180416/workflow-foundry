@@ -19,6 +19,11 @@
 //   - the decision names the person ("Ravi Patel (ravi@laptop)"), and every decision goes to the chained decision log (P5 B1-B3);
 //   - each card can add notes the person should read first (./cards.mjs: a firmer reminder as first contact; claims already sent).
 //
+// Since the free-form front door (app/FRONT-DOOR.md, 2026-11-05): a free-form automation (one FoundryApp checked and recorded as such)
+// makes its list the same way, from a practice-registry run of the exact turned-on version on the person's live sheets, with the run
+// input the agent gave (its `now`, when it has one, is the server's clock, as for the examples). One that asks the person questions or
+// waits while it runs cannot have its list made in advance (BATCH_INTERACTIVE): each of its actions asks the person instead.
+//
 // Since the security review of 2026-10-21 (M7): the yes is bound to the list the person saw. The page sends the fingerprint of the list
 // exactly as its card shows it (listDigest: sha256 over the batch id, the version's hash and each item's to, subject and full text), and
 // approve refuses a list whose stored items no longer give that fingerprint. Every change to batches.json is a read-modify-write under
@@ -31,6 +36,8 @@ import { FoundryError, digest } from '../../src/data.mjs';
 import { effectDigest } from '../core/service.mjs';
 import { templateOf, slotsOf } from '../core/library.mjs';
 import { readWorld } from '../core/stand-ins.mjs';
+import { sheetsRead } from '../core/freeform-practice.mjs';
+import { allNodes } from '../core/freeform.mjs';
 import { inputSheets } from './csv.mjs';
 import { previewRun } from './preview-run.mjs';
 import { listNotes } from './cards.mjs';
@@ -83,12 +90,16 @@ export class Batches {
     let head; try { head = app.foundry.store.workflow(flowId); } catch (error) { if (error.code === 'NOT_FOUND') throw new FoundryError('NOT_FOUND', `No automation named ${flowId}`); throw error; }
     if (!app.ledger.approvedFor(flowId, head.hash)) throw new FoundryError('NOT_APPROVED', 'Turn this version on first');
     if (app.practiceOnly()) throw new FoundryError('PRACTICE_ONLY', 'Practice-only mode is on');
-    const template = templateOf(head.workflow);
-    if (!template) throw new FoundryError('BATCH_TEMPLATE', 'Only automations made from a card can make a list in advance');
+    const template = templateOf(head.workflow), freeform = template ? false : !!app.isFreeform?.(head.hash);
+    if (!template && !freeform) throw new FoundryError('BATCH_TEMPLATE', 'Only automations made from an example, or checked free-form ones, can make a list in advance');
+    if (freeform && allNodes(head.workflow).some(({ node }) => node.kind === 'human' || node.kind === 'wait'))
+      throw new FoundryError('BATCH_INTERACTIVE', 'This automation asks questions or waits while it runs, so its list cannot be made in advance; each of its actions asks you instead');
     const sheets = readWorld(app.worldDir).sheets;
-    const missing = inputSheets(template.id).filter(s => !sheets[s]);
+    const missing = (template ? inputSheets(template.id) : sheetsRead(head.workflow)).filter(s => !sheets[s]);
     if (missing.length) throw Object.assign(new FoundryError('SHEET_NOT_FOUND', `Foundry needs your ${missing.join(' and ')} first`), { sheets: missing });
-    const runInput = input ?? { now: new Date(this.asOf()).toISOString() };
+    const today = new Date(this.asOf()).toISOString();
+    const runInput = template ? input ?? { now: today }
+      : { ...(input ?? {}), ...(typeof head.workflow.inputSchema?.properties?.now === 'object' ? { now: today } : {}) };
     const res = await previewRun(app, head.workflow, { sheets, input: runInput });
     if (!res.passed) return { ok: false, passed: false, status: res.status, headline: res.explained?.headline ?? res.status, checks: res.explained?.checks ?? [],
       problem: res.explained?.problem ?? null, error: res.error ?? null };
@@ -97,13 +108,13 @@ export class Batches {
       ...Object.entries(res.effects.chat).flatMap(([channel, posts]) => posts.map(text => ({ tool: 'chat.post', action: 'post', to: channel, subject: null, body: text, digest: effectDigest('chat.post', { channel, text }) })))];
     // A stable order the person can read: messages to the people in the data first, then the ones to the person's own addresses
     // (a summary, a digest), each group by subject. Matching on approve does not depend on the order.
-    const own = new Set(Object.values(slotsOf(head.workflow) ?? {}).filter(v => typeof v === 'string' && v.includes('@')).map(v => v.toLowerCase()));
+    const own = new Set(template ? Object.values(slotsOf(head.workflow) ?? {}).filter(v => typeof v === 'string' && v.includes('@')).map(v => v.toLowerCase()) : []);
     items.sort((a, b) => (own.has(String(a.to).toLowerCase()) - own.has(String(b.to).toLowerCase())) || String(a.subject ?? '').localeCompare(String(b.subject ?? '')) || String(a.to).localeCompare(String(b.to)));
     const alsoDoes = Object.entries(res.effects.appended).map(([sheet, rows]) => ({ action: 'append', sheet, rows: rows.length }));
     const created = this.now();
     const alreadyMade = (res.state ?? []).length;
-    const batch = { batchId: randomUUID(), flowId, title: head.workflow.title, version: head.workflow.version, workflowHash: head.hash, input: runInput, template: template.id,
-      items: items.map((it, i) => ({ n: i + 1, ...it })), alsoDoes, checks: res.explained.checks, notes: listNotes(template.id, { preview: res, root: app.root, flowId, slots: slotsOf(head.workflow) ?? {} }),
+    const batch = { batchId: randomUUID(), flowId, title: head.workflow.title, version: head.workflow.version, workflowHash: head.hash, input: runInput, template: template?.id ?? null, ...(freeform ? { freeform: true } : {}),
+      items: items.map((it, i) => ({ n: i + 1, ...it })), alsoDoes, checks: res.explained.checks, notes: template ? listNotes(template.id, { preview: res, root: app.root, flowId, slots: slotsOf(head.workflow) ?? {} }) : [],
       remembered: alreadyMade, createdAt: new Date(created).toISOString(), expiresAt: new Date(created + BATCH_TTL_MS).toISOString(), status: 'open', usedBy: {}, decision: null, result: null };
     // One open list per automation: the newest replaces the ones before it.
     this.#mutate(list => [...list.map(b => b.flowId === flowId && b.status === 'open' ? { ...b, status: 'replaced' } : b), batch]);

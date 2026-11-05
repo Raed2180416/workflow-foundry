@@ -1,0 +1,88 @@
+{
+ "arm": "B0-H+repair-t2",
+ "case": "HO2",
+ "expected": "oncall-digest",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "build_failed",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t2",
+     "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"for critical alerts nobody has acknowledged, send me an email\": email to requester@example.test names it but does not meet the requirement\n- \"n.okafor@stmaryshospital.org\": email to requester@example.test: to eq \"n.okafor@stmaryshospital.org\" does not hold\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00298731,
+  "tokens": 1573,
+  "inputTokens": 2,
+  "outputTokens": 1571,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00298731,
+   "inputTokens": 2,
+   "outputTokens": 1571
+  }
+ ],
+ "builderWallMs": 10746,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "build_failed",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {},
+ "builtValid": false,
+ "validationErrors": null,
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "no flow ran: the builder ended build_failed"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 4,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HO2",
+  "verifiedBefore": false,
+  "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"for critical alerts nobody has acknowledged, send me an email\": email to requester@example.test names it but does not meet the requirement\n- \"n.okafor@stmaryshospital.org\": email to requester@example.test: to eq \"n.okafor@stmaryshospital.org\" does not hold\nFix the workflow so it meets them."
+ }
+}

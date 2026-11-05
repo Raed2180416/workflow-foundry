@@ -1,0 +1,3559 @@
+{
+ "prompt": "tracker-prose-checklist/1",
+ "model": "claude-haiku-5-5",
+ "sample": 1,
+ "setting": "own",
+ "builds": {
+  "ref/HC2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run added b and e, the two subscribed CRM contacts missing from the list. a and d were already matched (d case-insensitively with D), so nothing else was needed."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The unsubscribed contact c@practice-co.example was not added. The cross-check node 'leak' gates the append on zero matches."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice run sent a report that lists the added contacts (b and e) and the send is gated on delivery."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send node's 'to' is janet@happytailsbakery.com, and the practice outbox shows the report going to that address."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The report does not list only the newly added people. It also has a 'Names that differ' section naming d@practice-co.example, who was not added. It also reports the count of extra list entries. The practice run output shows this named d entry."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001370145,
+    "inputTokens": 7406,
+    "outputTokens": 1086,
+    "calls": 1
+   },
+   "conv": "HC2"
+  },
+  "ref/HC1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Node 'rec' runs rows.reconcile on the eligible CRM rows against the newsletter sheet by email. The sheet is treated as the newsletter list; nothing shows a direct Mailchimp read, so that mapping is assumed."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The practice report lists 2 missing contacts (b@, e@) under 'Found (not added)'. No node adds rows to the list; toAdd only prepares rows and is not written anywhere."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The only write-like step is outbox.send to nadia. No step writes to the newsletter sheet or any other system, and the sheet audit expects zero added rows."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The eligible filter excludes unsubscribed=true, so c@ (unsubscribed) is not in the missing list. The leak cross-check reports matched 0, and the report notes 1 unsubscribed contact blocked."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run sent 'Newsletter sync report' to nadia@yogaflowstudio.com, and the audit node re-reads the outbox to confirm delivery to that single address."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.001517395,
+    "inputTokens": 7184,
+    "outputTokens": 1436,
+    "calls": 1
+   },
+   "conv": "HC1"
+  },
+  "ref/HE1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The decided rule approves amount <= 49.99 with receipt true. Practice run approved PX-1 (18.5, receipt true) automatically."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Every decision, including approved ones, is appended to expense-decisions. The practice run logged PX-1 with decision 'approved'."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Amounts above 49.99 fall through to 'waiting for approver' and are listed in the e-mail to dana. PX-2 (640) was routed to dana. The exact $50 boundary is not in the sample, but 50 > 49.99 by the same logic."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The first rule sends receipt != true to 'waiting for approver' with reason 'no receipt'. PX-3 (9, no receipt) was routed to dana and logged as waiting."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.001956365,
+    "inputTokens": 16677,
+    "outputTokens": 1695,
+    "calls": 1
+   },
+   "conv": "HE1"
+  },
+  "ref/HE2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Rule sets claims with amount <=99.99 and receipt=true to 'approved'. PX-1 (18.5, receipt true) was approved automatically. The check is on the receipt flag, not a photo field, which I take as the same thing."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Claims over the limit fall to 'waiting for approver' and go in the e-mail to Owen. PX-2 (640) was routed this way and listed in the e-mail."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The first rule sends any claim with receipt not true to 'waiting for approver'. PX-3 (9, no receipt) was sent to Owen with reason 'no receipt'."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The outbox.send step is addressed to owen@evergreenlandscaping.co, and the practice e-mail went to that address."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each submitted claim gets a row in the expense-decisions sheet with id, decision, reason and timestamp. Three rows were written, and sheetAudit checks one row per claim."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00146177,
+    "inputTokens": 7671,
+    "outputTokens": 1203,
+    "calls": 1
+   },
+   "conv": "HE2"
+  },
+  "ref/HI1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The routing rule sends a friendly reminder to invoices 30+ days late, and the practice run sent PR-103 (56 days late) a 'Friendly reminder'."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The route rule gte 60 sets the 'second reminder' firmer stage. The practice run had no 60-day invoice, so this rests on the rule itself."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The route rule gte 90 sets the 'final notice' stage, which is the final reminder. The practice run had no 90-day invoice, so this rests on the rule itself."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and lists 'running on a schedule by itself' as unsupported. Nothing shows the summary goes out every Monday."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The summary lists only invoices already due for a reminder (30+ days late). Unpaid clients under 30 days late are left off, so it does not list everyone who still owes."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The open filter keeps only status 'open', so disputed PR-105 was excluded and got no email in the practice run."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The summary step sends to maria@pixelandpixel.com, and the practice run shows that address receiving the summary."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001646745,
+    "inputTokens": 8288,
+    "outputTokens": 1421,
+    "calls": 1
+   },
+   "conv": "HI1"
+  },
+  "ref/HL1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The filter only checks status=new and an e-mail address. It does not restrict to website-form leads. The practice run routed a referral lead (Lou) and an event lead (Ray) as well as a website lead."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The California rule tests the region field for the value 'California', but region holds values like NA/EMEA/APAC and California is only ever in country or state data. No practice lead matched, so Marcus would never receive a California lead."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The otherwise branch assigns priya@sunrisesolar.energy, and the practice run sent EMEA, NA and APAC leads to Priya."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The rule companySize gte 201 matches 'over 200' for whole numbers. Practice Lou (900) was assigned to Priya."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The logRows and log steps append one row per routed lead with assignTo, and the practice run shows three lead-log rows with assignees."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The California rule's assignTo is marcus@sunrisesolar.energy, matching the requested address."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Both the company-size rule and the otherwise branch use priya@sunrisesolar.energy, matching the requested address."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The otherwise branch assigns priya@sunrisesolar.energy to any lead not matching the earlier rules."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0014705450000000002,
+    "inputTokens": 7807,
+    "outputTokens": 1190,
+    "calls": 1
+   },
+   "conv": "HL1"
+  },
+  "ref/HL2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The rule routes region 'West Coast' to ellen@nimbusconsulting.io, but the practice leads have only EMEA, NA and APAC regions, so no West Coast routing was exercised."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "The rule routes region 'East Coast' to rajesh@nimbusconsulting.io, but the practice data has no East Coast leads, so this routing was not exercised."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The otherwise branch assigns sarah@nimbusconsulting.io, and all three non-coast practice leads (Lou, Pat, Ray) were sent to Sarah."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The automation has no cc step. Lou's budget of 60000 is above 25k, yet her e-mail went only to Sarah and Tom was not copied."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The lead-log sheet received one row per routed lead, and the logAudit verification passed."
+    },
+    "C-006": {
+     "verdict": "unmet",
+     "why": "Ellen, Rajesh and Sarah use the correct addresses, but Tom (tom@nimbusconsulting.io) appears nowhere in the automation, so the people involved are incomplete."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The defaultAssignee fallback is sarah@nimbusconsulting.io, and every non-coast lead in the practice run went to her."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001480245,
+    "inputTokens": 7888,
+    "outputTokens": 1188,
+    "calls": 1
+   },
+   "conv": "HL2"
+  },
+  "ref/HI2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Read, filter and route keep only status open with an email. PR-101, PR-102 and PR-103 are overdue and were reminded. PR-104 (paid) and PR-105 (disputed) were excluded. PR-106 is open but only 2 days late, so it was correctly left alone."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "The route rule uses gte 3 for the first reminder, which matches the request. But the practice run has no invoice at exactly 3 days, and an invoice first seen at 56 days got only a final notice. Actual timing depends on how often the run happens, which is not given."
+    },
+    "C-003": {
+     "verdict": "cannot-tell",
+     "why": "The route rule uses gte 10 for the second reminder, which matches. The practice run has no invoice at 10 to 16 days. PR-102 at 20 days skipped the second reminder and got only the final notice, so the timing depends on run frequency."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The route rule uses gte 17 for the final notice. PR-102 (20 days) and PR-103 (56 days) received the final notice in the practice run."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The send step has only to, subject and body. No bcc is set on any reminder, and nothing blind-copies the user on the second reminder. The practice run shows no bcc on any email."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The send step's to address comes from the sheet's email column (plan.to = item.email). Each reminder went to the sheet address: practice-cafe, practice-gym and practice-florist @example.org."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The sendSummary step sends to dave@midwestpipesupply.com, and the practice run shows the summary delivered there."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0024413699999999996,
+    "inputTokens": 8649,
+    "outputTokens": 2920,
+    "calls": 1
+   },
+   "conv": "HI2"
+  },
+  "ref/HO2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and lists 'running on a schedule by itself' as unsupported. Nothing shows a 9am post; it posts only when run."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The recent filter keeps unresolved rows with severity in warning or critical. The practice digest included a warning (PA-2) and criticals (PA-1, PA-4)."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "chat.post targets channel #it-oncall, and the practice run posted the digest there."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The page set filters for severity eq critical and acknowledged not true. The practice run emailed only PA-1, the unacknowledged critical, and not the acknowledged PA-4."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Every page is sent to n.okafor@stmaryshospital.org, and the practice e-mail went to that address."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Pages are built only from the critical-filtered rows. The warning PA-2 produced no email in the practice run, and no step sends mail for warnings."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00135857,
+    "inputTokens": 7454,
+    "outputTokens": 1052,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "ref/HO1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation has no schedule. Its envelope lists 'Running on a schedule by itself' as unsupported, and it runs once per invocation with a 'now' input. Nothing makes it post at 8 every morning."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The 'recent' filter keeps only alerts with hoursAgo <= 168, so an unresolved alert older than 7 days is left out of the digest. The practice data contains no such alert, but the filter excludes them by design."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The line template is '- [{{severity}}] {{service}}: ...', and the practice digest shows severity and service on every alert."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The chat.post node targets '#oncall', and the practice run posted the digest to #oncall."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The 'critical' node pages for every unacknowledged critical alert in the window, with no one-hour threshold. A critical alert raised minutes ago and not yet acknowledged would be paged early."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The escalation uses outbox.send (email) to jordan@corestackit.com. Nothing is sent to the channel for pages."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The 'critical' node filters on severity eq 'critical' and acknowledged ne true. Warning and info alerts do not trigger a page; the practice run paged only PA-1."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The 'pageTo' and the 'to' of the send node are jordan@corestackit.com. The practice e-mail was addressed to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00170967,
+    "inputTokens": 7540,
+    "outputTokens": 1735,
+    "calls": 1
+   },
+   "conv": "HO1"
+  },
+  "ref/HS1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The route rule sends open tickets whose subject or body contains 'refund' to the auto route, and the auto branch sends the reply. The practice run had no refund ticket, so this rests on the automation's rule, not a run result."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The refund rule's answer field is the pasted text, and the reply template uses item.answer as the body, so the reply text comes from the user's paste."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The answer string in the rule matches the user's wording character for character: 'Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.'"
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Urgent tickets are routed to 'person', and the digest to zara@widgetly.app includes them. In the practice run P-3 [urgent] appeared in that digest, and no urgent ticket was auto-answered."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Other tickets go to zara in one digest, shown in the practice run. The 'each morning' timing is a schedule, and the automation lists running on a schedule as unsupported, so nothing shows it runs each morning."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Non-urgent, non-refund tickets P-1, P-2 and P-4 were bundled into a single digest email in the practice run, not sent individually."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Tickets that are neither refund nor urgent take the 'otherwise' route to person, and the digest sends them to zara. The run shows this for P-1, P-2 and P-4. Closed tickets such as P-5 are excluded by the open-status filter, which is a reasonable reading of 'everything else'."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.001931745,
+    "inputTokens": 7744,
+    "outputTokens": 2127,
+    "calls": 1
+   },
+   "conv": "HS1"
+  },
+  "ref/HW1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its envelope lists running on a schedule by itself as unsupported, and the practice run was a single manual run. Nothing shows a Friday 4pm trigger."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The read and filter steps take every tracker row with status done, with no date or week filter. The practice output lists all finished items, not only those from this week. Tracker rows have no date field to scope by."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The report has separate Still open and Blocked sections. The practice run listed the open item (Lee) and the blocked item (Kim)."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send step's recipient is rick@summitconstruction.com, and the practice run's email went to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00113422,
+    "inputTokens": 6898,
+    "outputTokens": 740,
+    "calls": 1
+   },
+   "conv": "HW1"
+  },
+  "ref/HS2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Open ticket P-1 has 'shipping' in its subject and was auto-answered. P-3 also mentions shipping but is urgent, so it correctly went to a person. P-5 mentions shipping but is closed, so it was correctly skipped."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The practice reply to ann@customer-practice.example contains the exact FAQ sentence: 'Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.'"
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Urgent ticket P-3 was routed to a person and appears in the e-mail delivered to mike@fitzone.com. It is batched into the digest, so it is not sent immediately on its own."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Non-urgent, non-shipping open tickets P-2 and P-4 went to mike@fitzone.com in the digest. The closed ticket P-5 was excluded. The automation does not schedule itself, so the 'daily' cadence depends on how it is run."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Tickets P-2, P-3 and P-4 were combined into one e-mail to Mike, with the count in the subject line. No individual forwards were sent."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00167927,
+    "inputTokens": 7791,
+    "outputTokens": 1608,
+    "calls": 1
+   },
+   "conv": "HS2"
+  },
+  "control/HC1-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The rec node reconciles the eligible CRM rows with the newsletter rows by email. The practice run reports the missing contacts and the name differences."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The automation has no report-only mode. The practice run appended b@ and e@ to the newsletter sheet, so it added contacts before the person reviewed the diff."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The append node writes rows to the newsletter sheet, and the practice run shows two rows added. The person asked for no changes, only the diff."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The unsubscribed CRM contact c@ was excluded from the adds. The leak cross-check gates the append and the report counts it as blocked (1 in the CRM)."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run sent the report via outbox.send to nadia@yogaflowstudio.com, and the send was audited."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001181645,
+    "inputTokens": 7510,
+    "outputTokens": 683,
+    "calls": 1
+   },
+   "conv": "HC1"
+  },
+  "ref/HW2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation declares 'Running on a schedule by itself' as unsupported and has no Monday schedule. Nothing shows it runs every Monday morning."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The send node targets liz@beaconcontent.co, and the practice run shows the e-mail delivered to that address."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The 'done' filter only matches status eq 'done' with no date condition. The tracker rows have no completion date, so the report would include done items from any week, not just last week. The practice output does not show a last-week window."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The e-mail lists only done items. Open and blocked appear as counts ('Still open: 1. Blocked: 1.') with no open or blocked task titles. The counts may not match the user's 'no open or blocked needed' wish, but no open or blocked tasks are included."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run's list has 2 items and is short. The template has no cap, but the person said a short list is fine."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00127327,
+    "inputTokens": 6831,
+    "outputTokens": 1036,
+    "calls": 1
+   },
+   "conv": "HW2"
+  },
+  "control/HC1-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation compares the newsletter list only with CRM rows tagged \"member\", not the whole customer sheet. The practice run had no member tags, so customers d@ and e@ were never compared."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The report shows 0 missing. Subscribed customers d@ and e@ are absent from the newsletter list but are not reported, because the member-tag filter excludes them."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The template is report-only (addMissing false). Nothing writes to the newsletter sheet, and the sheetAudit with rows:0 checks that nothing was added."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The eligible filter excludes unsubscribed contacts, and the leak cross-check returned 0 matches. The report notes 1 unsubscribed contact was blocked."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run sent the report via outbox.send to nadia@yogaflowstudio.com, and the send was reported as delivered."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0013746449999999999,
+    "inputTokens": 7194,
+    "outputTokens": 1148,
+    "calls": 1
+   },
+   "conv": "HC1"
+  },
+  "control/HC1-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The rec node reconciles the eligible CRM rows against the newsletter list by email, and the practice run reports the missing, differing and extra contacts."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The report lists the missing contacts (b@ and e@) and the run only writes the report. The toAdd rows are prepared but no node writes them to the list, so nothing is added. The sheetAudit with rows:0 backs this up."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The only side effect in the automation is the outbox send of the report. There is no Mailchimp or CRM write node, and the practice run shows only the one e-mail."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The automation excludes contacts flagged unsubscribed in the CRM (c@ was left out). The newsletter sheet has no unsubscribed field, so Mailchimp unsubscribe status is never checked. A contact who unsubscribed in Mailchimp but not in the CRM would still appear as missing."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The automation and the practice run send the report to hello@yogaflowstudio.com, not to nadia@yogaflowstudio.com as the person asked."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00153652,
+    "inputTokens": 7173,
+    "outputTokens": 1477,
+    "calls": 1
+   },
+   "conv": "HC1"
+  },
+  "control/HC2-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Eligible CRM customer e@ was missing from the list and was appended. The other eligible customers (a@, d@) already matched the list, case-insensitively for d@/D@."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Unsubscribed c@ is excluded from the eligible set, and the leak cross-check found 0 matches before the append ran."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The report was sent to janet@ and includes the added contact e@ (Practice Eve) under the added section."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The outbox send is addressed to janet@happytailsbakery.com, and the audit re-read confirms that address."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The added section lists only e@, but the report also lists d@ (Practice Di / Dina) under 'Names that differ'. d@ was not added, so the report names a person who was not newly added."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00135002,
+    "inputTokens": 7401,
+    "outputTokens": 1047,
+    "calls": 1
+   },
+   "conv": "HC2"
+  },
+  "control/HC2-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation is in report-only mode (addMissing:false, 'Found (not added)'). The practice run added nobody, so the missing customers b@ and e@ were not added to the list."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "No one was added in the practice run, so the unsubscribed contact c@ was not added. The leak cross-check also tests for unsubscribed contacts among rows to add."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "A report was sent, but it describes contacts 'Found (not added)'. Since nobody was added, it does not list people who got added."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send step targets janet@happytailsbakery.com, and the practice run's outbox shows the report going to that address."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The report includes a 'Names that differ' section (d@) and an 'extra' count, not just people newly added in this run. It also lists would-be additions that were not added."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001238145,
+    "inputTokens": 7102,
+    "outputTokens": 898,
+    "calls": 1
+   },
+   "conv": "HC2"
+  },
+  "control/HC2-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The practice run added the missing subscribed contacts b@ and e@ (both absent from the newsletter list). The sheetAudit verify re-reads the list to confirm exactly the missing rows were added."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The unsubscribed contact c@practice-co.example was not added. The leak cross-check ensures no unsubscribed contact appears among rows to add, and the practice output shows it was excluded."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The report sent includes an 'Added 2 contact(s)' section listing b@ and e@ with names."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The automation sends the report to hello@happytailsbakery.com, not janet@happytailsbakery.com as the person requested. The practice run confirms this address."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The report includes a 'Names that differ' section listing d@practice-co.example, who was not added in this run, and mentions the count of list-only entries. So it lists people beyond those newly added."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00130002,
+    "inputTokens": 7405,
+    "outputTokens": 946,
+    "calls": 1
+   },
+   "conv": "HC2"
+  },
+  "control/HE1-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "PX-1 (18.50, receipt true, submitted) was auto-approved. The rule amount lte 50 with receipt required sets decision approved."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The practice run wrote PX-1 to expense-decisions with decision 'approved', and the sheet audit passed."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The approval rule uses amount lte 50, so a $50.00 claim with a receipt is auto-approved instead of going to Dana. The practice run has no submitted $50 claim (PX-4 is 'paid'), so it did not catch this. The template's own tag notes the $50 boundary case."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "PX-3 (9, receipt false) got decision 'waiting for approver' with reason 'no receipt' and was listed in the e-mail to dana@brightleafmarketing.com."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00139672,
+    "inputTokens": 7654,
+    "outputTokens": 1076,
+    "calls": 1
+   },
+   "conv": "HE1"
+  },
+  "control/HE1-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run approved PX-1 (18.50, receipt true) automatically via the 49.99 limit rule, and the e-mail lists it as approved."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Auto-approved claims PX-1 and PX-3 were appended to expense-decisions with decision 'approved' and were listed as approved in the e-mail."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "PX-2 (640) was routed to 'waiting for approver' and included in the e-mail sent to dana@brightleafmarketing.com. No exact $50 claim was in the sample, but the rule is amount > 49.99 going to Dana."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "PX-3 (9, receipt: false) was auto-approved and not sent to Dana. The automation has no receipt check; requireReceipt is false in the template slots, so claims without receipts are approved if under the limit."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00128697,
+    "inputTokens": 7564,
+    "outputTokens": 879,
+    "calls": 1
+   },
+   "conv": "HE1"
+  },
+  "control/HE1-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation auto-approves claims up to 25 (autoApproveUpTo: 25), not under 50. Claims from 25 to under 50 with a receipt would go to Dana, so the threshold does not match the request."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The practice run logged PX-1 (18.5, with receipt) to expense-decisions with decision 'approved' and reason 'within the limit'."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice run routed PX-2 (640, over the limit) as 'waiting for approver' and included it in the e-mail to dana@brightleafmarketing.com. Claims above the threshold are routed the same way."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The practice run routed PX-3 (9, receipt false) as 'waiting for approver' with reason 'no receipt', and it was included in the e-mail to dana@brightleafmarketing.com."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001262845,
+    "inputTokens": 7647,
+    "outputTokens": 810,
+    "calls": 1
+   },
+   "conv": "HE1"
+  },
+  "control/HE2-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation auto-approves claims up to 50 with a receipt, not under 100 with a photo. Its limit is a guessed 50 and it checks for a receipt, not a photo. The practice run has no claim between 50 and 100 to confirm the behavior."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Anything over the limit is routed to 'waiting for approver' and e-mailed to Owen. PX-2 (640) went to Owen in the practice run. The over-$100 case is covered because it is also over 50."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The no-receipt rule sets 'waiting for approver' and PX-3 (no receipt, 9) was included in the e-mail to Owen in the practice run."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The sendApprover node is addressed to owen@evergreenlandscaping.co, and the practice run shows delivery to that address."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each submitted claim gets a row in expense-decisions with id, amount, decision, reason and time. The sheetAudit verify checks one row per submitted claim, and the practice run shows three rows written."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001312145,
+    "inputTokens": 7690,
+    "outputTokens": 899,
+    "calls": 1
+   },
+   "conv": "HE2"
+  },
+  "control/HE2-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The approval rule checks only amount <= 99.99 and never checks for a photo or receipt. PX-3 (9, receipt: false) was auto-approved, so claims under 100 are approved without the required photo."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "PX-2 at 640 was routed to 'waiting for approver' and listed in the e-mail sent to owen@evergreenlandscaping.co."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "PX-3 has receipt: false, yet it was approved automatically and not sent to Owen. The automation has no no-receipt rule (the template's requireReceipt is false)."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The sendApprover node and the audit both use owen@evergreenlandscaping.co, and the practice run's e-mail went to that address."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The expense-decisions sheet got one row per submitted claim (PX-1, PX-2, PX-3) with id, amount, decision, reason and timestamp, and the sheet audit checks the row count."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0013120200000000001,
+    "inputTokens": 7593,
+    "outputTokens": 923,
+    "calls": 1
+   },
+   "conv": "HE2"
+  },
+  "control/HE2-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run approved PX-1 (18.50, with receipt) automatically. The automation uses receipt=true as the 'photo' proxy, a reasonable reading but not literally a photo check."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "Over-limit claim PX-2 (640) is marked 'waiting for approver', but the e-mail goes to office@evergreenlandscaping.co, not Owen."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "No-receipt claim PX-3 is routed to waiting, but the e-mail goes to office@evergreenlandscaping.co, not Owen."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The automation's approver address is office@evergreenlandscaping.co. Owen's address owen@evergreenlandscaping.co is not used anywhere."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each submitted claim (PX-1, PX-2, PX-3) got a row in expense-decisions with id, amount, decision, reason and time, and the sheet audit checks it."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001424645,
+    "inputTokens": 7662,
+    "outputTokens": 1131,
+    "calls": 1
+   },
+   "conv": "HE2"
+  },
+  "control/HI1-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation's first reminder fires at 7 days late (friendly), not 30. The practice run sent a 'Friendly reminder' to PR-101 at 9 days late."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "There is no 60-day firmer stage. The stages are 7, 14 and 30 days. PR-103 at 56 days got a 'final notice' instead of a firmer reminder."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The final notice fires at 30 days, not 90. The practice run sent a final notice to PR-103 at 56 days."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The summary is sent once per run, and the automation says it does not run on a schedule by itself. Nothing shows it runs every Monday."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The summary lists only invoices due for a reminder (7+ days late). Open, past-due PR-106 (due 2026-10-18, still unpaid) is omitted, so not everyone who still owes is listed."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Only status 'open' invoices are kept. PR-105 (disputed) got no email, and the practice outbox shows no message to practice-garage."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The sendSummary node addresses maria@pixelandpixel.com, and the practice run sent the summary to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00171187,
+    "inputTokens": 8701,
+    "outputTokens": 1448,
+    "calls": 1
+   },
+   "conv": "HI1"
+  },
+  "control/HI1-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The route rule sends daysLate >= 30 (below 60) to the 'reminder' stage with the friendly subject. The practice run sent a friendly reminder for PR-103, 56 days late."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The route rule sends daysLate >= 60 (below 90) to the 'second reminder' stage with firmer wording. The practice run has no invoice in this band, so this rests on the rule alone."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The route rule sends daysLate >= 90 to the 'final notice' stage. The practice run has no invoice this old, so this rests on the rule alone."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The automation has no summary step. Its metadata sets sendSummary to false and says 'no summary to the person', so nothing is emailed on Mondays."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "No summary is generated anywhere in the automation, so there is no list of clients who still owe money."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The open filter keeps only status 'open', so disputed invoice PR-105 is excluded. The practice run sent nothing to practice-garage@example.org."
+    },
+    "C-007": {
+     "verdict": "unmet",
+     "why": "summaryTo is empty and no summary email node exists, so nothing is sent to maria@pixelandpixel.com."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0014441200000000001,
+    "inputTokens": 7587,
+    "outputTokens": 1191,
+    "calls": 1
+   },
+   "conv": "HI1"
+  },
+  "control/HI2-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The open filter keeps status=open rows with an email, and the run reminded only overdue open invoices (PR-101, 102, 103). Paid PR-104 and disputed PR-105 were excluded, and not-yet-due PR-106 was not chased."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The stages start at 7 days late (friendly reminder), not 3 days. The practice run sent PR-101 a reminder at 9 days late, and invoices 3 to 6 days late get nothing."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The second reminder is set at 14 days late, not 10. PR-102 got its second reminder at 20 days late, which does not match the requested 10-day point."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The final notice is set at 30 days late, not 17. PR-103 got a final notice at 56 days late, so the third reminder is not at 17 days."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The outbox.send step has only to, subject and body. Nothing blind-copies the user on the second reminder, and no bcc appears anywhere in the automation or practice output."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Reminders go to the plan.to value taken from each sheet row's email field. The practice run sent to practice-cafe, practice-gym and practice-florist, matching the sheet."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The sendSummary step sends to dave@midwestpipesupply.com, and the practice run shows the summary delivered to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0015729950000000002,
+    "inputTokens": 8710,
+    "outputTokens": 1168,
+    "calls": 1
+   },
+   "conv": "HI2"
+  },
+  "control/HI1-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The route rule sends a 'reminder' stage at daysLate >= 30 and the practice run sent a 30+ day reminder (PR-103, 56 days late). The 30-day boundary itself was not exercised."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The route rule sends a 'second reminder' (firmer wording) at daysLate >= 60. The practice run did not include a 60+ day invoice, so this rests on the rule definition."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "There is no final stage. Everything at 60+ days gets the 'second reminder', and the builder notes that a 110-day-late client gets the firmer reminder instead of a final notice. The 90-day final reminder is not implemented."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The summary is built and sent per run, but nothing shows a Monday schedule. The automation lists scheduling as unsupported and runs only when invoked."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The summary lists only invoices at reminder stage (30+ days late). Open invoices not yet 30 days late, such as PR-101, PR-106 and PR-102 at the practice date, still owe money but are omitted."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Only rows with status 'open' pass the filter. The disputed invoice PR-105 was excluded and no email to it appears in the practice outbox."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The summary step sends to maria@pixelandpixel.com, and the practice run shows the summary delivered to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00187612,
+    "inputTokens": 8259,
+    "outputTokens": 1887,
+    "calls": 1
+   },
+   "conv": "HI1"
+  },
+  "control/HL1-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The automation reads new leads (status new, with email) from the leads sheet and routes them, so it applies to website-form leads. It also applies to leads from other sources, which goes beyond the request but does not break this condition."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The rules list is empty, so no California rule exists. The practice run sent no lead to Marcus, and the run had no California lead to test. Every lead goes to Priya."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Every non-California lead in the run (France, USA, Japan) went to Priya, the default."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Practice Lou (companySize 900) was sent to Priya, as this condition requires."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The lead-log sheet gets one row per routed lead with assignTo, and the practice run wrote three rows showing who got each lead."
+    },
+    "C-006": {
+     "verdict": "unmet",
+     "why": "Marcus's address does not appear anywhere in the automation. Only priya@sunrisesolar.energy is configured, and Marcus is not set up as a recipient."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The default assignee and the otherwise branch are priya@sunrisesolar.energy, and the practice e-mails went to that address."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The otherwise branch sends all unmatched leads to priya@sunrisesolar.energy, and the practice run confirmed this."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001398795,
+    "inputTokens": 7569,
+    "outputTokens": 1106,
+    "calls": 1
+   },
+   "conv": "HL1"
+  },
+  "control/HL1-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation filters only on status 'new' and an email being present, not on source. The practice run sent leads whose source was 'referral' (Lou) and 'event' (Ray) as well as 'website'."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The CA rule tests the region field for the value 'CA', which holds region codes like EMEA/NA/APAC, not states. No California check exists (no state or country field is used), so California leads would not be reliably routed to Marcus."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The otherwise branch assigns priya@sunrisesolar.energy, and the practice run sent the non-CA leads (Pat, Lou, Ray) to Priya."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "No rule uses companySize. Lou (companySize 900) went only to Priya through the default, and the routing logic has no separate >200 rule, so this matches only by coincidence."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The logRows step records name, email, company and assignTo for each routed lead into the lead-log sheet, and the practice run shows three log rows appended."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The CA rule's assignTo is set to marcus@sunrisesolar.energy as requested."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The otherwise assignTo and the expected-recipient logic use priya@sunrisesolar.energy as requested."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "Every lead not matched by the CA rule falls through to the otherwise assignment of priya@sunrisesolar.energy, and the practice run confirms this."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00146317,
+    "inputTokens": 7688,
+    "outputTokens": 1205,
+    "calls": 1
+   },
+   "conv": "HL1"
+  },
+  "control/HI2-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The open filter keeps only status open with an email; rows.age and the route only send for daysLate of 3 or more. Practice run sent to PR-101, PR-102, PR-103 (all open and overdue); PR-104 (paid), PR-105 (disputed) and PR-106 (2 days late) were excluded."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The route rule sets the friendly reminder at daysLate gte 3. Practice PR-101 at 9 days got a 'Friendly reminder', consistent with a first reminder starting at 3 days."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The second-reminder rule (gte 10) exists, but the practice run shows PR-102 at 20 days going straight to a final notice with no second reminder ever sent. The sequence can skip the 10-day reminder when runs are not frequent, so it is not reliably sent at 10 days."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The route rule sets the final notice at daysLate gte 17. Practice run sent final notices at 20 days (PR-102) and 56 days (PR-103)."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The automation has no bcc to the user anywhere: sendSummary is false, summaryTo is empty, and the outbox.send args only contain to, subject and body. No blind copy is sent on the second reminder."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The send 'to' comes from the plan node reading item.email from the sheet. The practice e-mail to practice-florist@example.org, practice-cafe@example.org and practice-gym@example.org matches the sheet rows."
+    },
+    "C-007": {
+     "verdict": "unmet",
+     "why": "The summary is disabled (sendSummary false, summaryTo empty). Nothing in the automation or practice run sends a summary to dave@midwestpipesupply.com."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0021652449999999997,
+    "inputTokens": 7888,
+    "outputTokens": 2558,
+    "calls": 1
+   },
+   "conv": "HI2"
+  },
+  "control/HL1-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The filter keeps every new lead with an email, regardless of source. The practice run routed referral (Lou) and event (Ray) leads, not only website-form leads."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The rule sends California leads to priya@sunrisesolar.energy, not Marcus. The practice run had no California lead, but the configuration is inverted."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "Non-California leads go to marcus@sunrisesolar.energy (the otherwise branch), not Priya. The practice run sent all three leads to Marcus."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "No company-size rule exists. Lou (companySize 900) was sent to Marcus rather than Priya."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The lead-log sheet gets one row per routed lead with name, email, company, assignTo and assignedAt, and the logAudit verify step re-reads it."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The otherwise assignee is marcus@sunrisesolar.energy, and the practice e-mails went to that address."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The Priya address in the automation is priya@sunrisesolar.energy. It is used only for the California rule, but the address itself is correct."
+    },
+    "C-008": {
+     "verdict": "unmet",
+     "why": "Leads that match no rule go to Marcus, not Priya. The practice run sent the non-California leads to Marcus."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001458295,
+    "inputTokens": 7689,
+    "outputTokens": 1195,
+    "calls": 1
+   },
+   "conv": "HL1"
+  },
+  "control/HL2-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation has rules: [] and no west-coast rule. The practice run sent every lead to Sarah, including Lou (NA/USA) and Pat (EMEA), so no west-coast lead goes to Ellen."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "No east-coast rule exists. The practice run sent every lead to Sarah, so no east-coast lead goes to Rajesh."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The otherwise branch assigns all leads to sarah@nimbusconsulting.io, and the practice run confirms this for all three routed leads. Leads not on a coast go to Sarah."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "There is no cc step. Lou's budget of 60000 is above 25k, but the only e-mails were to Sarah with no copy to tom@nimbusconsulting.io."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each run appends one row per routed lead to the lead-log sheet, and sheet.audit re-reads it. The practice run wrote three rows and passed the audit."
+    },
+    "C-006": {
+     "verdict": "unmet",
+     "why": "The automation only involves Sarah. Ellen, Rajesh and Tom are not recipients or routing targets, so the people involved do not match the request."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "defaultAssignee and the otherwise branch are set to sarah@nimbusconsulting.io, and all practice leads defaulted to her."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001439245,
+    "inputTokens": 7640,
+    "outputTokens": 1168,
+    "calls": 1
+   },
+   "conv": "HL2"
+  },
+  "control/HO1-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation has no schedule. Its envelope lists 'Running on a schedule by itself' as unsupported, so nothing makes it run every morning at 8."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The digest filters to the last 24 hours. The practice run dropped PA-4, a critical unresolved alert raised 2026-10-18, so older unresolved alerts are missing."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Each digest line shows [severity] and service, e.g. '[critical] practice-api'."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The chat.post step targets #oncall and the practice run posted the digest there."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The pages step emails for every unacknowledged critical alert in the 24-hour window, with no one-hour threshold. A critical alert raised minutes ago would be emailed immediately."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The escalation goes by outbox.send to jordan@corestackit.com, not to the channel."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The critical filter uses severity eq 'critical', so warning and info alerts do not trigger the email. The practice run's PA-2 and PA-3 produced no page."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The send node is addressed to jordan@corestackit.com and the practice e-mail went to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0014687950000000002,
+    "inputTokens": 7533,
+    "outputTokens": 1255,
+    "calls": 1
+   },
+   "conv": "HO1"
+  },
+  "control/HL2-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The rules are first-match, and the budget rule comes first. A West Coast lead with budget at or above 25001 goes only to Tom and never reaches Ellen. The sample has no West Coast lead, and its region values are NA/EMEA/APAC, so the coast rule is never exercised."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "Same ordering problem as C-001. An East Coast lead with budget at or above 25001 goes only to Tom and never reaches Rajesh. The sample has no East Coast lead."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Practice leads Pat (EMEA) and Ray (APAC) were both routed to sarah@nimbusconsulting.io by the otherwise branch."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "Tom is not copied. Budget above 25k sends a single e-mail to Tom instead of the regional owner, which is a replacement, not a cc. The automation's own tag calls this out as a known defect. Lou (60000) went only to Tom."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each routed lead gets a row appended to the lead-log sheet with name, email, company, assignee and timestamp, and a logAudit verify step checks it."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The automation uses ellen@, rajesh@, sarah@ and tom@ at nimbusconsulting.io, matching the listed addresses, with Tom as the budget recipient."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The otherwise branch of the route step assigns sarah@nimbusconsulting.io, and the practice run confirms it as the default."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001965995,
+    "inputTokens": 8074,
+    "outputTokens": 2113,
+    "calls": 1
+   },
+   "conv": "HL2"
+  },
+  "control/HO1-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation has no schedule. Its envelope lists 'Running on a schedule by itself' as unsupported, so it will not post every morning at 8 on its own."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The digest filter keeps only warning and critical severities, so info alerts are dropped. The practice run left out PA-3 (info, unacknowledged), so it does not include all unresolved alerts."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Each digest line shows [severity] and service, e.g. '[critical] practice-api' and '[warning] practice-db'."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The post node targets channel #oncall, and the practice run posted the digest to #oncall."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The page node emails every unacknowledged critical alert in the window with no one-hour age check. It would page for critical alerts raised minutes ago, and it does not implement the one-hour rule."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The escalation goes by e-mail to jordan@corestackit.com, not to the chat channel."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The critical node filters on severity eq 'critical', so only critical alerts trigger the page email."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The page e-mail 'to' is set to jordan@corestackit.com, and the practice run sent to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00153867,
+    "inputTokens": 7540,
+    "outputTokens": 1393,
+    "calls": 1
+   },
+   "conv": "HO1"
+  },
+  "control/HO1-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its own unsupported list excludes running on a schedule by itself, and the practice run was a single manual run. Nothing shows a daily 8am trigger."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The filter keeps only alerts raised in the last 168 hours (hoursAgo <= 168). An unresolved alert older than 7 days would be dropped, but the request says all unresolved alerts."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The line template is '- [{{severity}}] {{service}}: ...', and the practice post shows severity and service on every line."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The chat.post node targets channel #oncall, and the practice run's chat post went to #oncall."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The automation has no check for critical alerts unacknowledged after one hour and no escalation email. Paging is off (page:false, pageTo empty), and mailAudit expects no e-mails."
+    },
+    "C-006": {
+     "verdict": "unmet",
+     "why": "No email to the user is produced. The outbox audit expects zero messages (to: []), so the direct email is absent."
+    },
+    "C-007": {
+     "verdict": "unmet",
+     "why": "No escalation logic exists, so the automation cannot be shown to send an email only for unacknowledged critical alerts. It sends no such email at all."
+    },
+    "C-008": {
+     "verdict": "unmet",
+     "why": "jordan@corestackit.com appears nowhere in the automation. The pageTo slot is empty, so the escalation email has no recipient."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001323795,
+    "inputTokens": 6385,
+    "outputTokens": 1252,
+    "calls": 1
+   },
+   "conv": "HO1"
+  },
+  "control/HO2-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its unsupported list says it does not run on a schedule by itself, and the practice run shows a manual run, so the 9am timing cannot be confirmed."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The 'recent' filter keeps only severity 'critical'. Its own description says 'critical and above', and the template notes that the PACS warning was deliberately left out. Unresolved warnings are not in the digest, as the person asked."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The chat.post node targets channel '#it-oncall', and the practice run shows the digest posted to #it-oncall."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The 'critical' node filters for severity critical and acknowledged not true. The practice run paged only PA-1, which is critical and unacknowledged. PA-4 is acknowledged and was not paged."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The outbox.send node sets 'to' to n.okafor@stmaryshospital.org, and the practice e-mail was addressed to that address."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Only the critical-filtered rows feed the pages map, and no warning-level alert is included. The practice run sent no e-mail for the warning PA-2."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001233695,
+    "inputTokens": 7423,
+    "outputTokens": 810,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "control/HO2-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its unsupported list says it does not run on a schedule by itself, and the run was a manual one, so a 9am post is not shown."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The digest filter keeps only alerts raised in the last 24 hours. The practice data has PA-4, an unresolved critical from 2 days ago, and the run left it out. The request asked for all unresolved warnings and criticals, with no time limit."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice run posted the digest to #it-oncall, and the post step names that channel."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The email step is fed only by critical alerts with acknowledged not true. PA-1 was emailed and the acknowledged critical PA-5 and PA-4 were not. The 24-hour window limit is noted under C-002."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The page step sends to n.okafor@stmaryshospital.org, and the practice run's email went to that address."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The email filter selects only severity critical. The warning PA-2 was not emailed in the practice run."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0014929449999999999,
+    "inputTokens": 7449,
+    "outputTokens": 1322,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "control/HO2-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation is run on demand with a 'now' input and its unsupported list excludes scheduling. Nothing shows a 9am trigger, so the timing is not confirmed. The practice run only shows a digest being posted."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The filter keeps unresolved rows with severity in [warning, critical]. The practice digest includes a warning (PA-2) and criticals (PA-1, PA-4)."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The chat.post step targets #it-oncall, and the practice run shows the digest posted to #it-oncall."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "Paging is off (page: false, pageTo empty) and the mail audit expects to: [], so no e-mail is sent for unacknowledged criticals. The practice run also shows PA-1, an unacknowledged critical, with no e-mail."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "No recipient is configured. pageTo is empty and the outbox audit expects no recipients, so n.okafor@stmaryshospital.org is never used."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "No e-mail is sent at all, so none is sent for warnings. The mail audit's to: [] confirms this."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001217945,
+    "inputTokens": 6297,
+    "outputTokens": 1060,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "control/HS1-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation has no refund rule or refund reply. The template note says 'no canned reply: the refund ticket goes to the digest unanswered', and the practice run answered 0 tickets automatically."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The automation has no slot for the user's pasted reply text. The answers list is empty, so no refund reply text is used anywhere."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The exact refund wording does not appear in the automation or the practice output. No reply containing it was composed or sent."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Urgent tickets (P-3) are routed to 'person' and included in the digest e-mailed to zara@widgetly.app. They are never auto-answered (urgentAuto count 0)."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Non-urgent tickets (P-1, P-2, P-4) go to zara in one digest in the practice run. The 'each morning' schedule is not part of the automation, which states it does not run on a schedule by itself."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The practice run sent one digest e-mail containing all four non-auto tickets, not one e-mail per ticket."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Tickets that are neither refund-mentioning nor urgent (P-1, P-2, P-4) are routed to zara in the digest. The automation has no refund match, so no ticket is routed to auto."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00143337,
+    "inputTokens": 7641,
+    "outputTokens": 1156,
+    "calls": 1
+   },
+   "conv": "HS1"
+  },
+  "control/HS1-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The routing rule matches the keyword \"money back\", not \"refund\". A ticket mentioning \"refund\" would not get the reply. The practice run has no refund ticket, so it did not test this."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The reply text in the automation is the user's pasted text, passed through the answer field of the refund rule."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The answer string in the routing rule matches the requested wording word for word."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Urgent ticket P-3 is routed to a person and appears in the digest sent to zara@widgetly.app. It is not auto-answered (urgentAuto count is 0)."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "Non-special tickets P-1, P-2 and P-4 go to zara in a digest. The \"each morning\" timing is a schedule, and the automation says it does not run on a schedule by itself, so nothing shows the morning timing."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The practice run sent one digest e-mail to zara listing all four non-auto tickets, not one e-mail per ticket."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Every open ticket that is neither urgent nor matched is in the person route, and the digest to zara includes P-1, P-2 and P-4."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001422495,
+    "inputTokens": 7762,
+    "outputTokens": 1104,
+    "calls": 1
+   },
+   "conv": "HS1"
+  },
+  "control/HS1-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The routing rule sends tickets whose subject or body contains 'refund' to the auto route with the refund reply. The practice data had no refund ticket, so this was not exercised in the run."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The refund reply text is set in the routing rule's answer field, and that text is what the compose step uses."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The answer text in the automation matches the user's pasted wording word for word."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "Urgent tickets go to a person, but the digest is addressed to support@widgetly.app, not zara@widgetly.app. The practice run confirms P-3 (urgent) went to support@widgetly.app."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "Other tickets are digested to support@widgetly.app, not to zara. The practice run shows the digest went to support@widgetly.app."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Non-automated tickets are bundled into one digest email (sendDigest), not sent individually."
+    },
+    "C-007": {
+     "verdict": "unmet",
+     "why": "Tickets that are neither refund nor urgent are routed to a person, but the recipient is support@widgetly.app, not zara."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00153237,
+    "inputTokens": 7737,
+    "outputTokens": 1330,
+    "calls": 1
+   },
+   "conv": "HS1"
+  },
+  "control/HO2-3": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The digest step posts the summary, but nothing in the automation sets a 9am time. It says it does not run on a schedule by itself, so the 9am timing must come from outside it. Not shown either way."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The recent filter keeps unresolved rows at info, warning and critical. The practice digest included unresolved warning PA-2 and unresolved criticals PA-1 and PA-4. It also lists info, which does not break the condition."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The chat.post step targets channel #it-oncall, and the practice run posted the digest to #it-oncall."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Pages are filtered to critical with acknowledged not true. The practice run emailed only PA-1; acknowledged critical PA-4 got no email. The 168-hour window also limits pages, which still keeps emails within the condition."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The send step's recipient is n.okafor@stmaryshospital.org, and the practice e-mail went to that address."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Only critical-filtered rows feed the page map. Warning PA-2 produced no email in the practice run, and the e-mail step runs only for critical rows."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00208436,
+    "inputTokens": 16502,
+    "outputTokens": 1963,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "control/HS2-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "P-1 mentions 'shipping' but was routed to a person, not answered. The practice run shows 'Answered automatically: 0'. The automation has no shipping reply wired in; its answers list is empty."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "No reply using the FAQ text was sent or composed in the practice run, and the automation contains no FAQ text. The answer slot is empty."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Urgent ticket P-3 was included in the e-mail delivered to mike@fitzone.com and was not auto-answered. It reaches Mike via the digest, though not as an immediate send."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Non-urgent open tickets P-2 and P-4 were delivered to mike@fitzone.com in the digest. P-1 also went there because no reply was available."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "All four tickets that need a person were combined into one digest e-mail with a single subject line."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001388395,
+    "inputTokens": 7572,
+    "outputTokens": 1081,
+    "calls": 1
+   },
+   "conv": "HS2"
+  },
+  "control/HS2-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "Non-urgent open shipping tickets get the FAQ reply (P-1 was answered). But urgent P-3 mentions 'shipping' and was routed to a person, not answered, so 'any ticket' is not fully met."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The template's answer text matches the FAQ exactly, and the practice reply to P-1 contains it verbatim."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "Urgent tickets go to support@fitzone.com in the digest, not to mike@fitzone.com. The urgent P-3 went to the wrong address."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "Other tickets are sent to support@fitzone.com, not to Mike. The digest recipient is wrong."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "All non-auto tickets are combined into one digest email, as the practice run shows (P-2, P-3, P-4 in one message)."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001592395,
+    "inputTokens": 7784,
+    "outputTokens": 1436,
+    "calls": 1
+   },
+   "conv": "HS2"
+  },
+  "control/HS2-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation matches the keyword 'ship time', not 'shipping'. P-1 ('How long is shipping?') mentions shipping but was routed to a person, and the practice run answered 0 tickets automatically."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The automation's answer text is exactly the FAQ wording. No reply was actually sent in the practice run, so the text was checked only in the automation definition."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Urgent ticket P-3 was routed to a person and included in the digest e-mailed to mike@fitzone.com. It is delivered in the daily digest, not immediately, which is a timing gap."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Non-urgent, non-auto-answered tickets P-1, P-2 and P-4 were all sent to mike@fitzone.com in the digest."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "All non-urgent tickets were combined into one digest e-mail ('Support: 4 ticket(s) need a person')."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00140177,
+    "inputTokens": 7723,
+    "outputTokens": 1070,
+    "calls": 1
+   },
+   "conv": "HS2"
+  },
+  "control/HW1-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and its own unsupported list says it does not run on a schedule by itself. Nothing shows a Friday 4pm trigger."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The read node takes every row of the tracker with no week filter, and tracker rows have no date field. The report lists all done items, not only those finished this week."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "Blocked items are listed. Open items are only counted ('Still open: 1') and never named; the template sets listOpen to false, and the practice e-mail has no open-items list."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send node targets rick@summitconstruction.com and the practice run e-mail was addressed to that recipient."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00125297,
+    "inputTokens": 6848,
+    "outputTokens": 990,
+    "calls": 1
+   },
+   "conv": "HW1"
+  },
+  "control/HW1-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and its own unsupported list says it cannot run on a schedule by itself. Nothing shows a Friday 4pm trigger."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "The report draws done items from the tracker sheet, but the automation applies no this-week filter and the tracker rows have no dates. The practice run cannot show whether only this week's items are included."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The workflow filters open and blocked items, lists them, and the practice report includes an Open section and a Blocked section."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The send node addresses office@summitconstruction.com, not rick@summitconstruction.com. The practice run's email went to office@ as well."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0010937199999999998,
+    "inputTokens": 6890,
+    "outputTokens": 661,
+    "calls": 1
+   },
+   "conv": "HW1"
+  },
+  "control/HW1-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and lists 'running on a schedule by itself' as unsupported. Nothing shown confirms a Friday 4pm run."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The done filter pulls every row with status done. There is no week filter, and tracker rows carry no dates, so the report covers all finished items, not this week's."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "Open items are listed by name, but blocked items are only counted ('Blocked: 1'). The template sets listBlocked to false, so the blocked item (vendor contract review) is not shown."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send node addresses rick@summitconstruction.com, and the practice run shows the e-mail going to that recipient."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0013490950000000002,
+    "inputTokens": 6849,
+    "outputTokens": 1182,
+    "calls": 1
+   },
+   "conv": "HW1"
+  },
+  "control/HW2-0": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its envelope lists 'Running on a schedule by itself' as unsupported, and the practice run is a single manual run. Nothing shows it runs every Monday morning."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The send node addresses liz@beaconcontent.co, and the practice run's outbox shows the e-mail delivered to that address."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The 'done' node filters only on status = done. It has no date or week filter, and tracker rows carry no date. The report would include every done item ever recorded, not just those finished last week."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The compose step includes a 'Still open:' section listing open items and a 'Blocked:' count. The practice e-mail lists 'Practice: migrate the billing table (Lee)' under Still open, which the person said not to include."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run's done list has only two short lines, so the list is short. The extra open and blocked content is a separate problem covered under C-004."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0012648949999999998,
+    "inputTokens": 6884,
+    "outputTokens": 1006,
+    "calls": 1
+   },
+   "conv": "HW2"
+  },
+  "control/HW2-1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its unsupported list says it cannot run on a schedule by itself, so nothing shows a Monday-morning send."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The send node and the practice run both address liz@beaconcontent.co, the recipient the user confirmed."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The done filter only matches status eq done. It has no date filter, so done items from any week would be included. The tracker rows carry no dates to restrict by week."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The email body includes a 'Blocked:' section listing the blocked item (vendor contract review). The user said open and blocked items are not needed."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice email lists only two finished items, and the short list fits the request. Open and blocked counts and sections add length, though."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001095895,
+    "inputTokens": 6876,
+    "outputTokens": 670,
+    "calls": 1
+   },
+   "conv": "HW2"
+  },
+  "control/HW2-2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and says running on a schedule by itself is unsupported. Nothing shows a Monday morning send."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The send goes to team@beaconcontent.co, not liz@beaconcontent.co as the recipient answer specified."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The done filter has no date window. Tracker rows have no dates, so it cannot limit results to last week and would list all done items."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The finished list excludes open and blocked items, but the report text still states 'Still open: 1. Blocked: 1.' This includes open and blocked information the person said they did not want."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run lists only 2 finished items, which is short. Only the done list is included, so the list stays brief."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00124652,
+    "inputTokens": 6825,
+    "outputTokens": 984,
+    "calls": 1
+   },
+   "conv": "HW2"
+  },
+  "b-h/HC1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The rec node reconciles the CRM (eligible rows) against the newsletter list by email; the practice report shows the comparison result."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The report lists the missing contacts (b@ and e@) as 'Found (not added)'. No node writes missing rows to the sheet, and the practice run added nobody."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The only write in the practice run is the report e-mail. No sheet or Mailchimp write node exists, and sheetAudit checks that zero rows were added."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Unsubscribed contacts are filtered out before reconciliation. The practice run did not list unsubscribed c@ as missing, and the leak cross-check (must match 0) guards against adding them."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run sent the report via outbox.send to nadia@yogaflowstudio.com, and the audit step re-reads the outbox to confirm only that report went out."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.001423395,
+    "inputTokens": 7236,
+    "outputTokens": 1235,
+    "calls": 1
+   },
+   "conv": "HC1"
+  },
+  "b-h/HE1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Rule sets approved when receipt is true and amount <= 49.99. Practice run auto-approved PX-1 (18.5, receipt true). Amounts between 49.99 and 50 are not approved, which is negligible for currency."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The recordRows step writes every decision to expense-decisions, and the practice run logged PX-1 with decision 'approved'. The sheet audit passed."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Claims not approved fall to 'otherwise' and go to waiting for approver, which is e-mailed to dana. Practice run sent PX-2 (640) to dana. An exact $50 submitted claim was not in the sample, but the logic (lte 49.99 else waiting) covers it."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The no-receipt rule sets 'waiting for approver' and the claim is e-mailed to dana. Practice run routed PX-3 (9, receipt false) to dana with reason 'no receipt'."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.001469345,
+    "inputTokens": 7687,
+    "outputTokens": 1213,
+    "calls": 1
+   },
+   "conv": "HE1"
+  },
+  "b-h/HC2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run added the subscribed CRM contacts missing from the list (b@ and e@). Ada and Di already matched by email, so the rule holds in the sample."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Unsubscribed contact c@ (Cy) is excluded from the rows to add. The leak cross-check gates the append on zero matches, and the report shows 1 blocked and no added row for c@."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The report was sent and lists the added contacts (b@practice-co.example and e@practice-co.example)."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The outbox send is addressed to janet@happytailsbakery.com, and the audit checks that address."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The report lists Practice Di (d@practice-co.example) under 'Names that differ'. Di was not newly added, so the report lists someone beyond the new additions, which the condition excludes."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001452145,
+    "inputTokens": 7458,
+    "outputTokens": 1237,
+    "calls": 1
+   },
+   "conv": "HC2"
+  },
+  "b-h/HE2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The rule approves when receipt is true and amount <= 99.99. Practice PX-1 (18.5, receipt true) was approved automatically. Treating 'photo' as the receipt flag is a reasonable reading."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Amounts over the limit fall to 'waiting for approver' and are e-mailed to Owen. Practice PX-2 (640) appeared in the e-mail to owen@evergreenlandscaping.co."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "A claim with receipt not true is routed to 'waiting for approver' with reason 'no receipt'. Practice PX-3 (no receipt) was listed in the e-mail to Owen."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "outbox.send and the audit both use owen@evergreenlandscaping.co, and the practice run's outbox e-mail went to that address."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Every submitted claim gets a row in expense-decisions with id, amount, decision, reason and time (PX-1, PX-2, PX-3), checked by sheetAudit. The e-mail send itself is not logged in that sheet, but the outbox holds it."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00145627,
+    "inputTokens": 7723,
+    "outputTokens": 1179,
+    "calls": 1
+   },
+   "conv": "HE2"
+  },
+  "b-h/HI1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The rows.route rule sends any invoice at 30+ days late to the 'reminder' stage with a friendly opening. The practice run's PR-103 (56 days late) got that friendly reminder. The 30-day boundary itself is not exercised in the sample."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The route rule at daysLate >= 60 sets the 'second reminder' stage with a firmer opening ('This is our second reminder.'). Whether the tone reads as firmer is a judgment, but the stage is clearly routed."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The route rule at daysLate >= 90 sets the 'final notice' stage with the opening 'This is a final notice.'"
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule, and its unsupported list includes 'Running on a schedule by itself'. Nothing shows a Monday trigger. The summary is only emitted when a run happens."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The summary lists only invoices due for a reminder (sumLines runs on the 'due' rows, which are 30+ days late). Open invoices that owe money but are under 30 days late are omitted. In the practice data, PR-102 (Practice Gym, 20 days late at the run date) owes money but is not listed."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The 'open' filter keeps only status 'open', so disputed PR-105 (Practice Garage) is excluded before any send. The practice run sent nothing to it."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The sendSummary node sends to the fixed address maria@pixelandpixel.com, and the practice run shows that summary email going to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0018877450000000001,
+    "inputTokens": 8340,
+    "outputTokens": 1890,
+    "calls": 1
+   },
+   "conv": "HI1"
+  },
+  "b-h/HL1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The automation reads the leads sheet, keeps rows with status new and an e-mail, and runs the send for each. The practice run processed all three new leads. It also covers leads from non-website sources, which goes beyond the request."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The California rule tests region eq 'California', but the lead data's region field holds values like NA, EMEA and APAC; California appears in country or state terms, not region. A California lead would not match, so it would not go to Marcus. No California lead appeared in the practice run."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The otherwise branch assigns priya@sunrisesolar.energy. The practice run sent Pat (France), Lou (USA, not California) and Ray (Japan) to Priya."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "Routing is first-match: a lead matching California goes only to Marcus, so a California lead with company size over 200 is not also sent to Priya. The size rule only reaches Priya when no earlier rule matched. The practice run only showed a non-California large lead (Lou, 900) going to Priya."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each routed lead gets a lead-log row with name, email, company and assignTo, and the log audit checks one row per routed lead. The practice run wrote three rows naming Priya."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The rules and otherwise branch use marcus@sunrisesolar.energy and priya@sunrisesolar.energy exactly as the person specified."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The otherwise branch sends every lead not matched by the Marcus rule to priya@sunrisesolar.energy, and the practice run confirmed this for non-California leads."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0009691750000000001,
+    "inputTokens": 7867,
+    "outputTokens": 1699,
+    "calls": 1
+   },
+   "conv": "HL1~063fbc73"
+  },
+  "b-h/HL2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The rule routes region 'West Coast' to ellen@nimbusconsulting.io, but no practice lead has region 'West Coast' (regions were EMEA, NA, APAC), so the practice run does not exercise it."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "The rule routes region 'East Coast' to rajesh@nimbusconsulting.io, but no practice lead has region 'East Coast', so the practice run does not exercise it."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Practice leads with regions EMEA, NA and APAC were all routed to sarah@nimbusconsulting.io via the otherwise branch."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The automation has no copy to tom@nimbusconsulting.io and no budget threshold check. Practice lead Lou (budget 60000) was e-mailed only to Sarah."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each assignment is appended to the lead-log sheet, and a logAudit verify step checks one row per routed lead; the practice run shows three log rows."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The automation uses the exact addresses ellen@, rajesh@ and sarah@nimbusconsulting.io. Tom's address is not in the automation, which is covered under C-004."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The otherwise branch sets assignTo to sarah@nimbusconsulting.io, and the practice run sent the default-case leads to Sarah."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0015262449999999999,
+    "inputTokens": 7940,
+    "outputTokens": 1267,
+    "calls": 1
+   },
+   "conv": "HL2"
+  },
+  "b-h/HI2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run reminded only PR-101, PR-102 and PR-103, which are open and past due. PR-104 (paid), PR-105 (disputed) and PR-106 (not yet due) were left out."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Paid PR-104, disputed PR-105 and not-yet-overdue PR-106 received no reminder in the run. The open-status filter and the stage 'none' filter exclude them."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The routing rule fires the first reminder at daysLate >= 3, and PR-101 (9 days late) got the 'Friendly reminder' stage. The day-3 trigger itself is not directly exercised, but the rule matches the request."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The second-reminder rule is daysLate >= 10, but no invoice in the run received a second reminder. PR-102 at 20 days late got only the final notice, so the 10-day stage was skipped by the catch-up routing. Behaviour depends on how often the run is scheduled, and that is not shown."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The final-notice rule fires at daysLate >= 17. PR-102 (20 days) and PR-103 (56 days) both received 'Final notice' emails."
+    },
+    "C-006": {
+     "verdict": "unmet",
+     "why": "The automation's outbox.send step has only to, subject and body. There is no bcc on any stage, so the person would not be blind-copied on the second reminder as requested. The practice e-mails show no bcc either."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Recipients come from the sheet's email field: practice-florist, practice-cafe and practice-gym addresses match the invoices rows exactly."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00198262,
+    "inputTokens": 7927,
+    "outputTokens": 2183,
+    "calls": 1
+   },
+   "conv": "HI2~4f53cda1"
+  },
+  "b-h/HO2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule; it runs when started with a 'now' input and the practice run does not show a 9am trigger. Scheduling is listed as unsupported."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The 'recent' filter keeps only alerts raised in the last 24h. Unresolved warnings or criticals older than 24h are dropped. Sample PA-4 (unresolved critical from 2026-10-18) is excluded, so the summary does not cover all unresolved warnings and criticals."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice run posted the digest to #it-oncall via chat.post with channel set to #it-oncall."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The 'critical' node keeps only severity critical with acknowledged not true, and the practice run sent one email, for unacknowledged critical PA-1 only."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The outbox.send 'to' field is n.okafor@stmaryshospital.org and the practice e-mail was addressed there."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Paging is filtered to severity eq critical, and the practice run e-mailed no warning alert (PA-2 warning produced no email)."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00148182,
+    "inputTokens": 7468,
+    "outputTokens": 1295,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "b-h/HS1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "No refund keyword rule exists. rows.route only checks priority=urgent, and everything else goes to a person. The answers slot is empty, and the practice run sent 0 automatic replies. A refund ticket would go to Zara, not get the refund reply."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The only reply text is a generic template ('Thanks for getting in touch...') with an empty answer slot. No refund reply text is wired in. The user's text is not yet provided, so it cannot be verified as used."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice run sent urgent ticket P-3 ('Site down??', priority urgent) in the digest e-mail to zara@widgetly.app, and no urgent ticket was auto-answered."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Non-refund, non-urgent tickets P-1, P-2 and P-4 (priority normal) were included in the practice run's e-mail to zara@widgetly.app."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice run sent one e-mail to zara@widgetly.app with all four person-routed tickets listed together as a single digest."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "The automation states it does not run on a schedule by itself, and no schedule or 'each morning' trigger appears in the automation or the practice run."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0008249800000000001,
+    "inputTokens": 7536,
+    "outputTokens": 1417,
+    "calls": 1
+   },
+   "conv": "HS1~4f53cda1"
+  },
+  "b-h/HO1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and its envelope lists running on a schedule as unsupported. Nothing shows it runs every morning at 8."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The recent filter keeps only alerts raised in the last 24 hours. PA-4 is unresolved but was raised about 2 days earlier, so it is left out of the digest."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice digest lines show severity and service for each alert, e.g. '[critical] practice-api'."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The chat.post step targets channel #oncall and the practice run posted the digest there."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The critical filter has no one-hour age check. It emails any unacknowledged critical in the 24h window, including one raised minutes ago, so it does not wait an hour as asked."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The escalation is an outbox.send addressed to jordan@corestackit.com, not to a channel."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The page list filters on severity eq critical and acknowledged not true. The practice run paged only PA-1, not the unacknowledged info alert PA-3."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The page step sends to jordan@corestackit.com, and the practice e-mail was addressed there."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001678545,
+    "inputTokens": 7555,
+    "outputTokens": 1669,
+    "calls": 1
+   },
+   "conv": "HO1"
+  },
+  "b-h/HW1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule and its unsupported list says it cannot run on a schedule by itself. The practice run shows nothing about Friday 4pm timing."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The read node loads every row of the tracker sheet and no filter limits items to this week. The tracker rows have no date field. The report therefore counts all done items ever recorded as 'this week'."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The open and blocked filters feed the report, and the practice run shows 'Still open' and 'Blocked' sections with items."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send node is addressed to rick@summitconstruction.com, and the practice run's email went to that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00119797,
+    "inputTokens": 6920,
+    "outputTokens": 862,
+    "calls": 1
+   },
+   "conv": "HW1"
+  },
+  "b-h/HS2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run auto-replied to P-1 (\"How long is shipping?\") with the shipping FAQ answer. P-3 mentions shipping but is urgent, so it went to a person as intended."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Urgent P-3 was routed to a person and appears in the digest e-mailed to mike@fitzone.com. The run does not send it immediately, so timing depends on the daily digest."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Non-urgent, non-shipping tickets P-2 and P-4 were sent to mike@fitzone.com in the digest. Closed P-5 was correctly skipped."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The practice run shows one bundled digest, which meets the bundling part. Daily cadence cannot be verified: the automation has no schedule and lists scheduling as unsupported."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.001450595,
+    "inputTokens": 7749,
+    "outputTokens": 1160,
+    "calls": 1
+   },
+   "conv": "HS2~4f53cda1"
+  },
+  "b-h/HW2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its own unsupported list says it cannot run on a schedule by itself, and nothing shows a Monday-morning trigger."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The send node is addressed to liz@beaconcontent.co, and the practice run delivered to that address."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The done filter only checks status eq done. It has no date filter, and tracker rows have no date field, so every done item is included regardless of when it was finished, not just last week's."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "Open and blocked items are not listed, but the email still reports 'Still open: 1. Blocked: 1.' The person asked for no open or blocked content, and those counts appear in the delivered email."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice email is compact: a short header and a bulleted list of done items only. Length still depends on the data, but the format is short."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001217895,
+    "inputTokens": 6856,
+    "outputTokens": 919,
+    "calls": 1
+   },
+   "conv": "HW2"
+  },
+  "b-m/HC1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The rec node reconciles the CRM rows against the newsletter sheet by email, and the practice report shows the resulting differences."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The report lists the 2 missing contacts (b and e) and labels them 'Found (not added)'. The sheetAudit check with rows:0 passed in the practice run."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The only write-side step is the outbox send of the report. The toAdd rows are prepared but never written to the sheet, and the practice run shows only the e-mail."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The eligible filter excludes unsubscribed=true CRM rows. Practice Cy (unsubscribed) is absent from the missing list, and the leak cross-check requires 0 matches. The automation only checks the CRM unsubscribed flag, not Mailchimp's own unsubscribe status, so this is only partly verified."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The send node targets nadia@yogaflowstudio.com, and the practice run shows the report delivered to that address."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.0016001449999999999,
+    "inputTokens": 7226,
+    "outputTokens": 1591,
+    "calls": 1
+   },
+   "conv": "HC1"
+  },
+  "b-m/HC2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run added b and e, the two subscribed CRM contacts missing from the list. a was already listed and d matched the list's D@ entry case-insensitively, so neither was added."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The unsubscribed contact c@practice-co.example was not added. The leak cross-check matched 0 and the append ran. The report counts 1 blocked contact."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The report emailed to janet lists the added contacts b and e under 'Added 2 contact(s)'."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The outbox send was addressed to janet@happytailsbakery.com, and the audit step checks that address."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The report includes a 'Names that differ' section that names d@practice-co.example, who was not added this run. It also gives a count of extra list entries. The report therefore lists people beyond those newly added."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0013610200000000001,
+    "inputTokens": 7449,
+    "outputTokens": 1057,
+    "calls": 1
+   },
+   "conv": "HC2"
+  },
+  "b-m/HE1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The approved rule is amount lte 49.99 with receipt true. PX-1 (18.50, receipt true) was auto-approved in the practice run. Two-decimal amounts up to 49.99 are covered."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "PX-1 was written to expense-decisions with decision 'approved' and reason 'within the limit', and the sheet audit passed."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Anything not approved by the first two rules falls to 'otherwise' and becomes 'waiting for approver', which is e-mailed to dana. PX-2 (640) was routed to dana in the run. The exact $50 boundary is not in the practice data, but the rule logic sends 50 to the waiting branch."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The first rule sends any claim with receipt not true to 'waiting for approver' (reason 'no receipt'). PX-3 (no receipt) was routed to dana in the run and listed in the e-mail."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00194992,
+    "inputTokens": 16705,
+    "outputTokens": 1685,
+    "calls": 1
+   },
+   "conv": "HE1"
+  },
+  "b-m/HE2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Rule approves claims with amount <= 99.99 and receipt true. Practice run approved PX-1 (18.5, receipt true) automatically. The automation uses the receipt flag as the 'photo' proxy, which is a reasonable match."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Claims over the limit get decision 'waiting for approver'. PX-2 (640) was routed this way and listed in the e-mail to Owen."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Claims with receipt not true are routed to 'waiting for approver' with reason 'no receipt'. PX-3 (no receipt) was sent to Owen in the e-mail."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The sendApprover step addresses owen@evergreenlandscaping.co, and the outbox audit checks that exact recipient. The practice e-mail went to that address."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each submitted claim got a row in expense-decisions with id, amount, decision, reason and time (PX-1, PX-2, PX-3). The sheet audit verifies one row per claim. The e-mail send itself is not logged in that sheet, but the outbox audit checks it."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00141252,
+    "inputTokens": 7713,
+    "outputTokens": 1094,
+    "calls": 1
+   },
+   "conv": "HE2"
+  },
+  "b-m/HI1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The route rule sends daysLate >= 30 to the friendly 'reminder' stage, and the practice run sent a friendly reminder to PR-103 at 56 days late."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The route rule sends daysLate >= 60 to the 'second reminder' stage with firmer wording. The practice run has no 60-day case, so this rests on the rule itself."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The route rule sends daysLate >= 90 to the 'final notice' stage, checked before the lower thresholds. The practice run has no 90-day case, so this rests on the rule itself."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The automation runs only when invoked. Its envelope lists 'running on a schedule by itself' as unsupported, and nothing shows a Monday trigger."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The summary lists only invoices already routed to a reminder (30+ days late). Open invoices still owed but not yet 30 days late, such as PR-101, PR-102 and PR-106 in the sample, are omitted."
+    },
+    "C-006": {
+     "verdict": "unmet",
+     "why": "The filter excludes disputed invoices per invoice, not per client. A client with one disputed invoice and another open overdue invoice would still get a reminder. The sample's disputed client (PR-105) has no other invoice, so the practice run does not show this case."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The summary step sends to maria@pixelandpixel.com, and the practice run shows that address receiving the summary."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0021269949999999996,
+    "inputTokens": 8330,
+    "outputTokens": 2371,
+    "calls": 1
+   },
+   "conv": "HI1"
+  },
+  "b-m/HI2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Only open invoices (PR-101, 102, 103) were reminded. Paid PR-104 and disputed PR-105 were filtered out. Source is the invoices sheet."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "PR-104 (paid), PR-105 (disputed) and PR-106 (open, only 2 days late, stage none) got no reminder."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "Reminders are routed by 'days late >= 3' with no step-through. PR-103 (56 days late) and PR-102 (20 days late) got a final notice as their first contact. The first reminder was never sent at day 3, and PR-101 got a friendly reminder at 9 days."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "No second reminder was sent in the run. PR-102 at 20 days late jumped straight to 'Final notice'. The stage after 10 days is never produced for overdue invoices."
+    },
+    "C-005": {
+     "verdict": "cannot-tell",
+     "why": "The final notice threshold is 17 days (gte), so it is configured correctly. But the run only shows late catch-up sends (20 and 56 days), not a send at exactly day 17, so timing is unobserved."
+    },
+    "C-006": {
+     "verdict": "unmet",
+     "why": "No bcc field exists in the outbox.send args, and no step blind-copies the user on any stage. The second reminder is never sent in the run, so the requested bcc is not implemented."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Recipients were practice-florist, practice-gym and practice-cafe @example.org, each matching the email column in the invoices sheet."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0012606649999999998,
+    "inputTokens": 7916,
+    "outputTokens": 2281,
+    "calls": 1
+   },
+   "conv": "HI2~4f53cda1"
+  },
+  "b-m/HL1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The read node loads the leads sheet and the fresh node keeps only rows with status new and an email. The practice run only processed new leads (spam and contacted rows were excluded)."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The rule tests region eq 'California', but the leads sheet has no state field. Region holds values like NA, EMEA, APAC, and California would sit under region NA with country USA. No California lead appears in the practice run, and the rule as written cannot match a California lead."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Non-California leads Pat (EMEA) and Ray (APAC) were both assigned to priya@sunrisesolar.energy in the practice run via the otherwise branch."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Lou (companySize 900) was assigned to priya@sunrisesolar.energy. The rule uses gte 200, which is a slight boundary mismatch with 'over 200', but leads above 200 are correctly routed."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each routed lead gets a lead-log row with name, email, company, assignTo and assignedAt. The practice run shows three log rows, and a logAudit verify step checks the log."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The automation sets assignTo to marcus@sunrisesolar.energy for the California rule."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The automation uses priya@sunrisesolar.energy for the company-size rule and the otherwise branch, and the practice e-mails went to that address."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The otherwise branch sets assignTo to priya@sunrisesolar.energy, and the practice run sent non-matching leads there."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00185967,
+    "inputTokens": 7848,
+    "outputTokens": 1958,
+    "calls": 1
+   },
+   "conv": "HL1"
+  },
+  "b-m/HL2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The routing rule sends region 'west coast' to ellen@nimbusconsulting.io. The practice run had no west coast leads, so the rule was not exercised, but the automation clearly contains it."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The routing rule sends region 'east coast' to rajesh@nimbusconsulting.io. The practice run had no east coast leads, so the rule was not exercised, but the automation clearly contains it."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The otherwise branch sends all non-west and non-east leads to sarah@nimbusconsulting.io. In the practice run, the NA, APAC and EMEA leads all went to Sarah."
+    },
+    "C-004": {
+     "verdict": "unmet",
+     "why": "The automation has no budget condition and no cc. The practice run sent Practice Lou (budget 60000, above 25k) only to Sarah, with no copy to tom@nimbusconsulting.io."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each assignment is appended to the lead-log sheet, and the practice run shows three log rows. A sheet.audit step re-reads the log."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The automation uses the listed addresses for Ellen, Rajesh and Sarah. Tom is the requester but is not referenced in the automation; his copy is covered by C-004."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The otherwise (default) assignee is sarah@nimbusconsulting.io, and the practice run shows every lead without a west or east coast match going to Sarah."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001678245,
+    "inputTokens": 7924,
+    "outputTokens": 1575,
+    "calls": 1
+   },
+   "conv": "HL2"
+  },
+  "b-m/HO1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its envelope lists running on a schedule by itself as unsupported, and it runs only when invoked. Nothing shows an 8am daily trigger."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The 'recent' filter keeps only warning and critical alerts from the last 24 hours. The practice run excluded PA-3 (unresolved info alert) and PA-4 (unresolved, over 24h old). The digest therefore does not cover all unresolved alerts."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Each digest line reads '[{{severity}}] {{service}}: ...', and the practice post shows severity and service for both alerts."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The chat.post step targets channel #oncall, and the practice run posted the digest to #oncall."
+    },
+    "C-005": {
+     "verdict": "unmet",
+     "why": "The critical step emails any unacknowledged critical alert in the 24h window. It never checks whether an hour has passed since the alert was raised, so a critical alert raised minutes ago would be emailed immediately."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The page is sent with outbox.send to jordan@corestackit.com as a direct e-mail. It is not posted to the channel."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The critical filter uses severity eq critical, so warning and info alerts do not trigger e-mails. In the practice run, the unacknowledged info alert PA-3 was not paged."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The page recipient is jordan@corestackit.com, and the practice run e-mailed that address."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0015815450000000002,
+    "inputTokens": 7507,
+    "outputTokens": 1487,
+    "calls": 1
+   },
+   "conv": "HO1"
+  },
+  "b-m/HO2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule or 9am trigger; it runs only when invoked with a 'now' input and posts after approval. Nothing shows it runs at 9am."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The filter keeps only alerts from the last 24 hours. The practice run omitted PA-4, an unresolved critical alert from 2026-10-18, so the summary does not cover all unresolved warnings and criticals."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The chat.post node targets channel #it-oncall, and the practice run posted the digest to #it-oncall."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The pages step filters to severity critical with acknowledged not true, and the practice run emailed only PA-1, the unacknowledged critical. The acknowledged critical PA-4 and the warning PA-2 were not emailed."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The send node's 'to' is n.okafor@stmaryshospital.org, and the practice run's email went to that address."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Emails are only generated from the critical-severity filter. The warning PA-2 produced no email in the practice run."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0014940700000000001,
+    "inputTokens": 7458,
+    "outputTokens": 1322,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "b-m/HS1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The routing only checks status=open and priority=urgent. No rule matches 'refund' in a ticket, and the practice run had no refund tickets, so nothing shows refund tickets get a reply."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The answer field is blank and the reply template is generic ('Thanks for getting in touch...'). No refund reply text is configured, so the user's standard text is not in the automation."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Urgent ticket P-3 is excluded from automatic answers and listed in the digest e-mailed to zara@widgetly.app, as shown in the practice output."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Non-urgent open tickets P-1, P-2 and P-4 (none refund-related) were all sent to zara@widgetly.app in the practice run. Closed P-5 was correctly left out."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "One digest e-mail (sendDigest) to zara@widgetly.app contains all four person-routed tickets."
+    },
+    "C-006": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its own unsupported list says it does not run on a schedule by itself, so daily delivery each morning is not shown."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0006668799999999999,
+    "inputTokens": 7526,
+    "outputTokens": 1101,
+    "calls": 1
+   },
+   "conv": "HS1~4f53cda1"
+  },
+  "b-m/HS2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run replied to P-1 (\"How long is shipping?\") with the shipping answer via the template. P-3 mentioned shipping but was urgent, so it was not auto-answered; P-5 was closed and skipped."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Urgent P-3 was routed to a person (rows.route rule) and listed in the digest e-mailed to mike@fitzone.com. The urgentAuto check confirmed no urgent ticket was auto-answered."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Non-urgent, non-shipping open tickets P-2 and P-4 were included in the single digest sent to mike@fitzone.com. Daily cadence is covered under C-004."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The practice run shows one bundled digest per run, which is met. The automation has no schedule and declares scheduling unsupported, so 'once per day' is not shown either way."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.001495095,
+    "inputTokens": 7605,
+    "outputTokens": 1285,
+    "calls": 1
+   },
+   "conv": "HS2~4f53cda1"
+  },
+  "b-m/HW1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The automation has no schedule. Its unsupported list includes 'Running on a schedule by itself', and the input only takes 'now'. Nothing shows it runs every Friday at 4."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The report reads all tracker rows with no week filter, and the tracker rows have no date field. 'Finished' therefore covers every done item, not only this week's. It does draw from the tracker export."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The report has separate 'Still open' and 'Blocked' sections, filled from the open and blocked filters. The practice run shows both, with one open item and one blocked item."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The practice run's outbox.send went to rick@summitconstruction.com, and the verify step confirmed delivery."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.00123547,
+    "inputTokens": 6908,
+    "outputTokens": 940,
+    "calls": 1
+   },
+   "conv": "HW1"
+  },
+  "b-m/HW2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. Its own unsupported list says it cannot run on a schedule by itself, and nothing shows a Monday-morning trigger."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The send node's recipient is liz@beaconcontent.co, and the practice run delivered to that address."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "The done filter only checks status == done. It has no date filter, and the tracker rows carry no dates. The run would list every done item ever recorded, not just last week's."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The practice run lists only the two done items. Open and blocked tasks are not listed. The summary line does show open and blocked counts, which is a minor deviation from 'no open or blocked needed'."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The practice output is a short report with two finished items. The automation has no cap on length, so a long tracker could produce a longer list."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.001268645,
+    "inputTokens": 6846,
+    "outputTokens": 1023,
+    "calls": 1
+   },
+   "conv": "HW2"
+  },
+  "b0-h2/HC1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The diff node runs rows.reconcile of the active CRM rows against the newsletter rows keyed by email, comparing name. This is the comparison the person asked for."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The automation only reads both sheets, computes the missing list, and saves it as a text artifact (newsletter-diff.txt). Nothing is added before the person reviews the diff."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "No write node touches any sheet; the only output is a core.artifact report. The practice run reports that nothing was sent, posted or written."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The drop_unsubscribed node filters with unsubscribed ne true before the diff, so unsubscribed contacts (e.g. c@practice-co.example) are excluded from the missing list. Practice run output was not shown, so this rests on the configuration."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.0006202450000000001,
+    "inputTokens": 5374,
+    "outputTokens": 1051,
+    "calls": 1
+   },
+   "conv": "HC1~4f53cda1"
+  },
+  "b0-h2/HC2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run added b and e, the two subscribed CRM contacts missing from the newsletter. d matched the existing D@ row case-insensitively, so it was correctly treated as already listed."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "c@practice-co.example is unsubscribed in the CRM and was filtered out before reconciliation. It was not appended."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The outbox.send step sent a report, and its body lists the added contacts."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send_report node is addressed to janet@happytailsbakery.com, and the practice run confirms the e-mail went there."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The report lists only Practice Bo and Practice Eve, the contacts added in this run. It excludes Ada, Dina/Di, Zed, and the unsubscribed Cy."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00047182999999999996,
+    "inputTokens": 6571,
+    "outputTokens": 730,
+    "calls": 1
+   },
+   "conv": "HC2"
+  },
+  "b0-h2/HE1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The route rules set PX-1 (amount 18.5, receipt true) to approved, and the practice run logged it as approved. Logic matches the condition."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The expense-decisions append for PX-1 shows decision 'approved'."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "PX-2 ($640) was routed to waiting for approver and an e-mail was sent to dana@brightleafmarketing.com. The e-mail subject shows unrendered '{{id}}', a defect, but routing itself works."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "PX-3 (no receipt, $9) was routed to waiting for approver and e-mailed to dana@brightleafmarketing.com."
+    }
+   },
+   "ready": false,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00063065,
+    "inputTokens": 6603,
+    "outputTokens": 1047,
+    "calls": 1
+   },
+   "conv": "HE1"
+  },
+  "b0-h2/HE2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The route rule sends only amount under 100 with receipt true to 'approved'. In the practice run PX-1 (18.5, receipt true) was written as approved."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Rule amount gte 100 sets 'waiting for approver'. PX-2 (640) was routed to waiting and listed in Owen's summary email."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Rule receipt ne true sets 'waiting for approver'. PX-3 (receipt false) was routed to waiting and listed in Owen's email."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The outbox.send and outbox.audit nodes both use owen@evergreenlandscaping.co, and the practice run emailed that address."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Each claim gets a decision row in expense-decisions with id, employee, amount, decision, reason and run time, and the sheet append is verified. The email send is not logged in that sheet, but it is checked via the outbox audit."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.0006709000000000001,
+    "inputTokens": 7078,
+    "outputTokens": 1118,
+    "calls": 1
+   },
+   "conv": "HE2"
+  },
+  "b0-h2/HI2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "The invoices are filtered to status 'open' with a due date, then to days_overdue in [3,10,17]. Paid and disputed rows are excluded by the same filter."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "Invoices exactly 3 days overdue fall through the route's otherwise rule and get stage 1, so the first reminder fires at 3 days."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Invoices exactly 10 days overdue are labelled stage 2 and get the reminder."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Invoices exactly 17 days overdue are labelled stage 3 and get the reminder."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The 10-day reminder gets a separate outbox.send to dave@midwestpipesupply.com with the same subject and body. This is not a true BCC, but the customer never sees the requester's address, so it achieves the blind copy in effect."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Customer reminders are addressed to item.email, which comes from the invoices sheet rows."
+    },
+    "C-007": {
+     "verdict": "unmet",
+     "why": "The automation sends the reminders to each customer's sheet address (for example practice-cafe@example.org). dave@midwestpipesupply.com only receives the stage-2 copy, not the reminders. This conflicts with the answer that reminders go to dave."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0009326,
+    "inputTokens": 7148,
+    "outputTokens": 1640,
+    "calls": 1
+   },
+   "conv": "HI2~0b195a9f"
+  },
+  "b0-h2/HI1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "polite-rows selects invoices 30-59 days past due and sends the polite template. The practice run sent PR-103 (56 days) a polite reminder."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "firm-rows selects 60-89 days past due and firm-sends uses the firmer 'second reminder' template. No 60-89 day invoice was in the sample, so this is shown by the automation logic, not the run."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "final-rows selects 90+ days past due and final-sends uses the 'final reminder' template. Not exercised by the sample data, but the automation defines it."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The 30-day body is a friendly, courteous request ('friendly reminder', 'disregard if paid', 'at your earliest convenience'), as shown in the practice send."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The 60-day text says it is a second reminder, is more than 60 days overdue, and asks for payment 'as soon as possible'. That is firmer than the polite 30-day text."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The 90-day body is titled 'final reminder', says the client must pay immediately, and mentions further recovery steps."
+    },
+    "C-007": {
+     "verdict": "cannot-tell",
+     "why": "The envelope says the flow is scheduled for Mondays, but the automation has no schedule or weekday trigger, and the practice run does not show one. Only the summary send is defined."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "summary-send is addressed to maria@pixelandpixel.com, and the practice run shows delivery to that address."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "The summary lists every open, non-disputed invoice with customer, email, amount, due date and days past due, which covers who still owes. The practice summary shows four such clients."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "Only status 'open' rows pass the filter, so disputed PR-105 is excluded from every reminder tier and from the summary. The practice run sent nothing to it."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.0010242349999999999,
+    "inputTokens": 9323,
+    "outputTokens": 1780,
+    "calls": 1
+   },
+   "conv": "HI1~46b67239"
+  },
+  "b0-h2/HL1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "unmet",
+     "why": "The new_leads filter keeps only status 'new' and never checks source. The practice run routed Lou (source 'referral') and Ray (source 'event') as well as the website lead Pat."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The ca_leads node filters region in California/CA and assigns those rows to Marcus. The practice sample had no California lead, so this is shown by the automation logic, not by the run."
+    },
+    "C-003": {
+     "verdict": "unmet",
+     "why": "Non-California leads go to Priya only via other_leads, which requires companySize lte 200. Leads with a missing companySize are dropped, so 'else send to priya' is not applied to every non-California lead."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "big_leads (companySize gt 200) is routed to Priya in addition to any other branch. The practice run logged Lou (900 employees) to Priya."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The threshold uses gt 200 for Priya and lte 200 for the non-California branch, so a company of exactly 200 is not sent via the over-200 rule."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "ca_leads sends to Marcus and big_leads sends to Priya with no region exclusion, so a California lead over 200 gets two log rows. The envelope assumptions state this intent. The practice run had no such lead."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "Every appended lead-log row carries an assignTo field naming the recipient, plus assignedAt. The practice run shows this for Priya rows. The Marcus rows were not exercised."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.0008956300000000001,
+    "inputTokens": 6851,
+    "outputTokens": 1572,
+    "calls": 1
+   },
+   "conv": "HL1~4f53cda1"
+  },
+  "b0-h2/HO2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The workflow posts the summary once per invocation, and the 9am trigger is external per the envelope assumptions. Nothing shown proves the 9am timing itself."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "open_alerts filters resolved=false and severity in [warning, critical]. The practice post listed 3 items: one critical, one warning, and one critical already acknowledged."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "post_summary targets #it-oncall, and verify_post independently confirms the post via chat.audit. The practice run reports the post passed."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "critical_open keeps only severity=critical and acknowledged=false. send_email is gated on that count being above 0. The practice email covered only PA-1, the unacknowledged critical."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "send_email's to field is n.okafor@stmaryshospital.org, and verify_email checks that recipient. The practice email went to that address."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "Email is driven only by count_critical, which counts unacknowledged criticals. Warnings never enter the email path. The practice email contained no warning alerts, and PA-2 (warning) did not trigger one."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.0006068,
+    "inputTokens": 7018,
+    "outputTokens": 991,
+    "calls": 1
+   },
+   "conv": "HO2"
+  },
+  "b0-h2/HL2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The rule routes region values west, west coast or pacific to Ellen, but the practice data has no west coast lead, so the run does not show this routing."
+    },
+    "C-002": {
+     "verdict": "cannot-tell",
+     "why": "The rule routes region values east, east coast, northeast, southeast or atlantic to Rajesh, but the practice data has no east coast lead, so the run does not show this routing."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Practice leads with regions EMEA, NA and APAC were all assigned to sarah@nimbusconsulting.io, and the otherwise rule sends non-coast regions to Sarah."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Lou with budget 60000 triggered a notification e-mail to tom@nimbusconsulting.io. The copy is a separate e-mail rather than a true cc, which the automation's assumptions disclose."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "Leads with budgets 5000, 800 and 2000 produced no e-mail to Tom. The send node's when-condition and acceptance check limit notifications to budgets above 25000."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "One lead-log row was appended per routed lead, and the audit step with its pass result confirms the rows are in the sheet."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The person left this open, and the automation chose a sensible approach: a separate notification e-mail and a log without per-row timestamps."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The person left this open, and the automation chose a sensible approach for the second open question."
+    },
+    "C-009": {
+     "verdict": "met",
+     "why": "The automation uses ellen@, rajesh@ and sarah@nimbusconsulting.io as the assignment targets, matching the addresses the person gave."
+    },
+    "C-010": {
+     "verdict": "met",
+     "why": "The notification node sends to tom@nimbusconsulting.io, matching the address the person gave."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.0009242650000000001,
+    "inputTokens": 6903,
+    "outputTokens": 1628,
+    "calls": 1
+   },
+   "conv": "HL2~c06128c4"
+  },
+  "b0-h2/HO1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The automation has no schedule. It assumes an external runner starts it daily with input.now. Nothing shows the 8:00 timing, and the practice run failed before any post."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The unresolved node keeps every row with resolved == false, and digest_lines and the count are built from that full set. The logic covers all unresolved alerts."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The digest_lines template renders each line as '- [{{severity}}] {{service}}: ...', so every alert shows severity and service."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "chat.post targets channel 'oncall', which matches the request. But the practice run failed with CHAT_CHANNEL and posted nothing, so delivery to the channel was never shown."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "critical_unacked keeps critical, unacknowledged alerts. aged computes whole hours since 'at' against input.now, and overdue keeps hours_open >= 1. The email node runs when overdue.count > 0."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The escalation goes through outbox.send with to set to jordan@corestackit.com, a direct email rather than a channel post."
+    },
+    "C-007": {
+     "verdict": "met",
+     "why": "The escalation path starts from a filter on severity == 'critical' before the acknowledged check, so warning and info alerts never reach the email."
+    },
+    "C-008": {
+     "verdict": "met",
+     "why": "The outbox.send 'to' field and the email_check audit recipient are both jordan@corestackit.com."
+    }
+   },
+   "ready": false,
+   "flagged": false,
+   "cost": {
+    "usd": 0.0007867900000000001,
+    "inputTokens": 6817,
+    "outputTokens": 1355,
+    "calls": 1
+   },
+   "conv": "HO1"
+  },
+  "b0-h2/HW1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The workflow says Friday 16:00 scheduling is handled by an external scheduler and the workflow itself runs on demand. Nothing in the automation or practice run sets or shows the Friday 4pm timing."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The practice run reads the tracker export and lists done items (2 of 4) with owners. The automation treats the whole export as this week's work, as its stated assumption says, so the week scope rests on that assumption."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice report has an Open section (1 item) and a Blocked section (1 item), both drawn from the tracker rows."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "The send_report node addresses the e-mail to rick@summitconstruction.com, and the practice run shows the e-mail going to that address. Live sends still ask a person before dispatch."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.000476525,
+    "inputTokens": 6079,
+    "outputTokens": 749,
+    "calls": 1
+   },
+   "conv": "HW1"
+  },
+  "b0-h2/HS2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "met",
+     "why": "Practice run sent FAQ replies to P-1 (subject mentions shipping) and P-3 (body mentions shipping). Closed P-5 correctly skipped. Matching is on subject and body, case-insensitive."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The send_reply body is exactly the quoted FAQ text, 'Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.', and the practice output shows that same text delivered."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "Urgent ticket P-3 (priority urgent) was listed in the urgent email sent to mike@fitzone.com."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Non-urgent open tickets P-1, P-2 and P-4 all appear in a single 'Daily ticket digest' email to mike@fitzone.com. Closed P-5 is excluded."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "No fixed condition applies. The agent's own choices (empty-state messages, verify step, two Mike emails daily) are sensible and do not conflict with the other conditions."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00145277,
+    "inputTokens": 7627,
+    "outputTokens": 1196,
+    "calls": 1
+   },
+   "conv": "HS2~230c9acb"
+  },
+  "b0-h2/HS1": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The practice data has no open ticket mentioning 'refund', so the refund path never ran. The filter is a 'contains' on subject and body, but the node does not state it is case-insensitive."
+    },
+    "C-002": {
+     "verdict": "met",
+     "why": "The send_refund node body is exactly the requested text: 'Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.'"
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The practice run sent the urgent ticket P-3 to zara@widgetly.app in the 'Urgent open tickets' message."
+    },
+    "C-004": {
+     "verdict": "met",
+     "why": "Non-urgent, non-refund open tickets (P-1, P-2, P-4) went to zara@widgetly.app in the 'Morning ticket digest'. The morning timing depends on the external scheduler, which the automation leaves to whoever runs it."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "All three other open tickets were batched into one digest message, with no individual sends."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "The person left details to judgment, and the automation imposes no conflicting constraint on formatting or ordering."
+    }
+   },
+   "ready": true,
+   "flagged": false,
+   "cost": {
+    "usd": 0.00159582,
+    "inputTokens": 7344,
+    "outputTokens": 1554,
+    "calls": 1
+   },
+   "conv": "HS1~a762cff7"
+  },
+  "b0-h2/HW2": {
+   "verdicts": {
+    "C-001": {
+     "verdict": "cannot-tell",
+     "why": "The workflow states it does not create a schedule, and nothing in the automation or practice run sets a Monday trigger."
+    },
+    "C-002": {
+     "verdict": "unmet",
+     "why": "The tracker has no completion date, and the automation lists every task currently marked done, not only those done last week. The practice run's own assumptions confirm older done tasks will appear."
+    },
+    "C-003": {
+     "verdict": "met",
+     "why": "The select and tally steps keep only status done, and the practice email lists only the two done tasks, with the open and blocked rows left out."
+    },
+    "C-004": {
+     "verdict": "cannot-tell",
+     "why": "The practice list has two items, but because the digest includes all done tasks with no date filter, its length over time is not bounded and the practice data does not show it."
+    },
+    "C-005": {
+     "verdict": "met",
+     "why": "The send node's 'to' is liz@beaconcontent.co and the practice run delivered to that address."
+    },
+    "C-006": {
+     "verdict": "met",
+     "why": "This is the same recipient as C-005, liz@beaconcontent.co, and the practice run delivered there."
+    }
+   },
+   "ready": false,
+   "flagged": true,
+   "cost": {
+    "usd": 0.000441775,
+    "inputTokens": 5377,
+    "outputTokens": 694,
+    "calls": 1
+   },
+   "conv": "HW2~9b83ed82"
+  }
+ },
+ "costUsd": 0.133882,
+ "reused": 0
+}

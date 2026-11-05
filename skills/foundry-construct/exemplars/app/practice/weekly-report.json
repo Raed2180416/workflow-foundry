@@ -1,0 +1,35 @@
+{
+  "about": "Practice cases for exemplars/app/weekly-report.json (the example's own practice data). Every address in them is a practice address.",
+  "practiceInput": [
+    {
+      "name": "weekly-report practice data",
+      "input": {
+        "now": "2026-10-16T17:00:00Z"
+      },
+      "sheets": {
+        "tracker": [
+          {
+            "title": "Practice: ship the login fix",
+            "status": "done",
+            "owner": "Sam"
+          },
+          {
+            "title": "Practice: write release notes",
+            "status": "done",
+            "owner": "Ana"
+          },
+          {
+            "title": "Practice: migrate the billing table",
+            "status": "open",
+            "owner": "Lee"
+          },
+          {
+            "title": "Practice: vendor contract review",
+            "status": "blocked",
+            "owner": "Kim"
+          }
+        ]
+      }
+    }
+  ]
+}

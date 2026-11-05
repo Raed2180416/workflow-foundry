@@ -1,0 +1,2501 @@
+{
+ "note": "One label per group (case, check, failing items and reasons). label: true | oracle-gap | false; cause when false.",
+ "groups": {
+  "HC1:87273cfe8cd6": {
+   "case": "HC1",
+   "quote": "don't change anything yet just tell me the diff.",
+   "check": "No sheet row happens.",
+   "evidence": " row on newsletter happened |  row on newsletter happened",
+   "builds": [
+    "control/HC1-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the control adds the missing contacts although the person said not to change anything",
+   "verifiedShare": null
+  },
+  "HC1:ae4eb28c1afe": {
+   "case": "HC1",
+   "quote": "send it to me, nadia@yogaflowstudio.com",
+   "check": "an e-mail where to is “nadia@yogaflowstudio.com” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "b0-h/HC1",
+    "control/HC1-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "no report to the person (b0-h sends none; the control guesses the address)",
+   "verifiedShare": null
+  },
+  "HC2:362eb81540d4": {
+   "case": "HC2",
+   "quote": "skip anybody who's unsubscribed in the sheet",
+   "check": "When the flow handles a crm item where unsubscribed is false, it sends a sheet row whose row.email matches its email. Other crm items are never named in a sheet row.",
+   "evidence": "crm#3 acted on, but no row effect names it | crm#3 acted on, but no row effect names it",
+   "builds": [
+    "b-h/HC2",
+    "b-m/HC2",
+    "control/HC2-0",
+    "control/HC2-2",
+    "ref/HC2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "state-vs-effect",
+   "note": "crm#3 is already on the newsletter list; no new row is owed",
+   "verifiedShare": null
+  },
+  "HC2:5d925b7ee05e": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "Each crm item where email is none of the email values of newsletter and unsubscribed is false gets at least 1 row whose row.email matches its email.",
+   "evidence": "crm#1 0 row effect(s) name it; want atLeast 1 | crm#1 0 row effect(s) name it; want atLeast 1",
+   "builds": [
+    "control/HC2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__mercury-3.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "Rosa (wholesale) is not added",
+   "verifiedShare": null
+  },
+  "HC2:0c4a8b5edadb": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "Each crm item where email is none of the email values of newsletter and unsubscribed is false gets at least 1 row whose row.email matches its email.",
+   "evidence": "crm#1 0 row effect(s) name it; want atLeast 1 | crm#4 0 row effect(s) name it; want atLeast 1",
+   "builds": [
+    "control/HC2-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__mercury-3.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "nobody is added",
+   "verifiedShare": null
+  },
+  "HC2:d76eba47f09b": {
+   "case": "HC2",
+   "quote": "skip anybody who's unsubscribed in the sheet",
+   "check": "When the flow handles a crm item where unsubscribed is false, it sends a sheet row whose row.email matches its email. Other crm items are never named in a sheet row.",
+   "evidence": "crm#1 acted on, but no row effect names it | crm#3 acted on, but no row effect names it",
+   "builds": [
+    "control/HC2-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "conflated: subscribed contacts not added is a real violation of HC2.1, shown under the \"skip unsubscribed\" quote",
+   "verifiedShare": null
+  },
+  "HC2:3b120ce11cd2": {
+   "case": "HC2",
+   "quote": "my email is janet@happytailsbakery.com",
+   "check": "an e-mail where to is “janet@happytailsbakery.com” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "control/HC2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "report to a guessed address",
+   "verifiedShare": null
+  },
+  "HE1:a4d7e2b90ec6": {
+   "case": "HE1",
+   "quote": "Auto approve any expense claim under $50 if there's a receipt",
+   "check": "When the flow handles a expenses item where amount is under “50” and receipt is true, it sends a sheet row whose row.id matches its id with row.decision is “approved”.",
+   "evidence": "expenses#4 row on expense-decisions names it but does not meet the requirement | expenses#9 row on expense-decisions names it but does not meet the requirement",
+   "builds": [
+    "control/HE1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "claims under $50 with a receipt are not approved (limit 25)",
+   "verifiedShare": null
+  },
+  "HE1:1ee0859a9421": {
+   "case": "HE1",
+   "quote": "anything $50 or more goes to dana@brightleafmarketing.com",
+   "check": "When the flow handles a expenses item where amount is at least “50”, it sends an e-mail naming its id with to is “dana@brightleafmarketing.com”.",
+   "evidence": "expenses#1 acted on, but no email effect names it | expenses#1 acted on, but no email effect names it",
+   "builds": [
+    "b0-h/HE1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "a $50+ claim never reaches Dana",
+   "verifiedShare": null
+  },
+  "HE1:5f42b75c14ea": {
+   "case": "HE1",
+   "quote": "if there's no receipt it should go to dana too",
+   "check": "When the flow handles a expenses item where receipt is false, it sends an e-mail naming its id with to is “dana@brightleafmarketing.com”.",
+   "evidence": "expenses#2 acted on, but no email effect names it | expenses#2 acted on, but no email effect names it",
+   "builds": [
+    "b0-h/HE1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "a claim without receipt never reaches Dana",
+   "verifiedShare": null
+  },
+  "HE2:12c00cf79326": {
+   "case": "HE2",
+   "quote": "over that send to Owen",
+   "check": "When the flow handles a expenses item where amount is over “100”, it sends an e-mail whose to matches its email with to is “owen@evergreenlandscaping.co”.",
+   "evidence": "expenses#1 acted on, but no email effect names it | expenses#1 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HE2",
+    "b-m/HE2",
+    "b0-h/HE2",
+    "control/HE2-0",
+    "control/HE2-1",
+    "control/HE2-2",
+    "ref/HE2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "contradictory",
+   "note": "to fixed twice: the claimant's own address (link) and owen@ (requirement)",
+   "verifiedShare": null
+  },
+  "HE2:e9bb6441d19b": {
+   "case": "HE2",
+   "quote": "also if no receipt send to owen",
+   "check": "When the flow handles a expenses item where receipt is false, it sends an e-mail whose to matches its email with to is “owen@evergreenlandscaping.co”.",
+   "evidence": "expenses#2 acted on, but no email effect names it | expenses#2 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HE2",
+    "b-m/HE2",
+    "b0-h/HE2",
+    "control/HE2-0",
+    "control/HE2-1",
+    "control/HE2-2",
+    "ref/HE2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "contradictory",
+   "note": "as HE2:12c00cf79326",
+   "verifiedShare": null
+  },
+  "HE2:f4b48b21155e": {
+   "case": "HE2",
+   "quote": "claims under 100 bucks get approved automatically when they have a photo",
+   "check": "When the flow handles a expenses item where amount is under “100” and receipt is true, it sends a sheet row whose row.id matches its id with row.decision is “approved”.",
+   "evidence": "expenses#4 row on expense-decisions names it but does not meet the requirement",
+   "builds": [
+    "control/HE2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "claims under $100 with a receipt are not approved (limit 50)",
+   "verifiedShare": null
+  },
+  "HI1:f75f04bd2639": {
+   "case": "HI1",
+   "quote": "maria@pixelandpixel.com",
+   "check": "an e-mail where to is “maria@pixelandpixel.com” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "b0-h/HI1",
+    "control/HI1-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "no summary to the person",
+   "verifiedShare": null
+  },
+  "HI2:c0af305f4f68": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "base:e2 email to dave@midwestpipesupply.com: to inColumn does not hold | base:e2 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "ref/HI2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "\"use the emails in the sheet\" is about the customer reminders, not the summary to the person",
+   "verifiedShare": null
+  },
+  "HI2:ff0a38fad516": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "base:e2 email to dave@midwestpipesupply.com: to inColumn does not hold | base:e4 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "control/HI2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "the summary to the person is not a customer reminder",
+   "verifiedShare": null
+  },
+  "HI2:c969b6584a25": {
+   "case": "HI2",
+   "quote": "dave@midwestpipesupply.com",
+   "check": "an e-mail where to is “dave@midwestpipesupply.com” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "b-h/HI2",
+    "b-m/HI2",
+    "b0-h/HI2",
+    "control/HI2-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the person is never told about the second reminders",
+   "verifiedShare": null
+  },
+  "HI2:da36ceb60f43": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "repeat:repeat-2:e3 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "b0-h/HI2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "as HI2:ff0a38fad516",
+   "verifiedShare": null
+  },
+  "HL1:cf77974a176f": {
+   "case": "HL1",
+   "quote": "if company size is over 200 people also send to priya",
+   "check": "When the flow handles a leads item where companySize is over “200”, it sends an e-mail naming its name with to is “priya@sunrisesolar.energy”.",
+   "evidence": "leads#1 email to marcus@sunrisesolar.energy names it but does not meet the requirement | leads#1 email to marcus@sunrisesolar.energy names it but does not meet the requirement",
+   "builds": [
+    "control/HL1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the 900-person lead goes to Marcus (Marcus and Priya swapped)",
+   "verifiedShare": null
+  },
+  "HL1:52f5fa38b4d3": {
+   "case": "HL1",
+   "quote": "if company size is over 200 people also send to priya",
+   "check": "When the flow handles a leads item where companySize is over “200”, it sends an e-mail naming its name with to is “priya@sunrisesolar.energy”.",
+   "evidence": "leads#1 acted on, but no email effect names it | leads#1 acted on, but no email effect names it",
+   "builds": [
+    "b0-h/HL1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the 900-person lead is never e-mailed",
+   "verifiedShare": null
+  },
+  "HO1:04884cf51522": {
+   "case": "HO1",
+   "quote": "if any critical alert isnt acknowledged within an hour",
+   "check": "When the flow handles a alerts item where severity is “critical”, it sends an e-mail naming its message. Other alerts items are never named in an e-mail.",
+   "evidence": "alerts#3 acted on, but no email effect names it | alerts#3 acted on, but no email effect names it",
+   "builds": [
+    "b0-h/HO1",
+    "control/HO1-1",
+    "ref/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "\"isn't acknowledged within an hour\" dropped: alerts#3 (PA-4) is acknowledged; the builds are defective for other reasons",
+   "verifiedShare": null
+  },
+  "HO1:2ec44fda2463": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post has text contains “severity” and text contains “service”.",
+   "evidence": "base:e2 chat in #oncall: text contains \"severity\" does not hold | base:e4 chat in #oncall: text contains \"severity\" does not hold",
+   "builds": [
+    "b-h/HO1",
+    "b-m/HO1",
+    "control/HO1-0",
+    "control/HO1-1",
+    "ref/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "\"include severity and service\" required as the literal words; the digest shows \"[critical] practice-api\"",
+   "verifiedShare": null
+  },
+  "HO1:b4d0078be7bd": {
+   "case": "HO1",
+   "quote": "post a digest of all unresolved alerts",
+   "check": "Each alerts item where resolved is false gets at least 1 chat naming its message.",
+   "evidence": "alerts#3 0 chat effect(s) name it; want atLeast 1 | alerts#3 0 chat effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-h/HO1",
+    "control/HO1-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the 2-day-old unresolved alert PA-4 is left out of \"all unresolved alerts\" (24-hour window)",
+   "verifiedShare": null
+  },
+  "HO1:dbcbb6be3fb2": {
+   "case": "HO1",
+   "quote": "post a digest of all unresolved alerts",
+   "check": "Each alerts item where resolved is false gets at least 1 chat naming its message.",
+   "evidence": "alerts#2 0 chat effect(s) name it; want atLeast 1 | alerts#2 0 chat effect(s) name it; want atLeast 1",
+   "builds": [
+    "control/HO1-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the info alert is left out of \"all unresolved alerts\"",
+   "verifiedShare": null
+  },
+  "HO1:636c11b3846f": {
+   "case": "HO1",
+   "quote": "if any critical alert isnt acknowledged within an hour",
+   "check": "When the flow handles a alerts item where severity is “critical”, it sends an e-mail naming its message. Other alerts items are never named in an e-mail.",
+   "evidence": "alerts#0 acted on, but no email effect names it | alerts#3 acted on, but no email effect names it",
+   "builds": [
+    "control/HO1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "mixed: the unacknowledged critical PA-1 is never e-mailed (real); PA-4 is acknowledged (not owed)",
+   "verifiedShare": null
+  },
+  "HO1:996b8522cf2b": {
+   "case": "HO1",
+   "quote": "jordan@corestackit.com",
+   "check": "an e-mail where to is “jordan@corestackit.com” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "b0-h/HO1",
+    "control/HO1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "no e-mail to the person",
+   "verifiedShare": null
+  },
+  "HO1:32bf4d40479f": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post has text contains “severity” and text contains “service”.",
+   "evidence": "base:e1 chat in #oncall: text contains \"severity\" does not hold | base:e1 chat in #oncall: text contains \"severity\" does not hold",
+   "builds": [
+    "control/HO1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HO1:0f2ebed4d794": {
+   "case": "HO1",
+   "quote": "post a digest of all unresolved alerts",
+   "check": "Each alerts item where resolved is false gets at least 1 chat naming its message.",
+   "evidence": "alerts#2 0 chat effect(s) name it; want atLeast 1 | alerts#3 0 chat effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-m/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "info and 2-day-old alerts left out of the digest",
+   "verifiedShare": null
+  },
+  "HO1:65b81ff0cdea": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post has text contains “severity” and text contains “service”.",
+   "evidence": "base:e2 chat in #oncall: text contains \"severity\" does not hold | base:e2 chat in #oncall: text contains \"severity\" does not hold",
+   "builds": [
+    "b0-h/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HO2:b80182b4e14a": {
+   "case": "HO2",
+   "quote": "for critical alerts nobody has acknowledged, send me an email",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false, it sends an e-mail naming its message with to is “n.okafor@stmaryshospital.org”.",
+   "evidence": "alerts#0 acted on, but no email effect names it | alerts#0 acted on, but no email effect names it",
+   "builds": [
+    "control/HO2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "no e-mail for the unacknowledged critical",
+   "verifiedShare": null
+  },
+  "HO2:ff55f3a7d951": {
+   "case": "HO2",
+   "quote": "for critical alerts nobody has acknowledged, send me an email",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false, it sends an e-mail naming its message with to is “n.okafor@stmaryshospital.org”.",
+   "evidence": "alerts#0 email to requester@example.test names it but does not meet the requirement | alerts#0 email to requester@example.test names it but does not meet the requirement",
+   "builds": [
+    "b0-h/HO2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the page goes to an address the person never gave",
+   "verifiedShare": null
+  },
+  "HO2:7b6335218db4": {
+   "case": "HO2",
+   "quote": "n.okafor@stmaryshospital.org",
+   "check": "Every e-mail has to is “n.okafor@stmaryshospital.org”.",
+   "evidence": "base:e1 email to requester@example.test: to eq \"n.okafor@stmaryshospital.org\" does not hold | base:e1 email to requester@example.test: to eq \"n.okafor@stmaryshospital.org\" does not hold",
+   "builds": [
+    "b0-h/HO2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "e-mail to an address the person never gave",
+   "verifiedShare": null
+  },
+  "HS1:6a6b0e7989bb": {
+   "case": "HS1",
+   "quote": "everything else also goes to zara",
+   "check": "When the flow handles a tickets item where priority is “normal” and body does not contain “refund”, it sends an e-mail naming its id with to is “zara@widgetly.app”.",
+   "evidence": "tickets#4 email to scenario1.ann@customer-practice.example names it but does not meet the requirement",
+   "builds": [
+    "ref/HS1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "evaluator-names",
+   "note": "tickets#4 (P-5, body \"Thanks!\") named by a reply that says \"Thanks for getting in touch\"",
+   "verifiedShare": null
+  },
+  "HS1:6da6c929e5cd": {
+   "case": "HS1",
+   "quote": "tickets that mention 'refund' get our standard refund reply",
+   "check": "When the flow handles a tickets item where body contains “refund”, it sends an e-mail whose to matches its from with body contains “Refunds are processed within 5 business days of approval”.",
+   "evidence": "tickets#5 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HS1",
+    "b-m/HS1",
+    "control/HS1-0",
+    "control/HS1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the refund ticket gets no canned reply",
+   "verifiedShare": null
+  },
+  "HS1:7db2c64441fc": {
+   "case": "HS1",
+   "quote": "urgent tickets go to zara@widgetly.app",
+   "check": "When the flow handles a tickets item where priority is “urgent”, it sends an e-mail naming its id with to is “zara@widgetly.app”.",
+   "evidence": "tickets#2 email to support@widgetly.app names it but does not meet the requirement | tickets#2 email to support@widgetly.app names it but does not meet the requirement",
+   "builds": [
+    "control/HS1-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "urgent tickets to a guessed address",
+   "verifiedShare": null
+  },
+  "HS1:d17ca734c46c": {
+   "case": "HS1",
+   "quote": "everything else also goes to zara",
+   "check": "When the flow handles a tickets item where priority is “normal” and body does not contain “refund”, it sends an e-mail naming its id with to is “zara@widgetly.app”.",
+   "evidence": "tickets#0 email to support@widgetly.app names it but does not meet the requirement | tickets#1 email to support@widgetly.app names it but does not meet the requirement",
+   "builds": [
+    "control/HS1-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the digest goes to a guessed address",
+   "verifiedShare": null
+  },
+  "HS1:be93c1633753": {
+   "case": "HS1",
+   "quote": "everything else also goes to zara in one digest",
+   "check": "At most 1 email where subject contains “digest” in one run.",
+   "evidence": " 2 matching email effect(s); want atMost 1",
+   "builds": [
+    "b0-h/HS1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "evaluator-repeat",
+   "note": "\"at most 1 digest in one run\" counted over the two-run repeat view: one digest per run",
+   "verifiedShare": null
+  },
+  "HS2:f5e0571f38f7": {
+   "case": "HS2",
+   "quote": "if a ticket mentions 'shipping' answer with our shipping faq answer",
+   "check": "When the flow handles a tickets item where body contains “shipping”, it sends an e-mail whose to matches its from with body contains “Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.”.",
+   "evidence": "tickets#2 acted on, but no email effect names it | tickets#2 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HS2",
+    "b-m/HS2",
+    "control/HS2-0",
+    "control/HS2-1",
+    "control/HS2-2",
+    "ref/HS2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the build never answers a shipping question (the item shown is the overlap ticket P-3)",
+   "byBuild": {
+    "ref/HS2": {
+     "label": "false",
+     "cause": "rules-overlap",
+     "note": "tickets#2 is the urgent site-down report that mentions the shipping page: the urgent rule claims it"
+    },
+    "control/HS2-0": {
+     "label": "false",
+     "cause": "rules-overlap",
+     "note": "this control answers shipping questions (FAQ to ann); P-3 is the overlap ticket"
+    }
+   },
+   "verifiedShare": null
+  },
+  "HS2:65c2c4fe8a75": {
+   "case": "HS2",
+   "quote": "all other tickets also go to mike in a single daily digest",
+   "check": "Each tickets item where priority is “normal” gets at most 1 email where to is “mike@fitzone.com” naming its id.",
+   "evidence": "tickets#1 2 email effect(s) name it; want atMost 1 | tickets#3 2 email effect(s) name it; want atMost 1",
+   "builds": [
+    "b-h/HS2",
+    "b-m/HS2",
+    "ref/HS2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "\"a single daily digest\" bound as each ticket at most once ever; the repeat run is the next day, whose digest names the still-open tickets again",
+   "verifiedShare": null
+  },
+  "HS2:12cbe110375a": {
+   "case": "HS2",
+   "quote": "anything urgent goes to mike at mike@fitzone.com",
+   "check": "When the flow handles a tickets item where priority is “urgent”, it sends an e-mail naming its id with to is “mike@fitzone.com”.",
+   "evidence": "tickets#2 email to support@fitzone.com names it but does not meet the requirement | tickets#2 email to support@fitzone.com names it but does not meet the requirement",
+   "builds": [
+    "control/HS2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "urgent tickets to a guessed address",
+   "verifiedShare": null
+  },
+  "HS2:9a21c2f623bb": {
+   "case": "HS2",
+   "quote": "all other tickets also go to mike in a single daily digest",
+   "check": "Each tickets item where priority is “normal” gets at most 1 email where to is “mike@fitzone.com” naming its id.",
+   "evidence": "tickets#0 2 email effect(s) name it; want atMost 1 | tickets#1 2 email effect(s) name it; want atMost 1",
+   "builds": [
+    "control/HS2-1",
+    "control/HS2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "as HS2:65c2c4fe8a75 (the repeat run is the next day)",
+   "verifiedShare": null
+  },
+  "HS2:e402fc86f96e": {
+   "case": "HS2",
+   "quote": "all other tickets also go to mike in a single daily digest",
+   "check": "Each tickets item where priority is “normal” gets at most 1 email where to is “mike@fitzone.com” naming its id.",
+   "evidence": "tickets#0 2 email effect(s) name it; want atMost 1 | tickets#0 2 email effect(s) name it; want atMost 1",
+   "builds": [
+    "b0-h/HS2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "scenario-names",
+   "note": "as HS1:ef5fbda044c2",
+   "verifiedShare": null
+  },
+  "HW1:351a7e8a162a": {
+   "case": "HW1",
+   "quote": "send it to rick@summitconstruction.com",
+   "check": "an e-mail where to is “rick@summitconstruction.com” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "control/HW1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "wrong recipient",
+   "verifiedShare": null
+  },
+  "HW2:cfd3ff09e9f3": {
+   "case": "HW2",
+   "quote": "no open or blocked needed",
+   "check": "When the flow handles a tracker item where status is “done”, it sends an e-mail where to is “liz@beaconcontent.co” naming its title. Other tracker items are never named in an e-mail.",
+   "evidence": "tracker#2 not in scope, yet email to liz@beaconcontent.co names it | tracker#2 not in scope, yet email to liz@beaconcontent.co names it",
+   "builds": [
+    "control/HW2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "open items listed although the person said not needed",
+   "verifiedShare": null
+  },
+  "HW2:423102c424fe": {
+   "case": "HW2",
+   "quote": "no open or blocked needed",
+   "check": "When the flow handles a tracker item where status is “done”, it sends an e-mail where to is “liz@beaconcontent.co” naming its title. Other tracker items are never named in an e-mail.",
+   "evidence": "tracker#3 not in scope, yet email to liz@beaconcontent.co names it | tracker#3 not in scope, yet email to liz@beaconcontent.co names it",
+   "builds": [
+    "control/HW2-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "blocked items listed",
+   "verifiedShare": null
+  },
+  "HW2:c7ed616fa88d": {
+   "case": "HW2",
+   "quote": "email me just the tasks marked done last week",
+   "check": "an e-mail where to is “liz@beaconcontent.co” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "control/HW2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "guessed recipient",
+   "verifiedShare": null
+  },
+  "HW2:91221f2e376c": {
+   "case": "HW2",
+   "quote": "no open or blocked needed",
+   "check": "When the flow handles a tracker item where status is “done”, it sends an e-mail where to is “liz@beaconcontent.co” naming its title. Other tracker items are never named in an e-mail.",
+   "evidence": "tracker#0 acted on, but no email effect names it | tracker#1 acted on, but no email effect names it",
+   "builds": [
+    "control/HW2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s0__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "conflated: done tasks never reach the person (guessed recipient), shown under \"no open or blocked needed\"",
+   "verifiedShare": null
+  },
+  "HC1:3e37ae2fc276": {
+   "case": "HC1",
+   "quote": "don't change anything yet just tell me the diff.",
+   "check": "No sheet row where sheet is set happens.",
+   "evidence": " row on newsletter happened |  row on newsletter happened",
+   "builds": [
+    "control/HC1-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v2-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v3-claude-haiku-5-5-s0__mercury-3.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HC1:87273cfe8cd6",
+   "verifiedShare": null
+  },
+  "HC2:cf58ac5e396a": {
+   "case": "HC2",
+   "quote": "send me a report of who got added",
+   "check": "When the flow handles a crm item where email is none of the email values of newsletter and unsubscribed is false, it sends an e-mail where to is “janet@happytailsbakery.com” naming its name. Other crm items are never named in an e-mail.",
+   "evidence": "crm#3 not in scope, yet email to janet@happytailsbakery.com names it | crm#3 not in scope, yet email to janet@happytailsbakery.com names it",
+   "builds": [
+    "b-h/HC2",
+    "b-m/HC2",
+    "control/HC2-0",
+    "control/HC2-1",
+    "ref/HC2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json"
+   ],
+   "label": "false",
+   "cause": "closed-world",
+   "note": "the report naming a contact outside the add-set is not forbidden by the words",
+   "verifiedShare": null
+  },
+  "HC2:bec5e606046f": {
+   "case": "HC2",
+   "quote": "send me a report of who got added",
+   "check": "an e-mail where to is “janet@happytailsbakery.com” and body is not empty happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "control/HC2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v2-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v3-claude-haiku-5-5-s0__mercury-3.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "report to a guessed address",
+   "verifiedShare": null
+  },
+  "HC2:8fde172a43b6": {
+   "case": "HC2",
+   "quote": "my email is janet@happytailsbakery.com",
+   "check": "Every e-mail where body is not empty has to is “janet@happytailsbakery.com”.",
+   "evidence": "base:e1 email to hello@happytailsbakery.com: to eq \"janet@happytailsbakery.com\" does not hold | repeat-1:e1 email to hello@happytailsbakery.com: to eq \"janet@happytailsbakery.com\" does not hold",
+   "builds": [
+    "control/HC2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v2-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v3-claude-haiku-5-5-s0__mercury-3.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "report to a guessed address",
+   "verifiedShare": null
+  },
+  "HC2:4f9af24066a9": {
+   "case": "HC2",
+   "quote": "send me a report of who got added",
+   "check": "When the flow handles a crm item where email is none of the email values of newsletter and unsubscribed is false, it sends an e-mail where to is “janet@happytailsbakery.com” naming its name. Other crm items are never named in an e-mail.",
+   "evidence": "crm#1 acted on, but no email effect names it | crm#4 acted on, but no email effect names it",
+   "builds": [
+    "control/HC2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v2-claude-haiku-5-5-s0__mercury-3.json",
+    "judge-v3-claude-haiku-5-5-s0__mercury-3.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "report to a guessed address",
+   "verifiedShare": null
+  },
+  "HC2:b0fc306989b7": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item where email is none of the email values of newsletter and unsubscribed is false, it sends a sheet row whose row.email matches its email. Other crm items are never named in a sheet row.",
+   "evidence": "crm#1 acted on, but no row effect names it | crm#4 acted on, but no row effect names it",
+   "builds": [
+    "control/HC2-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "nobody is added",
+   "verifiedShare": null
+  },
+  "HE2:ae6f2b55c807": {
+   "case": "HE2",
+   "quote": "claims under 100 bucks get approved automatically when they have a photo",
+   "check": "When the flow handles a expenses item where amount is under “100” and receipt is true, it sends a sheet row whose row.id matches its id with row.decision is “approved”.",
+   "evidence": "expenses#4 row on expense-decisions names it but does not meet the requirement | expenses#9 row on expense-decisions names it but does not meet the requirement",
+   "builds": [
+    "control/HE2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HE2:f4b48b21155e",
+   "verifiedShare": null
+  },
+  "HE2:16c12e171722": {
+   "case": "HE2",
+   "quote": "over that send to Owen",
+   "check": "When the flow handles a expenses item where amount is at least “100”, it sends an e-mail naming its id with to is “owen@evergreenlandscaping.co”.",
+   "evidence": "expenses#1 email to office@evergreenlandscaping.co names it but does not meet the requirement | expenses#1 email to office@evergreenlandscaping.co names it but does not meet the requirement",
+   "builds": [
+    "control/HE2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "over-limit claims go to a guessed approver",
+   "verifiedShare": null
+  },
+  "HE2:5375cd634bee": {
+   "case": "HE2",
+   "quote": "also if no receipt send to owen",
+   "check": "When the flow handles a expenses item where receipt is false, it sends an e-mail naming its id with to is “owen@evergreenlandscaping.co”.",
+   "evidence": "expenses#2 email to office@evergreenlandscaping.co names it but does not meet the requirement | expenses#2 email to office@evergreenlandscaping.co names it but does not meet the requirement",
+   "builds": [
+    "control/HE2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HE2:16c12e171722",
+   "verifiedShare": null
+  },
+  "HE2:aa5c27e2c384": {
+   "case": "HE2",
+   "quote": "Owen is owen@evergreenlandscaping.co",
+   "check": "Every e-mail has to is “owen@evergreenlandscaping.co”.",
+   "evidence": "base:e1 email to office@evergreenlandscaping.co: to eq \"owen@evergreenlandscaping.co\" does not hold | base:e1 email to office@evergreenlandscaping.co: to eq \"owen@evergreenlandscaping.co\" does not hold",
+   "builds": [
+    "control/HE2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HE2:16c12e171722",
+   "verifiedShare": null
+  },
+  "HI2:0dbc7be68e2e": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "base:e1 email to dave@midwestpipesupply.com: to inColumn does not hold | base:e1 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "ref/HI2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "as HI2:c0af305f4f68",
+   "verifiedShare": null
+  },
+  "HI2:1a1c002dca0c": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "base:e4 email to dave@midwestpipesupply.com: to inColumn does not hold | base:e4 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "control/HI2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "as HI2:ff0a38fad516",
+   "verifiedShare": null
+  },
+  "HI2:f4815b8dbee1": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "repeat:repeat-2:e1 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "b0-h/HI2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "as HI2:ff0a38fad516",
+   "verifiedShare": null
+  },
+  "HL1:8d23a73931dd": {
+   "case": "HL1",
+   "quote": "log who got what",
+   "check": "Each leads item gets at least 1 row whose row.email matches its email.",
+   "evidence": "leads#3 0 row effect(s) name it; want atLeast 1 | leads#4 0 row effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-h/HL1",
+    "b-m/HL1",
+    "b0-h/HL1",
+    "control/HL1-0",
+    "control/HL1-1",
+    "control/HL1-2",
+    "ref/HL1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "\"log who got what\" bound over every lead; the words route NEW leads from the form (first sentence): the spam and already-contacted leads are not routed, so not logged",
+   "verifiedShare": null
+  },
+  "HL1:bc0a7bc0074e": {
+   "case": "HL1",
+   "quote": "if company size is over 200 people also send to priya",
+   "check": "When the flow handles a leads item where companySize is over “200”, it sends an e-mail naming its email with to is “priya@sunrisesolar.energy”.",
+   "evidence": "leads#1 email to marcus@sunrisesolar.energy names it but does not meet the requirement | leads#1 email to marcus@sunrisesolar.energy names it but does not meet the requirement",
+   "builds": [
+    "control/HL1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HL1:cf77974a176f",
+   "verifiedShare": null
+  },
+  "HL1:1cd09622e446": {
+   "case": "HL1",
+   "quote": "if company size is over 200 people also send to priya",
+   "check": "When the flow handles a leads item where companySize is over “200”, it sends an e-mail naming its email with to is “priya@sunrisesolar.energy”.",
+   "evidence": "leads#1 acted on, but no email effect names it | leads#1 acted on, but no email effect names it",
+   "builds": [
+    "b0-h/HL1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HL1:52f5fa38b4d3",
+   "verifiedShare": null
+  },
+  "HO1:4313f5215a25": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post has text contains “severity” and text contains “service”.",
+   "evidence": "base:e2 chat in #oncall: text contains \"severity\" does not hold | repeat-1:e2 chat in #oncall: text contains \"severity\" does not hold",
+   "builds": [
+    "b-h/HO1",
+    "b-m/HO1",
+    "b0-h/HO1",
+    "control/HO1-0",
+    "control/HO1-1",
+    "ref/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HO1:e2696981d8b6": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post has text contains “severity” and text contains “service”.",
+   "evidence": "base:e1 chat in #oncall: text contains \"severity\" does not hold | repeat-1:e1 chat in #oncall: text contains \"severity\" does not hold",
+   "builds": [
+    "control/HO1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HO1:fd29a8488eaa": {
+   "case": "HO1",
+   "quote": "jordan@corestackit.com",
+   "check": "Every e-mail has to is “jordan@corestackit.com”.",
+   "evidence": "base:e1 email to requester@example.test: to eq \"jordan@corestackit.com\" does not hold | repeat-1:e1 email to requester@example.test: to eq \"jordan@corestackit.com\" does not hold",
+   "builds": [
+    "b0-h/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "e-mail to an address the person never gave",
+   "verifiedShare": null
+  },
+  "HO2:04884cf51522": {
+   "case": "HO2",
+   "quote": "don't email for warnings",
+   "check": "When the flow handles a alerts item where severity is “critical”, it sends an e-mail naming its message. Other alerts items are never named in an e-mail.",
+   "evidence": "alerts#3 acted on, but no email effect names it | alerts#3 acted on, but no email effect names it",
+   "builds": [
+    "b0-h/HO2",
+    "control/HO2-1",
+    "control/HO2-3",
+    "ref/HO2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "\"don't email for warnings\" bound as \"every critical gets an e-mail\": alerts#3 (PA-4) is acknowledged, and the words page only criticals nobody acknowledged",
+   "verifiedShare": null
+  },
+  "HO2:8fde4f33a5ae": {
+   "case": "HO2",
+   "quote": "don't email for warnings",
+   "check": "When the flow handles a alerts item where severity is “critical”, it sends an e-mail naming its message. Other alerts items are never named in an e-mail.",
+   "evidence": "alerts#6 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HO2",
+    "b-m/HO2",
+    "control/HO2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "alerts#6 is the targeted copy of PA-1 with acknowledged = true (the edge of HO2.3's own filter): correctly not paged; the check dropped \"nobody has acknowledged\". b-h/HO2 and b-m/HO2 are defective for another reason (24-hour window)",
+   "verifiedShare": null
+  },
+  "HO2:846fcbfc56ac": {
+   "case": "HO2",
+   "quote": "for critical alerts nobody has acknowledged, send me an email",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false, it sends an e-mail naming its id with to is “n.okafor@stmaryshospital.org”.",
+   "evidence": "alerts#0 acted on, but no email effect names it | alerts#0 acted on, but no email effect names it",
+   "builds": [
+    "control/HO2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO2:b80182b4e14a",
+   "verifiedShare": null
+  },
+  "HO2:d28fe9f0fbdc": {
+   "case": "HO2",
+   "quote": "n.okafor@stmaryshospital.org",
+   "check": "an e-mail where to is “n.okafor@stmaryshospital.org” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "b0-h/HO2",
+    "control/HO2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "no e-mail to the person",
+   "verifiedShare": null
+  },
+  "HO2:636c11b3846f": {
+   "case": "HO2",
+   "quote": "don't email for warnings",
+   "check": "When the flow handles a alerts item where severity is “critical”, it sends an e-mail naming its message. Other alerts items are never named in an e-mail.",
+   "evidence": "alerts#0 acted on, but no email effect names it | alerts#3 acted on, but no email effect names it",
+   "builds": [
+    "control/HO2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "conflated and mixed: PA-1 (unacknowledged critical) never e-mailed is a real violation of HO2.3, shown under \"don't email for warnings\"; PA-4 is acknowledged",
+   "verifiedShare": null
+  },
+  "HO2:2b6ec2490721": {
+   "case": "HO2",
+   "quote": "for critical alerts nobody has acknowledged, send me an email",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false, it sends an e-mail naming its id with to is “n.okafor@stmaryshospital.org”.",
+   "evidence": "alerts#0 email to requester@example.test names it but does not meet the requirement | alerts#0 email to requester@example.test names it but does not meet the requirement",
+   "builds": [
+    "b0-h/HO2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO2:ff55f3a7d951",
+   "verifiedShare": null
+  },
+  "HS1:adbf4315548f": {
+   "case": "HS1",
+   "quote": "tickets that mention 'refund' get our standard refund reply",
+   "check": "When the flow handles a tickets item where body contains “refund”, it sends an e-mail whose to matches its from with body contains “Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.”.",
+   "evidence": "tickets#5 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HS1",
+    "b-m/HS1",
+    "control/HS1-0",
+    "control/HS1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HS1:6da6c929e5cd",
+   "verifiedShare": null
+  },
+  "HS1:3a8799dfb8aa": {
+   "case": "HS1",
+   "quote": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.",
+   "check": "Each tickets item where body contains “refund” gets at least 1 email where body contains “Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.” whose to matches its from.",
+   "evidence": "tickets#5 0 email effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-h/HS1",
+    "b-m/HS1",
+    "control/HS1-0",
+    "control/HS1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HS1:6da6c929e5cd",
+   "verifiedShare": null
+  },
+  "HW1:b25ebcaf3fa1": {
+   "case": "HW1",
+   "quote": "email me a report of what got done this week",
+   "check": "an e-mail where body contains “done” happens.",
+   "evidence": " no email effect matches |  no email effect matches",
+   "builds": [
+    "b-h/HW1",
+    "b-m/HW1",
+    "control/HW1-0",
+    "control/HW1-1",
+    "control/HW1-2",
+    "ref/HW1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "\"what got done\" required as the literal word \"done\"; the report says \"Finished\"",
+   "verifiedShare": null
+  },
+  "HW2:4891c9d037bb": {
+   "case": "HW2",
+   "quote": "just the tasks marked done last week",
+   "check": "When the flow handles a tracker item where status is “done”, it sends an e-mail naming its title. Other tracker items are never named in an e-mail.",
+   "evidence": "tracker#2 not in scope, yet email to liz@beaconcontent.co names it | tracker#2 not in scope, yet email to liz@beaconcontent.co names it",
+   "builds": [
+    "control/HW2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HW2:cfd3ff09e9f3",
+   "verifiedShare": null
+  },
+  "HW2:92b8edff693f": {
+   "case": "HW2",
+   "quote": "just the tasks marked done last week",
+   "check": "When the flow handles a tracker item where status is “done”, it sends an e-mail naming its title. Other tracker items are never named in an e-mail.",
+   "evidence": "tracker#3 not in scope, yet email to liz@beaconcontent.co names it | tracker#3 not in scope, yet email to liz@beaconcontent.co names it",
+   "builds": [
+    "control/HW2-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s1__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HW2:423102c424fe",
+   "verifiedShare": null
+  },
+  "HC2:aa7e42d7a3a5": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item where email is not empty, it sends a sheet row whose row.email matches its email. Other crm items are never named in a sheet row.",
+   "evidence": "crm#3 acted on, but no row effect names it | crm#3 acted on, but no row effect names it",
+   "builds": [
+    "b-h/HC2",
+    "b-m/HC2",
+    "control/HC2-0",
+    "control/HC2-2",
+    "ref/HC2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "state-vs-effect",
+   "note": "crm#3 is already on the list",
+   "verifiedShare": null
+  },
+  "HC2:f9eec597b86f": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item where email is not empty, it sends a sheet row whose row.email matches its email. Other crm items are never named in a sheet row.",
+   "evidence": "crm#1 acted on, but no row effect names it | crm#3 acted on, but no row effect names it",
+   "builds": [
+    "control/HC2-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "nobody is added",
+   "verifiedShare": null
+  },
+  "HE1:b41677823d9d": {
+   "case": "HE1",
+   "quote": "log it as approved",
+   "check": "Each expenses item where amount is under “50” and receipt is true gets at least 1 row where row.decision is “approved” whose row.id matches its id.",
+   "evidence": "expenses#4 0 row effect(s) name it; want atLeast 1 | expenses#9 0 row effect(s) name it; want atLeast 1",
+   "builds": [
+    "control/HE1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "claims under $50 with a receipt are not logged as approved",
+   "verifiedShare": null
+  },
+  "HE2:b562a4d7710d": {
+   "case": "HE2",
+   "quote": "keep a record of what u did",
+   "check": "Each expenses item gets at least 1 row whose row.id matches its id.",
+   "evidence": "expenses#3 0 row effect(s) name it; want atLeast 1 | expenses#3 0 row effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-h/HE2",
+    "b-m/HE2",
+    "b0-h/HE2",
+    "control/HE2-0",
+    "control/HE2-1",
+    "control/HE2-2",
+    "ref/HE2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "unstated-qualifier",
+   "note": "expenses#3 is not a pending claim; every build leaves it alone",
+   "verifiedShare": null
+  },
+  "HL2:6ad07e738818": {
+   "case": "HL2",
+   "quote": "ellen@nimbusconsulting.io, rajesh@nimbusconsulting.io, sarah@nimbusconsulting.io, and me: tom@nimbusconsulting.io",
+   "check": "Every e-mail has to is “ellen@nimbusconsulting.io” or “rajesh@nimbusconsulting.io” or “sarah@nimbusconsulting.io” or “tom@nimbusconsulting.io”.",
+   "evidence": "base:e1 email to requester@example.test: to in does not hold | repeat-1:e1 email to requester@example.test: to in does not hold",
+   "builds": [
+    "b0-h/HL2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "e-mail to an address the person never gave",
+   "verifiedShare": null
+  },
+  "HO1:53a462a151f3": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post where channel is “#oncall” has its text contains “severity” and its text contains “service”.",
+   "evidence": "base:e2 chat in #oncall: * contains \"severity\" does not hold | base:e4 chat in #oncall: * contains \"severity\" does not hold",
+   "builds": [
+    "b-h/HO1",
+    "b-m/HO1",
+    "control/HO1-0",
+    "control/HO1-1",
+    "ref/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HO1:f5ace50fbce5": {
+   "case": "HO1",
+   "quote": "post a digest of all unresolved alerts to our #oncall slack channel",
+   "check": "Each alerts item where resolved is false gets at least 1 chat where channel is “#oncall” naming its message.",
+   "evidence": "alerts#3 0 chat effect(s) name it; want atLeast 1 | alerts#3 0 chat effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-h/HO1",
+    "control/HO1-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO1:b4d0078be7bd",
+   "verifiedShare": null
+  },
+  "HO1:81e204a1b2c9": {
+   "case": "HO1",
+   "quote": "post a digest of all unresolved alerts to our #oncall slack channel",
+   "check": "Each alerts item where resolved is false gets at least 1 chat where channel is “#oncall” naming its message.",
+   "evidence": "alerts#2 0 chat effect(s) name it; want atLeast 1 | alerts#2 0 chat effect(s) name it; want atLeast 1",
+   "builds": [
+    "control/HO1-1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO1:dbcbb6be3fb2",
+   "verifiedShare": null
+  },
+  "HO1:934472969150": {
+   "case": "HO1",
+   "quote": "if any critical alert isnt acknowledged within an hour email me directly",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false, it sends an e-mail naming its message with to is “jordan@corestackit.com”.",
+   "evidence": "alerts#0 acted on, but no email effect names it | alerts#0 acted on, but no email effect names it",
+   "builds": [
+    "control/HO1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "no page for the unacknowledged critical",
+   "verifiedShare": null
+  },
+  "HO1:87d74f095165": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post where channel is “#oncall” has its text contains “severity” and its text contains “service”.",
+   "evidence": "base:e1 chat in #oncall: * contains \"severity\" does not hold | base:e1 chat in #oncall: * contains \"severity\" does not hold",
+   "builds": [
+    "control/HO1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HO1:823670dbe712": {
+   "case": "HO1",
+   "quote": "post a digest of all unresolved alerts to our #oncall slack channel",
+   "check": "Each alerts item where resolved is false gets at least 1 chat where channel is “#oncall” naming its message.",
+   "evidence": "alerts#2 0 chat effect(s) name it; want atLeast 1 | alerts#3 0 chat effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-m/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO1:0f2ebed4d794",
+   "verifiedShare": null
+  },
+  "HO1:a5563f06b4b0": {
+   "case": "HO1",
+   "quote": "if any critical alert isnt acknowledged within an hour email me directly",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false, it sends an e-mail naming its message with to is “jordan@corestackit.com”.",
+   "evidence": "alerts#0 email to requester@example.test names it but does not meet the requirement | alerts#0 email to requester@example.test names it but does not meet the requirement",
+   "builds": [
+    "b0-h/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the page goes to an address the person never gave",
+   "verifiedShare": null
+  },
+  "HO1:7ba52de9a695": {
+   "case": "HO1",
+   "quote": "jordan@corestackit.com",
+   "check": "Every e-mail has to is “jordan@corestackit.com”.",
+   "evidence": "base:e1 email to requester@example.test: to eq \"jordan@corestackit.com\" does not hold | base:e1 email to requester@example.test: to eq \"jordan@corestackit.com\" does not hold",
+   "builds": [
+    "b0-h/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO1:fd29a8488eaa",
+   "verifiedShare": null
+  },
+  "HO1:1e1691dd4de0": {
+   "case": "HO1",
+   "quote": "include severity and service",
+   "check": "Every chat post where channel is “#oncall” has its text contains “severity” and its text contains “service”.",
+   "evidence": "base:e2 chat in #oncall: * contains \"severity\" does not hold | base:e2 chat in #oncall: * contains \"severity\" does not hold",
+   "builds": [
+    "b0-h/HO1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HS1:ebe63a37310f": {
+   "case": "HS1",
+   "quote": "everything else also goes to zara in one digest each morning",
+   "check": "Each tickets item where priority is “normal” and body does not contain “refund” gets at most 1 email where to is “zara@widgetly.app” naming its id.",
+   "evidence": "tickets#0 2 email effect(s) name it; want atMost 1 | tickets#1 2 email effect(s) name it; want atMost 1",
+   "builds": [
+    "b-h/HS1",
+    "b-m/HS1",
+    "control/HS1-0",
+    "control/HS1-2",
+    "ref/HS1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "\"one digest each morning\" bound as each ticket at most once ever; the repeat run is the next morning",
+   "verifiedShare": null
+  },
+  "HS1:a64b84aa475a": {
+   "case": "HS1",
+   "quote": "tickets that mention 'refund' get our standard refund reply",
+   "check": "When the flow handles a tickets item where body contains “refund”, it sends an e-mail whose to matches its from.",
+   "evidence": "tickets#5 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HS1",
+    "b-m/HS1",
+    "control/HS1-0",
+    "control/HS1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HS1:6da6c929e5cd",
+   "verifiedShare": null
+  },
+  "HS1:2fe0571abe28": {
+   "case": "HS1",
+   "quote": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.",
+   "check": "Every e-mail where body contains “refund” has body contains “Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.”.",
+   "evidence": "base:e1 email to zara@widgetly.app: body contains \"Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.\" does not hold",
+   "builds": [
+    "b-h/HS1",
+    "b-m/HS1",
+    "control/HS1-0",
+    "control/HS1-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "the digest to zara mentions the refund ticket; the canned-reply wording is about replies to customers",
+   "verifiedShare": null
+  },
+  "HS1:ef5fbda044c2": {
+   "case": "HS1",
+   "quote": "everything else also goes to zara in one digest each morning",
+   "check": "Each tickets item where priority is “normal” and body does not contain “refund” gets at most 1 email where to is “zara@widgetly.app” naming its id.",
+   "evidence": "tickets#0 2 email effect(s) name it; want atMost 1 | tickets#0 2 email effect(s) name it; want atMost 1",
+   "builds": [
+    "b0-h/HS1"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "scenario-names",
+   "note": "a targeted copy's fresh id \"P-1 S2\" contains \"P-1\", so the e-mail about the copy names P-1 too; and the repeat run is the next morning",
+   "verifiedShare": null
+  },
+  "HS2:082dd863f084": {
+   "case": "HS2",
+   "quote": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.",
+   "check": "Every e-mail where its text contains “Orders ship within 2 business days” has its text is “Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.”.",
+   "evidence": "base:e1 email to ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold | base:e1 email to scenario1.ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold",
+   "builds": [
+    "ref/HS2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "the whole message text (subject + greeting + answer) must EQUAL the FAQ answer",
+   "verifiedShare": null
+  },
+  "HS2:01fe39d74190": {
+   "case": "HS2",
+   "quote": "all other tickets also go to mike in a single daily digest",
+   "check": "Each tickets item where priority is not “urgent” gets at least 1 email where to is “mike@fitzone.com” naming its id.",
+   "evidence": "tickets#0 0 email effect(s) name it; want atLeast 1 | tickets#4 0 email effect(s) name it; want atLeast 1",
+   "builds": [
+    "b-h/HS2",
+    "b-m/HS2",
+    "ref/HS2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "\"all other tickets\" bound as every non-urgent ticket: P-1 is the shipping question answered with the FAQ (not \"other\") and P-5 is closed",
+   "verifiedShare": null
+  },
+  "HS2:721a89d95b6a": {
+   "case": "HS2",
+   "quote": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.",
+   "check": "Every e-mail where its text contains “Orders ship within 2 business days” has its text is “Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.”.",
+   "evidence": "base:e1 email to ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold | base:e2 email to scenario1.ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold",
+   "builds": [
+    "control/HS2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HS2:082dd863f084",
+   "verifiedShare": null
+  },
+  "HS2:81c77e857769": {
+   "case": "HS2",
+   "quote": "all other tickets also go to mike in a single daily digest",
+   "check": "Each tickets item where priority is not “urgent” gets at least 1 email where to is “mike@fitzone.com” naming its id.",
+   "evidence": "tickets#0 0 email effect(s) name it; want atLeast 1 | tickets#1 0 email effect(s) name it; want atLeast 1",
+   "builds": [
+    "control/HS2-0"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "mixed: P-2 goes to the guessed address (real); P-1 is the shipping question answered with the FAQ (not owed)",
+   "verifiedShare": null
+  },
+  "HS2:103e9044f684": {
+   "case": "HS2",
+   "quote": "all other tickets also go to mike in a single daily digest",
+   "check": "Each tickets item where priority is not “urgent” gets at least 1 email where to is “mike@fitzone.com” naming its id.",
+   "evidence": "tickets#4 0 email effect(s) name it; want atLeast 1 | tickets#4 0 email effect(s) name it; want atLeast 1",
+   "builds": [
+    "b0-h/HS2",
+    "control/HS2-1",
+    "control/HS2-2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "unstated-qualifier",
+   "note": "tickets#4 is P-5, closed",
+   "verifiedShare": null
+  },
+  "HS2:3f6bd13940fd": {
+   "case": "HS2",
+   "quote": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.",
+   "check": "Every e-mail where its text contains “Orders ship within 2 business days” has its text is “Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.”.",
+   "evidence": "base:e2 email to ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold | base:e4 email to cy@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold",
+   "builds": [
+    "b0-h/HS2"
+   ],
+   "files": [
+    "judge-v1-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HS2:082dd863f084",
+   "verifiedShare": null
+  },
+  "HC1:6b500078a7a4": {
+   "case": "HC1",
+   "quote": "don't change anything yet just tell me the diff.",
+   "check": "No sheet row where its text is not empty happens.",
+   "evidence": " row on newsletter happened |  row on newsletter happened",
+   "builds": [
+    "control/HC1-0"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HC1:87273cfe8cd6",
+   "verifiedShare": null
+  },
+  "HC2:3c3b74c9a36c": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item, it sends a sheet row whose row.email matches its email with row.email is one of the email values of newsletter.",
+   "evidence": "crm#1 row on newsletter names it but does not meet the requirement | crm#3 acted on, but no row effect names it",
+   "builds": [
+    "b-h/HC2",
+    "b-m/HC2",
+    "control/HC2-2",
+    "ref/HC2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "\"isn't on the list\" bound as a requirement that the new row's e-mail IS one of the list's e-mails: nothing can pass",
+   "verifiedShare": null
+  },
+  "HC2:fa127092217a": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item, it sends a sheet row whose row.email matches its email with row.email is one of the email values of newsletter.",
+   "evidence": "crm#3 acted on, but no row effect names it | crm#4 row on newsletter names it but does not meet the requirement",
+   "builds": [
+    "control/HC2-0"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "as HC2:3c3b74c9a36c",
+   "verifiedShare": null
+  },
+  "HC2:5453f86411af": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item, it sends a sheet row whose row.email matches its email with row.email is one of the email values of newsletter.",
+   "evidence": "crm#1 acted on, but no row effect names it | crm#3 acted on, but no row effect names it",
+   "builds": [
+    "control/HC2-1"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "nobody is added (the check's requirement is also wrong, HC2:3c3b74c9a36c, but the shown failure is a missing row)",
+   "verifiedShare": null
+  },
+  "HC2:44ca1b6fec83": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item, it sends a sheet row whose row.email matches its email with row.email is one of the email values of newsletter.",
+   "evidence": "crm#1 row on newsletter names it but does not meet the requirement | crm#4 row on newsletter names it but does not meet the requirement",
+   "builds": [
+    "b-h/HC2",
+    "b-m/HC2",
+    "b0-h/HC2",
+    "control/HC2-2",
+    "ref/HC2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "as HC2:3c3b74c9a36c",
+   "verifiedShare": null
+  },
+  "HE2:34b82e721a66": {
+   "case": "HE2",
+   "quote": "for our expensify file: claims under 100 bucks get approved automatically when they have a photo.",
+   "check": "When the flow handles a expenses item where amount is under “100” and receipt is true, it sends a sheet row whose row.id matches its id with row.decision is “approved”.",
+   "evidence": "expenses#4 row on expense-decisions names it but does not meet the requirement",
+   "builds": [
+    "control/HE2-0"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HE2:f4b48b21155e",
+   "verifiedShare": null
+  },
+  "HE2:379806bb4293": {
+   "case": "HE2",
+   "quote": "over that send to Owen.",
+   "check": "When the flow handles a expenses item where amount is over “100”, it sends an e-mail naming its id with to is “owen@evergreenlandscaping.co”.",
+   "evidence": "expenses#1 email to office@evergreenlandscaping.co names it but does not meet the requirement | expenses#1 email to office@evergreenlandscaping.co names it but does not meet the requirement",
+   "builds": [
+    "control/HE2-2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HE2:16c12e171722",
+   "verifiedShare": null
+  },
+  "HI2:e053f12cadf9": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet.",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "base:e2 email to dave@midwestpipesupply.com: to inColumn does not hold | base:e3 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "ref/HI2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "as HI2:c0af305f4f68",
+   "verifiedShare": null
+  },
+  "HI2:fff48688374e": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet.",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "base:e1 email to dave@midwestpipesupply.com: to inColumn does not hold | base:e2 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "control/HI2-0"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "as HI2:ff0a38fad516",
+   "verifiedShare": null
+  },
+  "HI2:765289937e86": {
+   "case": "HI2",
+   "quote": "use the emails in the sheet.",
+   "check": "Every e-mail has to is one of the email values of invoices.",
+   "evidence": "repeat:repeat-2:e2 email to dave@midwestpipesupply.com: to inColumn does not hold",
+   "builds": [
+    "b0-h/HI2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "selector-it",
+   "note": "as HI2:ff0a38fad516",
+   "verifiedShare": null
+  },
+  "HL1:84f9be84b10c": {
+   "case": "HL1",
+   "quote": "actually if company size is over 200 people also send to priya.",
+   "check": "Each leads item where companySize is over “200” gets at least 1 email where to is “priya@sunrisesolar.energy” naming its email.",
+   "evidence": "leads#1 0 email effect(s) name it; want atLeast 1 | leads#1 0 email effect(s) name it; want atLeast 1",
+   "builds": [
+    "b0-h/HL1",
+    "control/HL1-2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "the 900-person lead never reaches Priya",
+   "verifiedShare": null
+  },
+  "HO1:2cf5027024bc": {
+   "case": "HO1",
+   "quote": "include severity and service.",
+   "check": "a chat post where text contains “severity” and text contains “service” happens.",
+   "evidence": " no chat effect matches |  no chat effect matches",
+   "builds": [
+    "b-h/HO1",
+    "b-m/HO1",
+    "b0-h/HO1",
+    "control/HO1-0",
+    "control/HO1-1",
+    "control/HO1-2",
+    "ref/HO1"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HO1:2ec44fda2463",
+   "verifiedShare": null
+  },
+  "HO1:1f6c0349a82c": {
+   "case": "HO1",
+   "quote": "if any critical alert isnt acknowledged within an hour email me directly.",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false and at is at least “1” hours old, it sends an e-mail naming its message with to is “jordan@corestackit.com”.",
+   "evidence": "alerts#0 acted on, but no email effect names it | alerts#0 acted on, but no email effect names it",
+   "builds": [
+    "control/HO1-2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO1:934472969150",
+   "verifiedShare": null
+  },
+  "HO1:2dc6c52f108f": {
+   "case": "HO1",
+   "quote": "if any critical alert isnt acknowledged within an hour email me directly.",
+   "check": "When the flow handles a alerts item where severity is “critical” and acknowledged is false and at is at least “1” hours old, it sends an e-mail naming its message with to is “jordan@corestackit.com”.",
+   "evidence": "alerts#0 email to requester@example.test names it but does not meet the requirement | alerts#0 email to requester@example.test names it but does not meet the requirement",
+   "builds": [
+    "b0-h/HO1"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HO1:a5563f06b4b0",
+   "verifiedShare": null
+  },
+  "HS2:d20c5009d23c": {
+   "case": "HS2",
+   "quote": "if a ticket mentions 'shipping' answer with our shipping faq answer.",
+   "check": "When the flow handles a tickets item where body contains “shipping”, it sends an e-mail whose to matches its from with body contains “Orders ship within 2 business days and arrive in 3-5 days.”.",
+   "evidence": "tickets#2 acted on, but no email effect names it | tickets#2 acted on, but no email effect names it",
+   "builds": [
+    "b-h/HS2",
+    "b-m/HS2",
+    "control/HS2-0",
+    "control/HS2-1",
+    "control/HS2-2",
+    "ref/HS2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HS2:f5e0571f38f7",
+   "byBuild": {
+    "ref/HS2": {
+     "label": "false",
+     "cause": "rules-overlap",
+     "note": "as HS2:f5e0571f38f7"
+    },
+    "control/HS2-0": {
+     "label": "false",
+     "cause": "rules-overlap",
+     "note": "as HS2:f5e0571f38f7"
+    }
+   },
+   "verifiedShare": null
+  },
+  "HS2:a01b2a81859c": {
+   "case": "HS2",
+   "quote": "anything urgent goes to mike at mike@fitzone.com",
+   "check": "When the flow handles a tickets item where priority is “urgent”, it sends an e-mail where to is “mike@fitzone.com” naming its id. Other tickets items are never named in an e-mail.",
+   "evidence": "tickets#1 not in scope, yet email to mike@fitzone.com names it | tickets#3 not in scope, yet email to mike@fitzone.com names it",
+   "builds": [
+    "b-h/HS2",
+    "b-m/HS2",
+    "ref/HS2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "closed-world",
+   "note": "\"anything urgent goes to mike\" with \"never anyone else\": the other tickets also go to mike (in the digest)",
+   "verifiedShare": null
+  },
+  "HS2:6e96a29e7d4b": {
+   "case": "HS2",
+   "quote": "anything urgent goes to mike at mike@fitzone.com",
+   "check": "When the flow handles a tickets item where priority is “urgent”, it sends an e-mail where to is “mike@fitzone.com” naming its id. Other tickets items are never named in an e-mail.",
+   "evidence": "tickets#2 acted on, but no email effect names it | tickets#2 acted on, but no email effect names it",
+   "builds": [
+    "control/HS2-0"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "true",
+   "cause": null,
+   "note": "as HS2:12cbe110375a",
+   "verifiedShare": null
+  },
+  "HS2:db5ec0b8af22": {
+   "case": "HS2",
+   "quote": "anything urgent goes to mike at mike@fitzone.com",
+   "check": "When the flow handles a tickets item where priority is “urgent”, it sends an e-mail where to is “mike@fitzone.com” naming its id. Other tickets items are never named in an e-mail.",
+   "evidence": "tickets#0 not in scope, yet email to mike@fitzone.com names it | tickets#1 not in scope, yet email to mike@fitzone.com names it",
+   "builds": [
+    "b0-h/HS2",
+    "control/HS2-1",
+    "control/HS2-2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "closed-world",
+   "note": "as HS2:a01b2a81859c",
+   "verifiedShare": null
+  },
+  "HW2:f6b8469df136": {
+   "case": "HW2",
+   "quote": "no open or blocked needed.",
+   "check": "Every e-mail has body does not contain “open” and body does not contain “blocked”.",
+   "evidence": "base:e1 email to liz@beaconcontent.co: body notContains \"open\" does not hold | repeat-1:e1 email to liz@beaconcontent.co: body notContains \"open\" does not hold",
+   "builds": [
+    "b-h/HW2",
+    "b-m/HW2",
+    "control/HW2-0",
+    "control/HW2-1",
+    "ref/HW2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "\"no open or blocked needed\" bound as the body never containing \"open\"/\"blocked\"; the report's count line says \"Still open: 1. Blocked: 1.\" and lists only finished items",
+   "verifiedShare": null
+  },
+  "HW2:3204152ed237": {
+   "case": "HW2",
+   "quote": "no open or blocked needed.",
+   "check": "Every e-mail has body does not contain “open” and body does not contain “blocked”.",
+   "evidence": "base:e1 email to team@beaconcontent.co: body notContains \"open\" does not hold | repeat-1:e1 email to team@beaconcontent.co: body notContains \"open\" does not hold",
+   "builds": [
+    "control/HW2-2"
+   ],
+   "files": [
+    "judge-v1-rule__claude-haiku-5-5.json",
+    "judge-v2-rule__claude-haiku-5-5.json",
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HW2:f6b8469df136; the control is defective for its recipient, not for this",
+   "verifiedShare": null
+  },
+  "HS2:c9da01dfb8fb": {
+   "case": "HS2",
+   "quote": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.",
+   "check": "Every e-mail where its text contains “Orders ship within 2 business days” has its text is “Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.”.",
+   "evidence": "base:e1 email to ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold | base:e1 email to ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold",
+   "builds": [
+    "ref/HS2"
+   ],
+   "files": [
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HS2:082dd863f084",
+   "verifiedShare": null
+  },
+  "HS2:7ed54e2ebf30": {
+   "case": "HS2",
+   "quote": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.",
+   "check": "Every e-mail where its text contains “Orders ship within 2 business days” has its text is “Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.”.",
+   "evidence": "base:e1 email to ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold | base:e2 email to ann@customer-practice.example: * eq \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\" does not hold",
+   "builds": [
+    "control/HS2-0"
+   ],
+   "files": [
+    "judge-v2-claude-haiku-5-5-s2__claude-haiku-5-5.json",
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "over-literal",
+   "note": "as HS2:082dd863f084",
+   "verifiedShare": null
+  },
+  "HS2:84e49f3b22ec": {
+   "case": "HS2",
+   "quote": "all other tickets also go to mike in a single daily digest",
+   "check": "Each tickets item where priority is “normal” gets at most 1 email where to is “mike@fitzone.com” naming its id.",
+   "evidence": "tickets#0 2 email effect(s) name it; want atMost 1",
+   "builds": [
+    "b0-h/HS2"
+   ],
+   "files": [
+    "judge-v3-claude-haiku-5-5-s0__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "scenario-names",
+   "note": "as HS1:ef5fbda044c2 (targeted view only)",
+   "verifiedShare": null
+  },
+  "HS1:cc3a805d408c": {
+   "case": "HS1",
+   "quote": "everything else also goes to zara in one digest each morning",
+   "check": "Each tickets item where priority is “normal” and body does not contain “refund” gets at most 1 email where to is “zara@widgetly.app” naming its id.",
+   "evidence": "tickets#0 2 email effect(s) name it; want atMost 1",
+   "builds": [
+    "b0-h/HS1"
+   ],
+   "files": [
+    "judge-v3-claude-haiku-5-5-s2__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "scenario-names",
+   "note": "as HS1:ef5fbda044c2 (targeted view only)",
+   "verifiedShare": null
+  },
+  "HC2:dbad38afe832": {
+   "case": "HC2",
+   "quote": "add anyone on the sheet that isn't on the list",
+   "check": "When the flow handles a crm item, it sends a sheet row whose row.email matches its email with row.email is one of the email values of newsletter.",
+   "evidence": "crm#4 row on newsletter names it but does not meet the requirement | crm#4 row on newsletter names it but does not meet the requirement",
+   "builds": [
+    "control/HC2-0"
+   ],
+   "files": [
+    "judge-v3-rule__claude-haiku-5-5.json"
+   ],
+   "label": "false",
+   "cause": "binding",
+   "note": "as HC2:3c3b74c9a36c",
+   "verifiedShare": null
+  }
+ }
+}

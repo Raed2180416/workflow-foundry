@@ -1,0 +1,405 @@
+{
+ "note": "Analyst labels for adjudication groups (PREREG-TRACKER §5), written after scoring from each group's evidence and the builds' practice effects (experiments/tracker-v2/explain.mjs). label: true (the build does not do what the person's words say) | oracle-gap (true per the words; the hidden-world oracle does not check it) | false (the check fails although the person's words are met). cause names the root cause of a false alarm (RESULT-TRACKER.md §5).",
+ "causes": {
+  "unstated-qualifier": "the person's words omit a qualifier any sensible build (and the oracle) applies: unsubscribed contacts, receipts, already-paid items; the literal check calls the sensible build wrong",
+  "object-name": "the check selects a system object by the person's name for it (sheet 'mailing list') where the system's name differs ('newsletter')",
+  "state-vs-effect": "the words ask for a state ('the list has everyone'); the check counts new effects, so an item already in that state reads as missed",
+  "binding": "the binder chose a template or a filter the words do not support (a strict count for a 'when', a once-only rule nobody stated, an excluded group included)",
+  "closed-world": "a scope check's 'no other item is ever named' half from words with no exclusive cue",
+  "rules-overlap": "two of the person's rules both claim the item; the build followed the other one",
+  "keyword-category": "the person's category ('asks about shipping') bound to a keyword in free text; the item has the keyword but not the category, or the category without the keyword",
+  "scenario-chimera": "a synthesized practice row built by appending a filter keyword to another row's text; its category is ambiguous by construction",
+  "evaluator-names": "an item 'named' by a common word of its free text ('Thanks!'), so unrelated effects count as acting on it",
+  "over-literal": "content the person described ('what's done', 'alerts', 'open mon-sat 9-6') required as literal words",
+  "selector-it": "'sign it' applied to every message, including ones to the person's own inbox",
+  "boundary-ambiguity": "a synthesized row exactly on an edge the words leave open ('from the last 24h' at exactly 24 h)",
+  "contradictory": "the check fixes one effect field twice: to the item's own value (link) and to a literal (require), so no effect can ever pass"
+ },
+ "labels": {
+  "C1:3758bca48c8d": [
+   "false",
+   "unstated-qualifier",
+   "crm#2 is unsubscribed (every build leaves it off); crm#0 is already on the list (state-vs-effect, v1 only)"
+  ],
+  "C1:7ae72eadd970": [
+   "false",
+   "unstated-qualifier",
+   "crm#2 is unsubscribed"
+  ],
+  "C2:02673c246855": [
+   "false",
+   "object-name",
+   "no sheet is called 'mailing list'; the list is 'newsletter'"
+  ],
+  "C2:5a17f9729ab0": [
+   "false",
+   "object-name",
+   "rows go to 'newsletter'"
+  ],
+  "C2:7f194a4dacf0": [
+   "false",
+   "state-vs-effect",
+   "crm#3 (d@) is already on the list as D@ with another name; the build reports it and adds no row"
+  ],
+  "C2:aa28cc35ec99": [
+   "false",
+   "object-name",
+   "rows go to 'newsletter'"
+  ],
+  "C3:ca3209d6b658": [
+   "true",
+   null,
+   "no report e-mail at all"
+  ],
+  "E1:33a349d399c3": [
+   "false",
+   "unstated-qualifier",
+   "PX-3 has no receipt; the person said up to $50 is fine, every build asks for a receipt"
+  ],
+  "E1:bea7b780086c": [
+   "false",
+   "unstated-qualifier",
+   "PX-3 has no receipt"
+  ],
+  "E2:10131d520974": [
+   "oracle-gap",
+   null,
+   "an expense of exactly 200 (synthesized ON point) is auto-approved; the words say under 200. The hidden world has no 200 case."
+  ],
+  "E2:a4dad8ea25ae": [
+   "false",
+   "binding",
+   "PX-4 is already paid; 'let people know when theirs got approved' is a when, bound as a strict count over every small expense"
+  ],
+  "E3:71a19b1ed956": [
+   "true",
+   null,
+   "no e-mail to the office manager"
+  ],
+  "I1:a31a7fe9cced": [
+   "false",
+   "binding",
+   "the filter includes 'disputed' although the words set disputed bills apart; PR-106 (2 days overdue) is also not chased by any build"
+  ],
+  "I1:eab6d55f8104": [
+   "false",
+   "binding",
+   "the disputed invoice"
+  ],
+  "I2:1f50a53da51f": [
+   "true",
+   null,
+   "no reminder to the two invoices 10+ days overdue"
+  ],
+  "I3:83c738383e1c": [
+   "true",
+   null,
+   "no summary e-mail"
+  ],
+  "I3:ffa957e4e742": [
+   "true",
+   null,
+   "no e-mail to ops@"
+  ],
+  "L1:b04c16603b2a": [
+   "false",
+   "binding",
+   "'go to the right person' bound as a sheet row per lead; the person asked for no log"
+  ],
+  "L1:c7f9a7ef4b26": [
+   "false",
+   "closed-world",
+   "referral and event leads also routed; nothing in the words excludes them"
+  ],
+  "L2:5826b548a156": [
+   "false",
+   "rules-overlap",
+   "Lou is big (900) and a referral; 'go straight to Raj' won"
+  ],
+  "L2:bccf0adbbb96": [
+   "false",
+   "rules-overlap",
+   "same item"
+  ],
+  "L3:53632b6279c9": [
+   "true",
+   null,
+   "non-DACH, non-France leads not assigned to kai"
+  ],
+  "L3:5c5e0d6d431c": [
+   "true",
+   null,
+   "the French lead is not assigned to Paul"
+  ],
+  "L3:6771fa352075": [
+   "true",
+   null,
+   "the French lead is not assigned to Paul"
+  ],
+  "L3:b2e3303d782c": [
+   "true",
+   null,
+   "leads assigned to nobody the person named"
+  ],
+  "L3:f5bd8045ca03": [
+   "true",
+   null,
+   "German and Austrian leads not assigned to Lena"
+  ],
+  "L3:f7d75450d364": [
+   "false",
+   "binding",
+   "'at most one row per lead' is not in the words; the repeat run logs the same leads again (real duplicate behaviour the one-run oracle never sees)"
+  ],
+  "O1:3e1ce664a042": [
+   "false",
+   "boundary-ambiguity",
+   "a synthesized alert exactly 24 h old is posted; 'from the last 24h' does not say whether 24 h is in"
+  ],
+  "O3:6292fc41e159": [
+   "false",
+   "over-literal",
+   "the post says 'alert(s)'"
+  ],
+  "S1:230ab6b05896": [
+   "false",
+   "keyword-category",
+   "P-1 and P-2 are a shipping and a password question by their subjects; their bodies lack the keywords"
+  ],
+  "S1:65bcb7aae368": [
+   "false",
+   "scenario-chimera",
+   "the synthesized row is the shipping question with 'password' appended"
+  ],
+  "S1:7acdeaf8c9ca": [
+   "false",
+   "keyword-category",
+   "P-3 is a site-down report that mentions the shipping page"
+  ],
+  "S1:800e81b0fb3b": [
+   "false",
+   "scenario-chimera",
+   "same chimera row"
+  ],
+  "S1:ff7a9b320df3": [
+   "false",
+   "keyword-category",
+   "P-3 is a site-down report that mentions the shipping page; forwarded"
+  ],
+  "S2:0f42b7c3a042": [
+   "false",
+   "evaluator-names",
+   "P-5 ('Thanks!', closed) is 'named' by every reply that says thanks"
+  ],
+  "S2:944b862a5afa": [
+   "false",
+   "evaluator-names",
+   "same"
+  ],
+  "S2:ad6c3d10456c": [
+   "false",
+   "evaluator-names",
+   "same"
+  ],
+  "S2:b61377d97223": [
+   "false",
+   "over-literal",
+   "'We're open Monday to Saturday, 9am to 6pm'"
+  ],
+  "S3:0a10b629449b": [
+   "false",
+   "evaluator-names",
+   "P-5 'Thanks!'"
+  ],
+  "S3:2b4066d51111": [
+   "false",
+   "selector-it",
+   "only the internal digest to support@ is unsigned"
+  ],
+  "S3:98d6294fa2ed": [
+   "true",
+   null,
+   "P-1 and P-2 are answered directly instead of going to support@"
+  ],
+  "S3:b8f8aaaa168f": [
+   "false",
+   "evaluator-names",
+   "P-5 'Thanks!'"
+  ],
+  "S3:be214f93cdeb": [
+   "false",
+   "selector-it",
+   "only the internal digest is unsigned"
+  ],
+  "S3:f283c2493232": [
+   "true",
+   null,
+   "P-1 answered directly instead of going to support@"
+  ],
+  "W2:b25ebcaf3fa1": [
+   "false",
+   "over-literal",
+   "'Finished:' for 'what's done'"
+  ],
+  "W3:7c99e18b91e2": [
+   "true",
+   null,
+   "no e-mail at all"
+  ],
+  "W3:faea89c57f08": [
+   "true",
+   null,
+   "no e-mail at all"
+  ],
+  "C1:35ea4afbc8e4": [
+   "false",
+   "unstated-qualifier",
+   "crm#2 is unsubscribed"
+  ],
+  "C1:becfdf93d790": [
+   "false",
+   "unstated-qualifier",
+   "crm#2 is unsubscribed; crm#0 already on the list (state-vs-effect, v1)"
+  ],
+  "C2:dfd7b8c6d6c5": [
+   "false",
+   "object-name",
+   "no sheet is called 'mailing list'"
+  ],
+  "E1:5c64d840f7c6": [
+   "false",
+   "closed-world",
+   "the summary to finance also lists the auto-approved ones; 'send the rest to me' has no exclusive cue"
+  ],
+  "E1:746513304a61": [
+   "false",
+   "unstated-qualifier",
+   "PX-3 has no receipt, PX-4 is already paid"
+  ],
+  "E2:44b831153090": [
+   "false",
+   "binding",
+   "'when theirs got approved' bound with no approval filter: every expense must get an 'approved' e-mail"
+  ],
+  "E2:5c549a371e07": [
+   "oracle-gap",
+   null,
+   "an expense of exactly 200 (synthesized ON point) is auto-approved; the words say under 200"
+  ],
+  "E2:8ba856965b7d": [
+   "false",
+   "closed-world",
+   "the summary to the cofounder also lists the auto-approved ones"
+  ],
+  "E2:ab51051789a7": [
+   "false",
+   "binding",
+   "'when theirs got approved' bound with no approval filter"
+  ],
+  "E3:022536c7b519": [
+   "false",
+   "object-name",
+   "the expense-decisions sheet has no assignTo column (the vocabulary's row columns are a union over sheets)"
+  ],
+  "I2:441b5ea3cf9e": [
+   "false",
+   "selector-it",
+   "only the list to the person's own accounts@ is unsigned"
+  ],
+  "I2:49988aa25d34": [
+   "false",
+   "selector-it",
+   "same"
+  ],
+  "I2:c2bb47ad1343": [
+   "false",
+   "selector-it",
+   "same"
+  ],
+  "I2:7fedb6c3f6a2": [
+   "true",
+   null,
+   "no reminder to the two invoices 10+ days overdue"
+  ],
+  "I3:4df3fd000d58": [
+   "true",
+   null,
+   "no e-mail at all"
+  ],
+  "I3:a3ed7e957243": [
+   "false",
+   "over-literal",
+   "the reminders say 'past due', not 'overdue'"
+  ],
+  "I3:a8f61243078d": [
+   "true",
+   null,
+   "no e-mail at all"
+  ],
+  "I3:de07d44a6917": [
+   "true",
+   null,
+   "no e-mail at all"
+  ],
+  "L2:669dbada7aa4": [
+   "false",
+   "contradictory",
+   "to must equal the lead's own address and sales@ at once"
+  ],
+  "L2:f2eeb5ad3ee2": [
+   "false",
+   "contradictory",
+   "to must equal the lead's own address and raj@ at once"
+  ],
+  "L2:fd01c102be54": [
+   "false",
+   "contradictory",
+   "to must equal the lead's own address and sofia@ at once"
+  ],
+  "S1:d004b3952be1": [
+   "false",
+   "keyword-category",
+   "P-1 and P-2 are a shipping and a password question by their subjects"
+  ],
+  "S1:e2cdea3ffc51": [
+   "false",
+   "keyword-category",
+   "P-3 is a site-down report that mentions the shipping page"
+  ],
+  "S2:3e31cdfa5e94": [
+   "false",
+   "over-literal",
+   "'Monday to Saturday' for 'mon-sat'"
+  ],
+  "S3:0b8cd6deb82a": [
+   "false",
+   "evaluator-names",
+   "P-5 'Thanks!'"
+  ],
+  "S3:0c487b95beca": [
+   "false",
+   "evaluator-names",
+   "P-5 'Thanks!'"
+  ],
+  "S3:d82785c374f9": [
+   "true",
+   null,
+   "P-1 and P-2 answered directly instead of going to support@"
+  ],
+  "S3:f8bd5be54ff9": [
+   "true",
+   null,
+   "P-1 and P-2 answered directly instead of going to support@"
+  ],
+  "W2:4d379dd5b156": [
+   "false",
+   "over-literal",
+   "'Finished:' for 'what's done'"
+  ],
+  "I1:92c601d6e3e5": [
+   "false",
+   "binding",
+   "the filter includes disputed although the words set disputed bills apart: invoices#4 is PR-105 (disputed) and invoices#7 is the targeted disputed copy; b0-h-1/I1 is defective for another reason (wrong address)"
+  ]
+ }
+}

@@ -1,0 +1,2821 @@
+{
+ "capture": "capture-claude-haiku-5-5-s1.json",
+ "captureSha256": "55441300746fcfbb1757fd0bfbbb9aaadfe235427650eec0db6cbfbaf58afccf",
+ "prompt": "tracker-bind/1",
+ "model": "claude-haiku-5-5",
+ "cases": {
+  "HI2~4f53cda1": [
+   {
+    "id": "C-001",
+    "quote": "chase any open invoice that's overdue from our sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 52
+    },
+    "summary": "Reminders go to every open invoice in the sheet that is overdue.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "email",
+     "where": [],
+     "op": "atLeast",
+     "n": 1,
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 1,
+       "n": 1
+      }
+     ],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     }
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every open invoice in the sheet that is overdue must get a reminder e-mail.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "chase any open invoice that's overdue from our sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 52
+    },
+    "summary": "Invoices that are not open (e.g., paid) or not yet overdue get no reminders.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "scope",
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 1,
+       "n": 1
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     },
+     "require": []
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Invoices that are not open or not yet overdue must not get any reminder e-mail.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "start 3 days after due date",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 54,
+     "end": 81
+    },
+    "summary": "The first reminder is sent 3 days after the invoice due date.",
+    "kind": "deadline",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The e-mail record has no send-time field, so one run cannot show that the first reminder was sent exactly 3 days after the due date.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The e-mail record has no send-time field, so one run cannot show that the first reminder was sent exactly 3 days after the due date.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "remind again after 10",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 83,
+     "end": 104
+    },
+    "summary": "The second reminder is sent 10 days after the due date.",
+    "kind": "deadline",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The e-mail record has no send-time field, so one run cannot show that the second reminder was sent 10 days after the due date.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The e-mail record has no send-time field, so one run cannot show that the second reminder was sent 10 days after the due date.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "then 17",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 106,
+     "end": 113
+    },
+    "summary": "The third reminder is sent 17 days after the due date.",
+    "kind": "deadline",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The e-mail record has no send-time field, so one run cannot show that the third reminder was sent 17 days after the due date.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The e-mail record has no send-time field, so one run cannot show that the third reminder was sent 17 days after the due date.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "bcc me on the 2nd one",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 115,
+     "end": 136
+    },
+    "summary": "The user is BCC'd on the second reminder only.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The e-mail channel has only to, subject, body and text fields; no field records a BCC recipient, so one run cannot show the user was BCC'd on the second reminder.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The e-mail channel has only to, subject, body and text fields; no field records a BCC recipient, so one run cannot show the user was BCC'd on the second reminder.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-007",
+    "quote": "bcc me on the 2nd one",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 115,
+     "end": 136
+    },
+    "summary": "The user is not BCC'd on the first or third reminders.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The e-mail channel has no BCC field, so one run cannot show the user was left off the first and third reminders.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The e-mail channel has no BCC field, so one run cannot show the user was left off the first and third reminders.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-008",
+    "quote": "use the emails in the sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 138,
+     "end": 165
+    },
+    "summary": "Reminders are addressed to the email addresses listed in the sheet.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "field",
+     "channel": "email",
+     "where": [],
+     "require": [
+      {
+       "path": "to",
+       "op": "inColumn",
+       "source": "invoices",
+       "column": "email"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every reminder e-mail must be addressed to an e-mail listed in the invoices sheet.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HL1~063fbc73": [
+   {
+    "id": "C-001",
+    "quote": "new leads come in on our website form",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 37
+    },
+    "summary": "The automation applies to new leads submitted through the website form.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Describes where new leads arrive (the website form), which sets the scope of the other checks; it states no separate requirement.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "not-a-condition",
+     "why": "Describes where new leads arrive (the website form), which sets the scope of the other checks; it states no separate requirement.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "if they're in california send to Marcus",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 39,
+     "end": 78
+    },
+    "summary": "Leads located in California are sent to Marcus.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The leads source has no field recording a California location (it has region and country only, and country has no state values), so one run cannot show whether a lead is in California.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The leads source has no field recording a California location (it has region and country only, and country has no state values), so one run cannot show whether a lead is in California.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "else send to priya",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 79,
+     "end": 97
+    },
+    "summary": "Leads not in California are sent to Priya.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The 'else' branch depends on the California location, which no listed field records, so one run cannot verify it.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The 'else' branch depends on the California location, which no listed field records, so one run cannot verify it.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "if company size is over 200 people also send to priya",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 108,
+     "end": 161
+    },
+    "summary": "Leads whose company size is over 200 people are also sent to Priya.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "leads",
+     "filter": [
+      {
+       "path": "companySize",
+       "op": "gt",
+       "value": 200,
+       "n": 200
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "email",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "priya@sunrisesolar.energy"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Leads with company size over 200 must also get an applied e-mail to Priya.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "Marcus is marcus@sunrisesolar.energy",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 36
+    },
+    "summary": "Marcus's recipient address is marcus@sunrisesolar.energy.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Gives Marcus's e-mail address, a parameter used by other checks rather than a requirement of its own.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "not-a-condition",
+     "why": "Gives Marcus's e-mail address, a parameter used by other checks rather than a requirement of its own.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "Priya is priya@sunrisesolar.energy",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 41,
+     "end": 75
+    },
+    "summary": "Priya's recipient address is priya@sunrisesolar.energy.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Gives Priya's e-mail address, a parameter used by other checks rather than a requirement of its own.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "not-a-condition",
+     "why": "Gives Priya's e-mail address, a parameter used by other checks rather than a requirement of its own.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-007",
+    "quote": "everything else goes to Priya, priya@sunrisesolar.energy",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 76,
+     "end": 132
+    },
+    "summary": "Every lead not routed to Marcus goes to Priya at priya@sunrisesolar.energy.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Routing every non-California lead to Priya depends on the California location, which no listed field records, so one run cannot verify it.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "Routing every non-California lead to Priya depends on the California location, which no listed field records, so one run cannot verify it.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-008",
+    "quote": "log who got what",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 163,
+     "end": 179
+    },
+    "summary": "The automation keeps a log recording which person received each lead.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "leads",
+     "filter": [
+      {
+       "path": "source",
+       "op": "eq",
+       "value": "website"
+      }
+     ],
+     "channel": "row",
+     "where": [],
+     "link": {
+      "item": "email",
+      "effect": "row.email",
+      "op": "eq"
+     },
+     "require": [
+      {
+       "path": "row.assignTo",
+       "op": "nonEmpty"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each website lead the flow routed must have a log row recording who received it.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HS1~4f53cda1": [
+   {
+    "id": "C-001",
+    "quote": "tickets that mention 'refund' get our standard refund reply",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 59
+    },
+    "summary": "Any ticket that mentions 'refund' receives the standard refund reply.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": [
+     "Please paste the exact text of your standard refund reply."
+    ],
+    "binding": {
+     "decision": "needs-answer",
+     "why": "The standard refund reply text was promised ('I'll paste the text below') but is not in the message, so the required body text cannot be set.",
+     "question": "Please paste the exact text of your standard refund reply.",
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "(I'll paste the text below)",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 60,
+     "end": 87
+    },
+    "summary": "The refund reply must be the standard reply text the user pastes below, which is not included in this request.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The pasted reply text is not in the request, so a run cannot confirm the exact wording matches.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "urgent tickets go to zara@widgetly.app",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 89,
+     "end": 127
+    },
+    "summary": "Urgent tickets are routed to zara@widgetly.app.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "zara@widgetly.app"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each urgent ticket must get an e-mail to zara@widgetly.app.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "everything else also goes to zara",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 129,
+     "end": 162
+    },
+    "summary": "Tickets that are neither refund-mentioning nor urgent are also routed to zara@widgetly.app.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "scope",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "ne",
+       "value": "urgent"
+      },
+      {
+       "path": "body",
+       "op": "notContains",
+       "value": "refund"
+      }
+     ],
+     "channel": "email",
+     "where": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "zara@widgetly.app"
+      }
+     ],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": []
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Tickets that are neither urgent nor mention refund must be sent to zara; tickets not in this group must never be named in such an e-mail.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "in one digest each morning",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 163,
+     "end": 189
+    },
+    "summary": "The non-refund, non-urgent tickets are delivered to Zara as a single digest each morning.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The morning timing is a recurring schedule that one practice run cannot verify; the single-digest grouping is checkable separately.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "in one digest",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 163,
+     "end": 176
+    },
+    "summary": "Everything else is grouped into one digest rather than sent as separate messages.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "email",
+     "where": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "zara@widgetly.app"
+      }
+     ],
+     "op": "atMost",
+     "n": 1
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "The non-urgent, non-refund tickets must be grouped into a single digest e-mail to zara per run, so at most one such e-mail is allowed. The morning timing itself cannot be checked.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HS2~4f53cda1": [
+   {
+    "id": "C-001",
+    "quote": "if a ticket mentions 'shipping' answer with our shipping faq answer",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 67
+    },
+    "summary": "Tickets that mention 'shipping' get answered with the shipping FAQ answer.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": [
+     "What is the exact text of your shipping FAQ answer that should be sent to customers?"
+    ],
+    "binding": {
+     "decision": "needs-answer",
+     "why": "The shipping FAQ answer text is not given in the person's words, so the required reply content cannot be checked.",
+     "question": "What is the exact text of your shipping FAQ answer that should be sent to customers?",
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "anything urgent goes to mike at mike@fitzone.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 69,
+     "end": 117
+    },
+    "summary": "Urgent tickets are sent to mike@fitzone.com.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "mike@fitzone.com"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every urgent ticket the flow acted on must get an e-mail to mike@fitzone.com.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "all other tickets also go to mike in a single daily digest",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 123,
+     "end": 181
+    },
+    "summary": "All other (non-urgent) tickets are sent to Mike in one daily digest.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "email",
+     "where": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "mike@fitzone.com"
+      }
+     ],
+     "op": "atLeast",
+     "n": 1,
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "eq",
+       "value": "normal"
+      }
+     ],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     }
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each non-urgent ticket must be included in at least one e-mail to Mike.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "in a single daily digest",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 157,
+     "end": 181
+    },
+    "summary": "The non-urgent tickets are bundled into a single digest message, not sent individually.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "email",
+     "where": [
+      {
+       "path": "subject",
+       "op": "contains",
+       "value": "digest"
+      }
+     ],
+     "op": "exactly",
+     "n": 1
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "The non-urgent tickets must be bundled into exactly one digest e-mail.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "all other tickets also go to mike",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 123,
+     "end": 156
+    },
+    "summary": "Tickets that are not urgent go to Mike, including those that mention shipping if they are not urgent (implied: 'also' means in addition to urgent routing).",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "eq",
+       "value": "normal"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "mike@fitzone.com"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every non-urgent ticket the flow acted on must get an e-mail to Mike.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HC1~4f53cda1": [
+   {
+    "id": "C-001",
+    "quote": "sync my newsletter list with my customer sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 10,
+     "end": 56
+    },
+    "summary": "Compare the newsletter list with the customer sheet to find the differences.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Comparing the newsletter list with the customer sheet is a report-only task; no listed field records a diff report, so one run cannot verify it.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "Comparing the newsletter list with the customer sheet is a report-only task; no listed field records a diff report, so one run cannot verify it.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "I wanna see who's missing from Mailchimp before adding anyone",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 83,
+     "end": 144
+    },
+    "summary": "Show which customers are missing from Mailchimp before any contacts are added.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Listing which customers are missing from the newsletter is a report of differences; no listed channel or field holds that list as a checkable value.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "Listing which customers are missing from the newsletter is a report of differences; no listed channel or field holds that list as a checkable value.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "don't change anything yet just tell me the diff",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 146,
+     "end": 193
+    },
+    "summary": "Make no changes to Mailchimp or the sheet; only report the difference.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "absent",
+     "channel": "row",
+     "where": []
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "No sheet row may be appended: the user asked for no changes, only a report.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "if someone unsubscribed leave em alone",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 195,
+     "end": 233
+    },
+    "summary": "Do not add or modify contacts who have unsubscribed.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "row",
+     "where": [],
+     "op": "atMost",
+     "n": 0,
+     "source": "crm",
+     "filter": [
+      {
+       "path": "unsubscribed",
+       "op": "isTrue"
+      }
+     ],
+     "link": {
+      "item": "email",
+      "effect": "row.email",
+      "op": "eq"
+     }
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Contacts who unsubscribed must not be added or modified: no row effect may name an unsubscribed CRM contact's email.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HI1~46b67239": [
+   {
+    "id": "C-001",
+    "quote": "send a polite reminder at 30 days past due",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 50,
+     "end": 92
+    },
+    "summary": "Send a polite reminder to clients who are 30 days past due.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 30,
+       "n": 30
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     },
+     "require": [
+      {
+       "path": "body",
+       "op": "nonEmpty"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Per open invoice at least 30 days past due, an applied email to its client must exist with a non-empty body. Tone cannot be checked.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "a firmer one at 60",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 94,
+     "end": 112
+    },
+    "summary": "Send a firmer reminder to clients who are 60 days past due.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 60,
+       "n": 60
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     },
+     "require": [
+      {
+       "path": "body",
+       "op": "nonEmpty"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Per open invoice at least 60 days past due, an applied email to its client must exist with a non-empty body.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "and a final one at 90",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 114,
+     "end": 135
+    },
+    "summary": "Send a final reminder to clients who are 90 days past due.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 90,
+       "n": 90
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     },
+     "require": [
+      {
+       "path": "body",
+       "op": "nonEmpty"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Per open invoice at least 90 days past due, an applied email to its client must exist with a non-empty body.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "also email me a summary every monday of who still owes",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 137,
+     "end": 191
+    },
+    "summary": "Email the user a summary every Monday listing clients who still owe money.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Weekly Monday schedule cannot be verified in a single practice run.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "don't send anything to clients who disputed",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 193,
+     "end": 236
+    },
+    "summary": "Send no reminders of any kind to clients who have disputed an invoice.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "absent",
+     "channel": "email",
+     "where": [
+      {
+       "path": "to",
+       "op": "inColumn",
+       "source": "invoices",
+       "column": "email",
+       "filter": [
+        {
+         "path": "status",
+         "op": "eq",
+         "value": "disputed"
+        }
+       ]
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "No email may be sent to any address that belongs to an invoice with status disputed.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "maria@pixelandpixel.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 23
+    },
+    "summary": "The summary email recipient is maria@pixelandpixel.com (answer to where the summary should go).",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "present",
+     "channel": "email",
+     "where": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "maria@pixelandpixel.com"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "The summary email must be sent to maria@pixelandpixel.com.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-007",
+    "quote": "I don't mind - use whatever you think is sensible.",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 50
+    },
+    "summary": "The user leaves the wording, tone, and details of the reminders and summary to the agent's judgment; no specific format is mandated.",
+    "kind": "style",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Gives the agent discretion; no fixed requirement to verify beyond the stated tone of polite, firmer, and final.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   }
+  ],
+  "HI2~0b195a9f": [
+   {
+    "id": "C-001",
+    "quote": "chase any open invoice that's overdue from our sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 52
+    },
+    "summary": "Chase every open invoice that is overdue in the sheet.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "email",
+     "where": [],
+     "op": "atLeast",
+     "n": 1,
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 1,
+       "n": 1
+      }
+     ],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     }
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every open invoice that is overdue in the sheet must get a reminder e-mail.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "open invoice that's overdue",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 10,
+     "end": 37
+    },
+    "summary": "Invoices that are not open or not overdue are not chased.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "scope",
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 1,
+       "n": 1
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     },
+     "require": []
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Invoices that are not open or not overdue must not be chased by e-mail.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "start 3 days after due date",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 54,
+     "end": 81
+    },
+    "summary": "The first reminder goes out 3 days after the invoice's due date.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Reminder timing (3 days after due date) is a schedule; one run's records cannot show when each e-mail was sent relative to due date.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "Reminder timing (3 days after due date) is a schedule; one run's records cannot show when each e-mail was sent relative to due date.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "remind again after 10",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 83,
+     "end": 104
+    },
+    "summary": "The second reminder goes out 10 days after the previous reminder.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Interval of 10 days between reminders is a schedule; no listed field records the gap between sends.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "Interval of 10 days between reminders is a schedule; no listed field records the gap between sends.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "then 17",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 106,
+     "end": 113
+    },
+    "summary": "The third reminder goes out 17 days after the previous reminder.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Interval of 17 days before the third reminder is a schedule; no listed field records the gap between sends.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "Interval of 17 days before the third reminder is a schedule; no listed field records the gap between sends.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "start 3 days after due date, remind again after 10, then 17",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 54,
+     "end": 113
+    },
+    "summary": "Each invoice gets three reminders in total on that schedule.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "email",
+     "where": [],
+     "op": "exactly",
+     "n": 3,
+     "source": "invoices",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "path": "due",
+       "op": "ageDaysGte",
+       "value": 1,
+       "n": 1
+      }
+     ],
+     "link": {
+      "item": "email",
+      "effect": "to",
+      "op": "eq"
+     }
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each chased invoice must receive exactly three reminder e-mails in total.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-007",
+    "quote": "bcc me on the 2nd one",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 115,
+     "end": 136
+    },
+    "summary": "The user is blind-copied on the second reminder email.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The e-mail fields available are to, subject and body; no blind-copy (bcc) field is recorded, so a blind copy to the user cannot be shown.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The e-mail fields available are to, subject and body; no blind-copy (bcc) field is recorded, so a blind copy to the user cannot be shown.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-008",
+    "quote": "use the emails in the sheet",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 138,
+     "end": 165
+    },
+    "summary": "Reminder emails are sent to the addresses listed in the sheet.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "field",
+     "channel": "email",
+     "where": [],
+     "require": [
+      {
+       "path": "to",
+       "op": "inColumn",
+       "source": "invoices",
+       "column": "email"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every reminder e-mail must be addressed to an e-mail address listed in the invoices sheet.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-009",
+    "quote": "dave@midwestpipesupply.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 26
+    },
+    "summary": "The answer to question q1 is dave@midwestpipesupply.com.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Answer to question q1 supplying an address; it states no requirement by itself.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "not-a-condition",
+     "why": "Answer to question q1 supplying an address; it states no requirement by itself.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-010",
+    "quote": "dave@midwestpipesupply.com",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 26
+    },
+    "summary": "The answer to question q2 is dave@midwestpipesupply.com.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Answer to question q2 supplying an address; it states no requirement by itself.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "not-a-condition",
+     "why": "Answer to question q2 supplying an address; it states no requirement by itself.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HL1~4f53cda1": [
+   {
+    "id": "C-001",
+    "quote": "new leads come in on our website form",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 37
+    },
+    "summary": "The automation applies to new leads submitted through the website form.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "States where new leads arrive (background), not a requirement the automation must meet.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "not-a-condition",
+     "why": "States where new leads arrive (background), not a requirement the automation must meet.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "if they're in california send to Marcus",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 39,
+     "end": 78
+    },
+    "summary": "Leads located in California are sent to Marcus.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "No listed leads field records a California location: country only holds France, USA, Japan, Spain and region only EMEA, NA, APAC. One run cannot show this.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "No listed leads field records a California location: country only holds France, USA, Japan, Spain and region only EMEA, NA, APAC. One run cannot show this.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "else send to priya",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 79,
+     "end": 97
+    },
+    "summary": "Leads not located in California are sent to Priya and not to Marcus.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "Depends on the California location, which no listed leads field records (country and region do not show state), so one run cannot show it.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "Depends on the California location, which no listed leads field records (country and region do not show state), so one run cannot show it.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "if company size is over 200 people also send to priya",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 108,
+     "end": 161
+    },
+    "summary": "Any lead whose company size is over 200 people is also sent to Priya, in addition to whoever else received it.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": null,
+    "missing": [
+     "What is Priya's e-mail address, so I can check that leads with company size over 200 are also sent to her?"
+    ],
+    "binding": {
+     "decision": "needs-answer",
+     "why": "Priya's e-mail address is needed to check that the lead is also sent to her; it is not given in the words.",
+     "question": "What is Priya's e-mail address, so I can check that leads with company size over 200 are also sent to her?",
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "log who got what",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 163,
+     "end": 179
+    },
+    "summary": "Each lead's recipients are recorded in a log.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "leads",
+     "filter": [],
+     "channel": "row",
+     "where": [],
+     "link": {
+      "item": "name",
+      "effect": "row.name",
+      "op": "eq"
+     },
+     "require": [
+      {
+       "path": "row.assignTo",
+       "op": "nonEmpty"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each routed lead should have a recipient record; checked per lead via the row log, linked by lead name.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HL2~c06128c4": [
+   {
+    "id": "C-001",
+    "quote": "west coast to ellen",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 13,
+     "end": 32
+    },
+    "summary": "West coast leads are routed to Ellen.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "No listed field records west coast. Leads carry region (EMEA|NA|APAC) and country (France|USA|Japan|Spain) only, so one run cannot show which leads are west coast.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "No listed field records west coast. Leads carry region (EMEA|NA|APAC) and country (France|USA|Japan|Spain) only, so one run cannot show which leads are west coast.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "east coast to rajesh",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 34,
+     "end": 54
+    },
+    "summary": "East coast leads are routed to Rajesh.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "No listed field records east coast. Leads carry region (EMEA|NA|APAC) and country only, so one run cannot show which leads are east coast.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "No listed field records east coast. Leads carry region (EMEA|NA|APAC) and country only, so one run cannot show which leads are east coast.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "everyone else to sarah",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 56,
+     "end": 78
+    },
+    "summary": "All other leads are routed to Sarah.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The catch-all rule depends on coast, which no listed field records. The rule 'everyone else' cannot be identified from the data in one run.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The catch-all rule depends on coast, which no listed field records. The rule 'everyone else' cannot be identified from the data in one run.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "if budget is above 25k also cc me",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 80,
+     "end": 113
+    },
+    "summary": "When a lead's budget is above 25k, Tom is also copied (cc).",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The email channel has only to, subject and body fields. A cc recipient cannot be recorded or checked, so whether Tom is copied on high-budget leads cannot be shown.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The email channel has only to, subject and body fields. A cc recipient cannot be recorded or checked, so whether Tom is copied on high-budget leads cannot be shown.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "keep a log",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 115,
+     "end": 125
+    },
+    "summary": "The automation keeps a log of its activity.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "present",
+     "channel": "row",
+     "where": [
+      {
+       "path": "row.at",
+       "op": "exists"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "The person asked for a log. The flow's log is the rows it appends, so at least one applied row effect should exist.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "ellen@nimbusconsulting.io, rajesh@nimbusconsulting.io, sarah@nimbusconsulting.io, and me: tom@nimbusconsulting.io",
+    "source": {
+     "turn": 3,
+     "kind": "answer",
+     "start": 0,
+     "end": 113
+    },
+    "summary": "The recipients are Ellen, Rajesh, and Sarah at their nimbusconsulting.io addresses, and Tom at tom@nimbusconsulting.io as the cc.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "field",
+     "channel": "email",
+     "where": [],
+     "require": [
+      {
+       "path": "to",
+       "op": "in",
+       "values": [
+        "ellen@nimbusconsulting.io",
+        "rajesh@nimbusconsulting.io",
+        "sarah@nimbusconsulting.io",
+        "tom@nimbusconsulting.io"
+       ]
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "The person named the recipient addresses. Every e-mail the flow sends must go to one of the four listed addresses.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-007",
+    "quote": "I don't mind - use whatever you think is sensible.",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 50
+    },
+    "summary": "For the questions q1 and q2, the person has no preference and leaves the choice to the assistant.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "This delegates choices rather than stating a requirement, so no run can check it against a specific expected outcome.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   }
+  ],
+  "HS1~a762cff7": [
+   {
+    "id": "C-001",
+    "quote": "tickets that mention 'refund' get our standard refund reply",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 59
+    },
+    "summary": "Any ticket that mentions 'refund' receives the standard refund reply.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "body",
+       "op": "contains",
+       "value": "refund"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "from",
+      "effect": "to",
+      "op": "eq"
+     },
+     "require": [
+      {
+       "path": "*",
+       "op": "contains",
+       "value": "Refunds are processed within 5 business days of approval."
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each ticket whose body mentions 'refund' must get an e-mail containing the standard refund reply, linked to the ticket by its sender address.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 13,
+     "end": 130
+    },
+    "summary": "The standard refund reply text is exactly this message.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "field",
+     "channel": "email",
+     "where": [
+      {
+       "path": "*",
+       "op": "contains",
+       "value": "Refunds are processed within 5 business days of approval."
+      }
+     ],
+     "require": [
+      {
+       "path": "*",
+       "op": "eq",
+       "value": "Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away."
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every e-mail that carries the refund reply must carry exactly the standard refund reply text.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "urgent tickets go to zara@widgetly.app",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 89,
+     "end": 127
+    },
+    "summary": "Urgent tickets are routed to zara@widgetly.app.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "zara@widgetly.app"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each urgent ticket must produce an e-mail to zara@widgetly.app that names the ticket id.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "everything else also goes to zara in one digest",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 129,
+     "end": 176
+    },
+    "summary": "All tickets that are not urgent are sent to zara@widgetly.app.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "eq",
+       "value": "normal"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "zara@widgetly.app"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each non-urgent ticket must produce an e-mail to zara@widgetly.app that names the ticket id; the digest timing is not checkable here.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "everything else also goes to zara in one digest",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 129,
+     "end": 176
+    },
+    "summary": "The non-urgent tickets are bundled into a single digest rather than sent individually.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "count",
+     "channel": "email",
+     "where": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "zara@widgetly.app"
+      }
+     ],
+     "op": "exactly",
+     "n": 1
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "The non-urgent tickets should be bundled into one digest e-mail to zara per run, so exactly one such e-mail is expected.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "everything else also goes to zara in one digest each morning",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 129,
+     "end": 189
+    },
+    "summary": "The digest is sent once each morning.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A schedule runs over time; a single practice run cannot confirm the every-morning timing.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   },
+   {
+    "id": "C-007",
+    "quote": "I don't mind - use whatever you think is sensible.",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 50
+    },
+    "summary": "The person leaves the remaining details (such as digest format and handling of unspecified cases) to the agent's judgment, with no specific requirement.",
+    "kind": "other",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "This delegates details to the agent and sets no concrete, verifiable requirement.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   }
+  ],
+  "HS2~230c9acb": [
+   {
+    "id": "C-001",
+    "quote": "if a ticket mentions 'shipping' answer with our shipping faq answer.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 68
+    },
+    "summary": "Any ticket that mentions 'shipping' gets the shipping FAQ answer as its reply.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "body",
+       "op": "contains",
+       "value": "shipping"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "from",
+      "effect": "to",
+      "op": "eq"
+     },
+     "require": [
+      {
+       "path": "body",
+       "op": "contains",
+       "value": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email."
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each ticket whose body mentions 'shipping' gets an applied email reply to the customer containing the shipping FAQ answer.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "Our shipping FAQ answer: \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\"",
+    "source": {
+     "turn": 1,
+     "kind": "answer",
+     "start": 0,
+     "end": 124
+    },
+    "summary": "The shipping reply must use this exact FAQ text: orders ship within 2 business days, arrive in 3-5 days, and customers get a tracking number by email.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "field",
+     "channel": "email",
+     "where": [
+      {
+       "path": "body",
+       "op": "contains",
+       "value": "Orders ship within 2 business days"
+      }
+     ],
+     "require": [
+      {
+       "path": "body",
+       "op": "eq",
+       "value": "Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email."
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every shipping reply email must use the exact FAQ text given by the user.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "anything urgent goes to mike at mike@fitzone.com",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 69,
+     "end": 117
+    },
+    "summary": "Urgent tickets are sent to mike@fitzone.com.",
+    "kind": "when-then",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "when-then",
+     "source": "tickets",
+     "filter": [
+      {
+       "path": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "id",
+      "effect": "*",
+      "op": "mentions"
+     },
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "mike@fitzone.com"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Each urgent ticket gets an applied email addressed to mike@fitzone.com that names the ticket.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "all other tickets also go to mike in a single daily digest.",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 123,
+     "end": 182
+    },
+    "summary": "Non-urgent tickets are sent to Mike in one combined digest per day rather than individually.",
+    "kind": "count",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "A single daily digest is a schedule (once per day) that one practice run cannot show; the recipient 'mike' has no address for non-urgent tickets in the words given.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "A single daily digest is a schedule (once per day) that one practice run cannot show; the recipient 'mike' has no address for non-urgent tickets in the words given.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ],
+  "HW2~9b83ed82": [
+   {
+    "id": "C-001",
+    "quote": "monday mornings email me just the tasks marked done last week",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 0,
+     "end": 61
+    },
+    "summary": "The automation sends its email on Monday mornings.",
+    "kind": "schedule",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "It describes when the job runs, and one practice run cannot confirm the Monday-morning timing.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   },
+   {
+    "id": "C-002",
+    "quote": "email me just the tasks marked done last week",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 16,
+     "end": 61
+    },
+    "summary": "The email includes only tasks marked done in the previous week.",
+    "kind": "must",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "The tracker has no date column, so a run cannot tell which tasks were marked done last week.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "inspection",
+     "why": "The tracker has no date column, so a run cannot tell which tasks were marked done last week.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-003",
+    "quote": "no open or blocked needed",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 63,
+     "end": 88
+    },
+    "summary": "Open tasks and blocked tasks are left out of the email.",
+    "kind": "never",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "scope",
+     "source": "tracker",
+     "filter": [
+      {
+       "path": "status",
+       "op": "eq",
+       "value": "done"
+      }
+     ],
+     "channel": "email",
+     "where": [],
+     "link": {
+      "item": "title",
+      "effect": "body",
+      "op": "mentions"
+     },
+     "require": []
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Tracker items not marked done must never be named in the email.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-004",
+    "quote": "short list is fine",
+    "source": {
+     "turn": 0,
+     "kind": "request",
+     "start": 90,
+     "end": 108
+    },
+    "summary": "The email should be a short list of tasks.",
+    "kind": "style",
+    "origin": "user",
+    "verification": "inspection",
+    "why": "'Short' is vague, so a run cannot be checked against a clear threshold.",
+    "check": null,
+    "missing": [],
+    "binding": {
+     "decision": "capture-inspection"
+    }
+   },
+   {
+    "id": "C-005",
+    "quote": "liz@beaconcontent.co",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 20
+    },
+    "summary": "The email is addressed to liz@beaconcontent.co (answer to q2).",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "field",
+     "channel": "email",
+     "where": [],
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "liz@beaconcontent.co"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every email must be addressed to liz@beaconcontent.co.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   },
+   {
+    "id": "C-006",
+    "quote": "liz@beaconcontent.co",
+    "source": {
+     "turn": 2,
+     "kind": "answer",
+     "start": 0,
+     "end": 20
+    },
+    "summary": "The email is sent to liz@beaconcontent.co (answer to q4).",
+    "kind": "must",
+    "origin": "user",
+    "verification": "test",
+    "why": null,
+    "check": {
+     "template": "field",
+     "channel": "email",
+     "where": [],
+     "require": [
+      {
+       "path": "to",
+       "op": "eq",
+       "value": "liz@beaconcontent.co"
+      }
+     ]
+    },
+    "missing": [],
+    "binding": {
+     "decision": "check",
+     "why": "Every email must be sent to liz@beaconcontent.co.",
+     "question": null,
+     "lint": [],
+     "retried": false,
+     "dropped": null
+    }
+   }
+  ]
+ },
+ "calls": [
+  {
+   "case": "HI2~4f53cda1",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3999,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 11295,
+   "costUsd": 0.003411575,
+   "latencyMs": 16943
+  },
+  {
+   "case": "HL1~063fbc73",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4642,
+   "cacheReadTokens": 8404,
+   "cacheWriteTokens": 3049,
+   "costUsd": 0.0027863650000000003,
+   "latencyMs": 20548
+  },
+  {
+   "case": "HS1~4f53cda1",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3601,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 11140,
+   "costUsd": 0.0031932,
+   "latencyMs": 15603
+  },
+  {
+   "case": "HS2~4f53cda1",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4235,
+   "cacheReadTokens": 8389,
+   "cacheWriteTokens": 2848,
+   "costUsd": 0.00255759,
+   "latencyMs": 17725
+  },
+  {
+   "case": "HC1~4f53cda1",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 2574,
+   "cacheReadTokens": 8384,
+   "cacheWriteTokens": 2772,
+   "costUsd": 0.0017175399999999998,
+   "latencyMs": 13214
+  },
+  {
+   "case": "HI1~46b67239",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 5568,
+   "cacheReadTokens": 11262,
+   "cacheWriteTokens": 15362,
+   "costUsd": 0.00481727,
+   "latencyMs": 22076
+  },
+  {
+   "case": "HI2~0b195a9f",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 5066,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 11467,
+   "costUsd": 0.003966575,
+   "latencyMs": 20497
+  },
+  {
+   "case": "HL1~4f53cda1",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3201,
+   "cacheReadTokens": 8389,
+   "cacheWriteTokens": 2747,
+   "costUsd": 0.002027965,
+   "latencyMs": 28740
+  },
+  {
+   "case": "HL2~c06128c4",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3399,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 11413,
+   "costUsd": 0.003126325,
+   "latencyMs": 15547
+  },
+  {
+   "case": "HS1~a762cff7",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3837,
+   "cacheReadTokens": 8389,
+   "cacheWriteTokens": 2921,
+   "costUsd": 0.002367715,
+   "latencyMs": 16277
+  },
+  {
+   "case": "HS2~230c9acb",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3366,
+   "cacheReadTokens": 8384,
+   "cacheWriteTokens": 2999,
+   "costUsd": 0.002141915,
+   "latencyMs": 15488
+  },
+  {
+   "case": "HW2~9b83ed82",
+   "nodeKey": "bind",
+   "attempt": 0,
+   "model": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 4,
+   "outputTokens": 3552,
+   "cacheReadTokens": 19611,
+   "cacheWriteTokens": 5625,
+   "costUsd": 0.002675635,
+   "latencyMs": 15806
+  }
+ ],
+ "costUsd": 0.034791,
+ "tokens": 211918,
+ "tokenMeter": {}
+}

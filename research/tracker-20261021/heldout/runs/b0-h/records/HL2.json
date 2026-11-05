@@ -1,0 +1,467 @@
+{
+ "arm": "B0-H",
+ "case": "HL2",
+ "expected": "lead-triage",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004426,
+  "tokens": 20822,
+  "inputTokens": 2,
+  "outputTokens": 5127,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14828,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 5127,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14828,
+   "costUsd": 0.004425849999999999,
+   "costUnknown": false,
+   "latencyMs": 28019,
+   "journalId": 14
+  }
+ ],
+ "builderWallMs": 28104,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-leads",
+  "version": 1,
+  "title": "Route leads by coast and log assignments",
+  "goal": "Assign each lead in the leads sheet: region containing 'west' goes to Ellen, containing 'east' goes to Rajesh, everything else goes to Sarah. Append each routed lead to lead-log. For leads with budget above 25000, send a notice copy to the requester at requester@example.test.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Region values name the coast in text (e.g. 'West Coast', 'East Coast'); matching is case-insensitive substring 'west' or 'east'.",
+    "Route rules are applied in order: west first, then east, then everyone else to Sarah.",
+    "The 'cc me' copy is sent as a notice to the requester only, because the Ellen, Rajesh and Sarah e-mail addresses are not in the data.",
+    "Leads of any status (including spam) are routed as the request says."
+   ],
+   "risks": [
+    "Regions such as 'Northeast' or 'Southwest' match by substring and will go to Rajesh or Ellen.",
+    "Leads with a missing region go to Sarah."
+   ],
+   "successCriteria": [
+    "Every lead in the sheet is appended once to lead-log with an assignee.",
+    "Leads with budget above 25000 trigger one notice to the requester.",
+    "The lead-log append is confirmed by an independent sheet audit."
+   ]
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all leads.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Assign Ellen to west coast, Rajesh to east coast, Sarah to everyone else.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "rules": [
+      {
+       "field": "region",
+       "op": "contains",
+       "value": "west",
+       "set": {
+        "assignTo": "Ellen"
+       }
+      },
+      {
+       "field": "region",
+       "op": "contains",
+       "value": "east",
+       "set": {
+        "assignTo": "Rajesh"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "Sarah"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log_rows",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Shape routed leads into lead-log rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_log",
+    "kind": "task",
+    "needs": [
+     "log_rows"
+    ],
+    "description": "Append routed leads to lead-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "high_budget",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Select routed leads with budget above 25000.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "where": [
+      {
+       "field": "budget",
+       "op": "gt",
+       "value": 25000
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notice_text",
+    "kind": "task",
+    "needs": [
+     "high_budget"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.high_budget.count"
+     },
+     "right": 0
+    },
+    "description": "Render the notice lines for high-budget leads.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.high_budget.rows"
+     },
+     "line": "{{name}} ({{company}}) <{{email}}> budget {{budget}} assigned to {{assignTo}}",
+     "empty": "No leads above 25000 budget."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "task",
+    "needs": [
+     "notice_text"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.high_budget.count"
+     },
+     "right": 0
+    },
+    "description": "Send the high-budget lead notice to the requester (cc).",
+    "tool": "outbox.send",
+    "args": {
+     "to": "requester@example.test",
+     "subject": "Leads above 25000 budget routed",
+     "body": {
+      "$ref": "nodes.notice_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "check_log",
+    "kind": "verify",
+    "needs": [
+     "append_log"
+    ],
+    "description": "Independently confirm the lead-log rows appended in this run are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.append_log.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.check_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_log.appended"
+    },
+    "right": {
+     "$ref": "nodes.read_leads.count"
+    }
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.high_budget.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "exists",
+      "value": {
+       "$ref": "nodes.notify.delivered"
+      }
+     }
+    ]
+   }
+  ],
+  "metadata": {
+   "tags": [
+    "leads",
+    "routing"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "requester@example.test",
+     "subject": "Leads above 25000 budget routed",
+     "body": "Ben Ruiz (Harbor Bank) <ben@harborbank.example> budget 40000 assigned to Rajesh\nDex Long (Gulf Energy) <dex@gulfenergy.example> budget 30000 assigned to Sarah"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "Ellen",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Pacific Retail",
+      "email": "ana@pacificretail.example",
+      "name": "Ana Holt"
+     },
+     {
+      "assignTo": "Rajesh",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Harbor Bank",
+      "email": "ben@harborbank.example",
+      "name": "Ben Ruiz"
+     },
+     {
+      "assignTo": "Ellen",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Prairie Foods",
+      "email": "cleo@prairiefoods.example",
+      "name": "Cleo Ward"
+     },
+     {
+      "assignTo": "Sarah",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Gulf Energy",
+      "email": "dex@gulfenergy.example",
+      "name": "Dex Long"
+     },
+     {
+      "assignTo": "Ellen",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Redwood Labs",
+      "email": "eve@redwoodlabs.example",
+      "name": "Eve Moss"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h/foundry-live-4FFF0R",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every lead in the sheet is appended once to lead-log with an assignee.",
+    "exact": "the pass of “Independently confirm the lead-log rows appended in this run are in the sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Leads with budget above 25000 trigger one notice to the requester.",
+    "exact": "the appended of “Append routed leads to lead-log.” equals the count of “Read all leads.”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The lead-log append is confirmed by an independent sheet audit.",
+    "exact": "the count of “Select routed leads with budget above 25000.” equals 0 or the delivered of “Send the high-budget lead notice to the requester (cc).” exists",
+    "passed": true
+   },
+   {
+    "id": "verify.check_log",
+    "plain": "Independently confirm the lead-log rows appended in this run are in the sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to ellen@nimbusconsulting.io containing \"Pacific Retail\"",
+   "outbox : missing a message to rajesh@nimbusconsulting.io containing \"Harbor Bank\"",
+   "outbox : missing a message to sarah@nimbusconsulting.io containing \"Prairie Foods\"",
+   "outbox : missing a message to sarah@nimbusconsulting.io containing \"Gulf Energy\"",
+   "outbox : missing a message to tom@nimbusconsulting.io containing \"Harbor Bank\"",
+   "outbox : missing a message to tom@nimbusconsulting.io containing \"Gulf Energy\"",
+   "outbox : unexpected or wrong message to requester@example.test (\"Leads above 25000 budget routed\")",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Ellen\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Redwood Labs\",\"email\":\"eve@redwoodlabs.example\",\"name\":\"Eve Moss\"}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

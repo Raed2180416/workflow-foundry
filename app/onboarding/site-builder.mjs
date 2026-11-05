@@ -1,5 +1,6 @@
 // The site's builder: one object FoundryApp can hold, routing each request to the right builder.
-//   template given (site form or agent-filled settings)  -> the template form builder ($0, no model)
+//   template given (the site's form)                     -> the template form builder ($0, no model). Agents no longer pass a
+//                                                            template: they build a workflow (the free-form front door, app/FRONT-DOOR.md)
 //   an existing library automation, no template given     -> the form builder on that automation's own card (settings unchanged)
 //   words only                                            -> the text builder: the stub ($0) by default; a model builder only when
 //                                                            the owner wires one (Mercury preview, app/onboarding/builder-worker.mjs)

@@ -1,0 +1,376 @@
+{
+ "arm": "B0-H+repair-t1",
+ "case": "HL2",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "build_failed",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t1",
+     "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-004: For budget 60000 (Practice Lou), the only notice goes to requester@example.test. Nothing copies tom@nimbusconsulting.io.\n- C-006: The automation never uses the listed addresses for Ellen, Rajesh, Sarah or Tom. It uses a Gmail address for the notice and assigns by name.\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00415731,
+  "tokens": 4052,
+  "inputTokens": 2,
+  "outputTokens": 4050,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00415731,
+   "inputTokens": 2,
+   "outputTokens": 4050
+  }
+ ],
+ "builderWallMs": 16033,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "build_failed",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-leads",
+  "version": 1,
+  "title": "Route leads by coast and log assignments",
+  "goal": "Assign each lead in the leads sheet: region containing 'west' goes to Ellen, containing 'east' goes to Rajesh, everything else goes to Sarah. Append each routed lead to lead-log. For leads with budget above 25000, send a notice copy to the requester at requester@example.test.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Region values name the coast in text (e.g. 'West Coast', 'East Coast'); matching is case-insensitive substring 'west' or 'east'.",
+    "Route rules are applied in order: west first, then east, then everyone else to Sarah.",
+    "The 'cc me' copy is sent as a notice to the requester only, because the Ellen, Rajesh and Sarah e-mail addresses are not in the data.",
+    "Leads of any status (including spam) are routed as the request says."
+   ],
+   "risks": [
+    "Regions such as 'Northeast' or 'Southwest' match by substring and will go to Rajesh or Ellen.",
+    "Leads with a missing region go to Sarah."
+   ],
+   "successCriteria": [
+    "Every lead in the sheet is appended once to lead-log with an assignee.",
+    "Leads with budget above 25000 trigger one notice to the requester.",
+    "The lead-log append is confirmed by an independent sheet audit."
+   ]
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all leads.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Assign Ellen to west coast, Rajesh to east coast, Sarah to everyone else.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "rules": [
+      {
+       "field": "region",
+       "op": "contains",
+       "value": "west",
+       "set": {
+        "assignTo": "Ellen"
+       }
+      },
+      {
+       "field": "region",
+       "op": "contains",
+       "value": "east",
+       "set": {
+        "assignTo": "Rajesh"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "Sarah"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log_rows",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Shape routed leads into lead-log rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_log",
+    "kind": "task",
+    "needs": [
+     "log_rows"
+    ],
+    "description": "Append routed leads to lead-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "high_budget",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Select routed leads with budget above 25000.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "where": [
+      {
+       "field": "budget",
+       "op": "gt",
+       "value": 25000
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notice_text",
+    "kind": "task",
+    "needs": [
+     "high_budget"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.high_budget.count"
+     },
+     "right": 0
+    },
+    "description": "Render the notice lines for high-budget leads.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.high_budget.rows"
+     },
+     "line": "{{name}} ({{company}}) <{{email}}> budget {{budget}} assigned to {{assignTo}}",
+     "empty": "No leads above 25000 budget."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "task",
+    "needs": [
+     "notice_text"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.high_budget.count"
+     },
+     "right": 0
+    },
+    "description": "Send the high-budget lead notice to the requester (cc).",
+    "tool": "outbox.send",
+    "args": {
+     "to": "requester@example.test",
+     "subject": "Leads above 25000 budget routed",
+     "body": {
+      "$ref": "nodes.notice_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "check_log",
+    "kind": "verify",
+    "needs": [
+     "append_log"
+    ],
+    "description": "Independently confirm the lead-log rows appended in this run are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.append_log.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.check_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_log.appended"
+    },
+    "right": {
+     "$ref": "nodes.read_leads.count"
+    }
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.high_budget.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "exists",
+      "value": {
+       "$ref": "nodes.notify.delivered"
+      }
+     }
+    ]
+   }
+  ],
+  "metadata": {
+   "tags": [
+    "leads",
+    "routing"
+   ]
+  }
+ },
+ "builtValid": false,
+ "validationErrors": null,
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "no flow ran: the builder ended build_failed"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HL2",
+  "verifiedBefore": false,
+  "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-004: For budget 60000 (Practice Lou), the only notice goes to requester@example.test. Nothing copies tom@nimbusconsulting.io.\n- C-006: The automation never uses the listed addresses for Ellen, Rajesh, Sarah or Tom. It uses a Gmail address for the notice and assigns by name.\nFix the workflow so it meets them."
+ }
+}

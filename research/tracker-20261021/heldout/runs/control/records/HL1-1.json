@@ -1,0 +1,588 @@
+{
+ "arm": "CONTROL",
+ "case": "HL1",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "lead-triage",
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 0,
+  "unknown": 0
+ },
+ "callLog": [],
+ "builderWallMs": 0,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "lead-triage",
+ "slots": {
+  "rules": [
+   {
+    "field": "region",
+    "op": "is",
+    "value": "CA",
+    "assignTo": "marcus@sunrisesolar.energy"
+   }
+  ],
+  "defaultAssignee": "priya@sunrisesolar.energy"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "lead-triage",
+  "version": 1,
+  "title": "New lead routing",
+  "goal": "Each run, send every new lead to the first matching person (region is CA → marcus@sunrisesolar.energy; otherwise priya@sunrisesolar.energy), one e-mail per lead after a person approves it, and log the assignment.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The leads sheet holds one row per lead with name, email, company, region, country, source, companySize, budget, message and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "A lead sent to the wrong person or to no one",
+    "A lead's details sent outside the team"
+   ],
+   "successCriteria": [
+    "Every new lead was sent to exactly one person",
+    "Every assignment is in the lead log",
+    "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Replying to leads",
+    "Changing the leads sheet",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the leads sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "fresh",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the new leads that have an e-mail address",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      },
+      {
+       "field": "email",
+       "op": "exists"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "routed",
+    "kind": "task",
+    "needs": [
+     "fresh"
+    ],
+    "description": "Pick the person for each lead",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.fresh.rows"
+     },
+     "rules": [
+      {
+       "field": "region",
+       "op": "eq",
+       "value": "CA",
+       "set": {
+        "assignTo": "marcus@sunrisesolar.energy"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "priya@sunrisesolar.energy"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "map",
+    "needs": [
+     "routed"
+    ],
+    "description": "E-mail each lead to its person",
+    "items": {
+     "$ref": "nodes.routed.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the lead e-mail",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead for you:\n\nName: {{name}}\nCompany: {{company}}\nE-mail: {{email}}\nRegion: {{region}} ({{country}})\nCompany size: {{size}}\nBudget: {{budget}}\nSource: {{source}}\n\nMessage:\n{{message}}\n\nPlease follow up within one business day.",
+        "variables": {
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         },
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "email": {
+          "$ref": "item.email"
+         },
+         "region": {
+          "$ref": "item.region",
+          "default": ""
+         },
+         "country": {
+          "$ref": "item.country",
+          "default": ""
+         },
+         "size": {
+          "$ref": "item.companySize",
+          "default": ""
+         },
+         "budget": {
+          "$ref": "item.budget",
+          "default": ""
+         },
+         "source": {
+          "$ref": "item.source",
+          "default": ""
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject line",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead: {{company}} ({{name}})",
+        "variables": {
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the lead to its person (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.assignTo"
+        },
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "logRows",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Prepare the assignment log rows",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log",
+    "kind": "task",
+    "needs": [
+     "logRows",
+     "notify"
+    ],
+    "description": "Log who got which lead in the lead-log sheet",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.logRows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "expected",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Who should have received a lead e-mail",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.routed.rows"
+     },
+     "field": "assignTo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "expected",
+     "notify"
+    ],
+    "description": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.expected.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.notify"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "logAudit",
+    "kind": "verify",
+    "needs": [
+     "log",
+     "routed"
+    ],
+    "description": "Re-read the lead log: one row per routed lead",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.routed.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.notify.count"
+    },
+    "right": {
+     "$ref": "nodes.routed.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.logAudit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P02 fetch -> transform -> write, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (crm-or-commerce automations)",
+    "app/core/templates/lead-triage.json sha256 a281f1ea7bbbacd4dead5c702a7d496fbf97d5103f78fda4e767a598f099c702"
+   ],
+   "tags": [
+    "template:lead-triage",
+    "builder:control 1: state written as CA: no California lead matches",
+    "slots:{\"defaultAssignee\":\"priya@sunrisesolar.energy\",\"rules\":[{\"assignTo\":\"marcus@sunrisesolar.energy\",\"field\":\"region\",\"op\":\"is\",\"value\":\"CA\"}]}"
+   ],
+   "rationale": "Frontier-written template \"lead-triage\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by control 1: state written as CA: no California lead matches; every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 4,
+   "approved": 4,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "priya@sunrisesolar.energy",
+     "subject": "New lead: Oakland Homes (Lena Park)",
+     "body": "New lead for you:\n\nName: Lena Park\nCompany: Oakland Homes\nE-mail: lena@oaklandhomes.example\nRegion: California (USA)\nCompany size: 40\nBudget: 18000\nSource: website\n\nMessage:\nQuote for 12 rooftops\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "priya@sunrisesolar.energy",
+     "subject": "New lead: Bayview Logistics (Tom Kwan)",
+     "body": "New lead for you:\n\nName: Tom Kwan\nCompany: Bayview Logistics\nE-mail: tom@bayviewlogistics.example\nRegion: Oregon (USA)\nCompany size: 450\nBudget: 120000\nSource: website\n\nMessage:\nWarehouse roof array\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "priya@sunrisesolar.energy",
+     "subject": "New lead: Desert Sun HOA (Raj Mehta)",
+     "body": "New lead for you:\n\nName: Raj Mehta\nCompany: Desert Sun HOA\nE-mail: raj@desertsunhoa.example\nRegion: Arizona (USA)\nCompany size: 15\nBudget: 9000\nSource: website\n\nMessage:\nCommunity solar?\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "priya@sunrisesolar.energy",
+     "subject": "New lead: Golden Gate Farms (Ivy Chen)",
+     "body": "New lead for you:\n\nName: Ivy Chen\nCompany: Golden Gate Farms\nE-mail: ivy@goldengatefarms.example\nRegion: California (USA)\nCompany size: 150\nBudget: 40000\nSource: website\n\nMessage:\nBarn and pumps\n\nPlease follow up within one business day."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "priya@sunrisesolar.energy",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Oakland Homes",
+      "email": "lena@oaklandhomes.example",
+      "name": "Lena Park"
+     },
+     {
+      "assignTo": "priya@sunrisesolar.energy",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Desert Sun HOA",
+      "email": "raj@desertsunhoa.example",
+      "name": "Raj Mehta"
+     },
+     {
+      "assignTo": "priya@sunrisesolar.energy",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Bayview Logistics",
+      "email": "tom@bayviewlogistics.example",
+      "name": "Tom Kwan"
+     },
+     {
+      "assignTo": "priya@sunrisesolar.energy",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Golden Gate Farms",
+      "email": "ivy@goldengatefarms.example",
+      "name": "Ivy Chen"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/control/foundry-live-IhH0Yx",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead was sent to exactly one person",
+    "exact": "the count of “E-mail each lead to its person” equals the count of “Pick the person for each lead”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every assignment is in the lead log",
+    "exact": "the pass of “Re-read the outbox: one e-mail per lead to its person, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)",
+    "exact": "the pass of “Re-read the lead log: one row per routed lead” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.logAudit",
+    "plain": "Re-read the lead log: one row per routed lead",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Oakland Homes\"",
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Golden Gate Farms\"",
+   "outbox : unexpected or wrong message to priya@sunrisesolar.energy (\"New lead: Oakland Homes (Lena Park)\")",
+   "outbox : unexpected or wrong message to priya@sunrisesolar.energy (\"New lead: Golden Gate Farms (Ivy Chen)\")",
+   "sheet lead-log: missing an expected item {\"email\":\"lena@oaklandhomes.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"ivy@goldengatefarms.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"priya@sunrisesolar.energy\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Oakland Homes\",\"email\":\"lena@oaklandhomes.example\",\"name\":\"Lena Park\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"priya@sunrisesolar.energy\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Golden Gate Farms\",\"email\":\"ivy@goldengatefarms.example\",\"name\":\"Ivy Chen"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 1
+ }
+}

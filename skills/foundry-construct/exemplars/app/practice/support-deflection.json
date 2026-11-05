@@ -1,0 +1,55 @@
+{
+  "about": "Practice cases for exemplars/app/support-deflection.json (the example's own practice data). Every address in them is a practice address.",
+  "practiceInput": [
+    {
+      "name": "support-deflection practice data",
+      "input": {
+        "now": "2026-10-14T10:00:00Z"
+      },
+      "sheets": {
+        "tickets": [
+          {
+            "id": "P-1",
+            "from": "ann@customer-practice.example",
+            "subject": "How long is shipping?",
+            "body": "When will my order arrive?",
+            "priority": "normal",
+            "status": "open"
+          },
+          {
+            "id": "P-2",
+            "from": "bob@customer-practice.example",
+            "subject": "Forgot my password",
+            "body": "I cannot log in",
+            "priority": "normal",
+            "status": "open"
+          },
+          {
+            "id": "P-3",
+            "from": "cy@customer-practice.example",
+            "subject": "Site down??",
+            "body": "Checkout broken, shipping page errors",
+            "priority": "urgent",
+            "status": "open"
+          },
+          {
+            "id": "P-4",
+            "from": "dee@customer-practice.example",
+            "subject": "Wholesale pricing",
+            "body": "Do you sell in bulk?",
+            "priority": "normal",
+            "status": "open"
+          },
+          {
+            "id": "P-5",
+            "from": "eve@customer-practice.example",
+            "subject": "Shipping to Canada",
+            "body": "Thanks!",
+            "priority": "normal",
+            "status": "closed"
+          }
+        ]
+      }
+    }
+  ]
+}

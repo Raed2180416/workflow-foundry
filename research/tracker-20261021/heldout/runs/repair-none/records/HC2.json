@@ -1,0 +1,446 @@
+{
+ "arm": "B0-H+repair-none",
+ "case": "HC2",
+ "expected": "contact-sync",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003986185,
+  "tokens": 3745,
+  "inputTokens": 2,
+  "outputTokens": 3743,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.003986185,
+   "inputTokens": 2,
+   "outputTokens": 3743
+  }
+ ],
+ "builderWallMs": 43545,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "crm-newsletter-sync",
+  "version": 1,
+  "title": "Sync customers from CRM into newsletter list and report additions",
+  "goal": "Add every non-unsubscribed CRM contact missing from the newsletter list to the newsletter sheet, then send Janet a report of who was added.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "The crm and newsletter sheets are keyed by email and compared case-insensitively.",
+    "Contacts with unsubscribed = true are skipped; only rows with unsubscribed = false are eligible (missing or non-boolean values are skipped to be safe).",
+    "The report recipient is janet@happytailsbakery.com as stated by the requester."
+   ],
+   "risks": [
+    "addedAt is not filled in for appended rows because rows.select can only set constant values; it will be null.",
+    "If the CRM sheet contains the same email more than once, that email may be appended more than once because no capability deduplicates rows.",
+    "The outbox send is an outside action and asks a person before dispatch."
+   ],
+   "successCriteria": [
+    "Every eligible CRM contact not already in newsletter is appended exactly once (barring duplicate CRM emails).",
+    "Unsubscribed contacts are never appended.",
+    "The report lists exactly the appended contacts and is delivered to Janet and verified."
+   ]
+  },
+  "budget": {
+   "maxSteps": 30,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the CRM sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the newsletter list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "active",
+    "kind": "task",
+    "needs": [
+     "read_crm"
+    ],
+    "description": "Keep only contacts that are not unsubscribed.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_crm.rows"
+     },
+     "where": [
+      {
+       "field": "unsubscribed",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "diff",
+    "kind": "task",
+    "needs": [
+     "active",
+     "read_newsletter"
+    ],
+    "description": "Find eligible CRM contacts missing from the newsletter list.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.active.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_newsletter.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pick",
+    "kind": "task",
+    "needs": [
+     "diff"
+    ],
+    "description": "Shape missing contacts as newsletter rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.diff.missing"
+     },
+     "fields": [
+      "email",
+      "name"
+     ],
+     "set": {
+      "source": "crm"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append",
+    "kind": "task",
+    "needs": [
+     "pick"
+    ],
+    "description": "Append the missing contacts to the newsletter sheet.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.pick.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "append",
+     "pick"
+    ],
+    "description": "Confirm the appended rows are in the newsletter sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.pick.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "diff"
+    ],
+    "description": "Render one report line per added contact.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.diff.missing"
+     },
+     "line": "{{email}} ({{name}})",
+     "empty": "No new contacts were added."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "body",
+    "kind": "task",
+    "needs": [
+     "pick",
+     "lines"
+    ],
+    "description": "Build the report text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Newsletter sync ({{now}}): {{count}} contact(s) added from the customer sheet.\n\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.pick.count"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "body",
+     "audit"
+    ],
+    "description": "Send the report to Janet.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "janet@happytailsbakery.com",
+     "subject": "Newsletter sync report",
+     "body": {
+      "$ref": "nodes.body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "check_send",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Confirm the report was delivered to Janet.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "janet@happytailsbakery.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.check_send.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "janet@happytailsbakery.com",
+     "subject": "Newsletter sync report",
+     "body": "Newsletter sync (2026-10-26T08:00:00Z): 3 contact(s) added from the customer sheet.\n\npip@barkmail.example (Pip Tran)\nrosa@woofpost.example (Rosa Vega)\numa@treatbox.example (Uma Shah)"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "newsletter": [
+     {
+      "email": "pip@barkmail.example",
+      "name": "Pip Tran",
+      "source": "crm"
+     },
+     {
+      "email": "rosa@woofpost.example",
+      "name": "Rosa Vega",
+      "source": "crm"
+     },
+     {
+      "email": "uma@treatbox.example",
+      "name": "Uma Shah",
+      "source": "crm"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-none/foundry-live-5hSfIr",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every eligible CRM contact not already in newsletter is appended exactly once (barring duplicate CRM emails).",
+    "exact": "the pass of “Confirm the appended rows are in the newsletter sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Unsubscribed contacts are never appended.",
+    "exact": "the pass of “Confirm the report was delivered to Janet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Confirm the appended rows are in the newsletter sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.check_send",
+    "plain": "Confirm the report was delivered to Janet.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 2,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HC2",
+  "verifiedBefore": true,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

@@ -1,0 +1,597 @@
+{
+ "arm": "B0-H+repair-none",
+ "case": "HE1",
+ "expected": "expense-approval",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.0049131850000000005,
+  "tokens": 5372,
+  "inputTokens": 2,
+  "outputTokens": 5370,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.0049131850000000005,
+   "inputTokens": 2,
+   "outputTokens": 5370
+  }
+ ],
+ "builderWallMs": 22064,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-auto-approve",
+  "version": 2,
+  "title": "Auto-approve small expense claims with receipts; route the rest to Dana",
+  "goal": "Read submitted expense claims that have no decision yet. Claims under $50 with a receipt are logged as approved. Claims of $50 or more, and claims under $50 without a receipt, are logged as waiting for approver and routed to dana@brightleafmarketing.com. Every decision is appended to the expense-decisions sheet.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Amounts are numeric in one currency (USD assumed) and the receipt field is boolean.",
+    "Only claims with status 'submitted' are processed.",
+    "The expense-decisions sheet already exists (possibly empty), because sheet.read fails on a missing sheet.",
+    "Routing to Dana is recorded as a 'waiting for approver' decision row naming dana@brightleafmarketing.com in the reason; no e-mail is sent.",
+    "The decision row has no 'at' timestamp because rows.select can only set constant values."
+   ],
+   "risks": [
+    "The expenses sheet status is not changed to approved (the flow only appends to expense-decisions); duplicates across runs are prevented by skipping claim ids already present in expense-decisions.",
+    "Claims with a missing or non-numeric amount are not routed by any branch and are left out of the decision log; a person should review them.",
+    "If expense-decisions is missing, the run fails at its read step rather than creating it."
+   ],
+   "successCriteria": [
+    "Every submitted claim with amount under 50 and receipt true has an 'approved' decision row.",
+    "Every submitted claim with amount 50 or more, or under 50 without a receipt, has a 'waiting for approver' decision row naming dana@brightleafmarketing.com.",
+    "No claim id is appended twice across runs.",
+    "Each append is confirmed by sheet.audit."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 30,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all expense claims.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_decisions",
+    "kind": "task",
+    "needs": [],
+    "description": "Read decisions already logged, to avoid logging a claim twice.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expense-decisions"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read_expenses"
+    ],
+    "description": "Keep only submitted claims.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pending",
+    "kind": "task",
+    "needs": [
+     "submitted",
+     "read_decisions"
+    ],
+    "description": "Keep submitted claims whose id has no decision row yet.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_decisions.rows"
+     },
+     "key": "id"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approved_claims",
+    "kind": "task",
+    "needs": [
+     "pending"
+    ],
+    "description": "Pending claims under 50 with a receipt.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.pending.missing"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "lt",
+       "value": 50
+      },
+      {
+       "field": "receipt",
+       "op": "eq",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "over_limit_claims",
+    "kind": "task",
+    "needs": [
+     "pending"
+    ],
+    "description": "Pending claims of 50 or more.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.pending.missing"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "gte",
+       "value": 50
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "no_receipt_claims",
+    "kind": "task",
+    "needs": [
+     "pending"
+    ],
+    "description": "Pending claims under 50 without a receipt (receipt missing, null or false).",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.pending.missing"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "lt",
+       "value": 50
+      },
+      {
+       "field": "receipt",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decide_approved",
+    "kind": "task",
+    "needs": [
+     "approved_claims"
+    ],
+    "description": "Build approved decision rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.approved_claims.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount"
+     ],
+     "set": {
+      "decision": "approved",
+      "reason": "under 50 with receipt"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decide_over_limit",
+    "kind": "task",
+    "needs": [
+     "over_limit_claims"
+    ],
+    "description": "Build waiting rows for claims of 50 or more.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.over_limit_claims.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount"
+     ],
+     "set": {
+      "decision": "waiting for approver",
+      "reason": "amount 50 or more; routed to dana@brightleafmarketing.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decide_no_receipt",
+    "kind": "task",
+    "needs": [
+     "no_receipt_claims"
+    ],
+    "description": "Build waiting rows for claims without a receipt.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.no_receipt_claims.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount"
+     ],
+     "set": {
+      "decision": "waiting for approver",
+      "reason": "no receipt; routed to dana@brightleafmarketing.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_approved",
+    "kind": "task",
+    "needs": [
+     "decide_approved"
+    ],
+    "description": "Log approved decisions.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decide_approved.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_over_limit",
+    "kind": "task",
+    "needs": [
+     "decide_over_limit"
+    ],
+    "description": "Log claims routed to Dana for amount.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decide_over_limit.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_no_receipt",
+    "kind": "task",
+    "needs": [
+     "decide_no_receipt"
+    ],
+    "description": "Log claims routed to Dana for missing receipt.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decide_no_receipt.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit_approved",
+    "kind": "verify",
+    "needs": [
+     "append_approved"
+    ],
+    "description": "Confirm approved decision rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_approved.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_approved"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "audit_over_limit",
+    "kind": "verify",
+    "needs": [
+     "append_over_limit"
+    ],
+    "description": "Confirm amount-based routing rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_over_limit.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_over_limit"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "audit_no_receipt",
+    "kind": "verify",
+    "needs": [
+     "append_no_receipt"
+    ],
+    "description": "Confirm no-receipt routing rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_no_receipt.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_no_receipt"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_approved.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_over_limit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_no_receipt.pass"
+    },
+    "right": true
+   }
+  ],
+  "oracle": {
+   "mode": "none",
+   "reason": "Decisions are rule-based and the audits only confirm rows were written, so a person should spot-check decisions against receipts and amounts."
+  },
+  "metadata": {
+   "tags": [
+    "expenses",
+    "approval"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "harness_fault",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "SHEET_NOT_FOUND",
+   "message": "There is no sheet named expense-decisions"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-none/foundry-live-iQj6aP",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim with amount under 50 and receipt true has an 'approved' decision row.",
+    "exact": "the pass of “Confirm approved decision rows were written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every submitted claim with amount 50 or more, or under 50 without a receipt, has a 'waiting for approver' decision row naming dana@brightleafmarketing.com.",
+    "exact": "the pass of “Confirm amount-based routing rows were written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "No claim id is appended twice across runs.",
+    "exact": "the pass of “Confirm no-receipt routing rows were written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_approved",
+    "plain": "Confirm approved decision rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_over_limit",
+    "plain": "Confirm amount-based routing rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_no_receipt",
+    "plain": "Confirm no-receipt routing rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Read decisions already logged, to avoid logging a claim twice."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict harness_fault): SHEET_NOT_FOUND",
+   "outbox : missing a message to dana@brightleafmarketing.com containing \"BL-3\", \"BL-4\", \"BL-5\"",
+   "sheet expense-decisions: missing an expected item {\"id\":\"BL-1\",\"decision\":\"approved\"}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"BL-2\",\"decision\":\"approved\"}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"BL-3\",\"decision\":{\"not\":\"approved\"}}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"BL-4\",\"decision\":{\"not\":\"approved\"}}",
+   "sheet expense-decisions: missing an expected item {\"id\":\"BL-5\",\"decision\":{\"not\":\"approved\"}}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 2,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HE1",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

@@ -1,0 +1,541 @@
+{
+ "arm": "B0-H+repair-t2",
+ "case": "HL1",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t2",
+     "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"if company size is over 200 people also send to priya\": acted on, but no email effect names it\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00557781,
+  "tokens": 7007,
+  "inputTokens": 2,
+  "outputTokens": 7005,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00557781,
+   "inputTokens": 2,
+   "outputTokens": 7005
+  }
+ ],
+ "builderWallMs": 30557,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-website-leads",
+  "version": 2,
+  "title": "Route new website leads to Marcus or Priya and log assignments",
+  "goal": "Route each new website lead: California leads go to Marcus; all other leads go to Priya. A California lead with company size over 200 also goes to Priya. Record every assignment in the lead-log sheet, one row per assignee.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Only leads with status 'new' are routed; contacted and spam leads are skipped.",
+    "California is matched when region or country contains 'california', or region/country equals 'CA' (case-insensitive).",
+    "'Send' means recording the assignee in lead-log; no e-mail or chat is sent.",
+    "companySize is a number of employees. A California lead with companySize over 200 gets two lead-log rows: one for Marcus and one for Priya. A non-California lead over 200 goes to Priya only once, as the default."
+   ],
+   "risks": [
+    "assignedAt is not filled per row because no capability can stamp a per-row timestamp; the lead-log row has no assignment time.",
+    "A lead with a missing or non-numeric companySize will not match the size rule and gets no extra Priya row.",
+    "Leads whose region or country is spelled differently (for example 'Calif.') will not be recognised as California.",
+    "A California lead over 200 appears twice in lead-log by design, once per assignee."
+   ],
+   "successCriteria": [
+    "Every new lead appears in lead-log for its base assignee (Marcus if California, otherwise Priya).",
+    "Every new California lead with companySize over 200 also appears in lead-log for Priya.",
+    "The appended row count equals the base rows plus the extra Priya rows.",
+    "sheet.audit confirms the appended lead-log rows are present."
+   ]
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 1,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all rows of the leads sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_leads",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Keep only leads with status new.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route_leads",
+    "kind": "task",
+    "needs": [
+     "new_leads"
+    ],
+    "description": "Label each new lead with its base assignee: California goes to Marcus; everyone else goes to Priya.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.new_leads.rows"
+     },
+     "rules": [
+      {
+       "field": [
+        "region",
+        "country"
+       ],
+       "op": "contains",
+       "value": "california",
+       "set": {
+        "assignTo": "Marcus"
+       }
+      },
+      {
+       "field": [
+        "region",
+        "country"
+       ],
+       "op": "eq",
+       "value": "CA",
+       "set": {
+        "assignTo": "Marcus"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "Priya"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "base_rows",
+    "kind": "task",
+    "needs": [
+     "route_leads"
+    ],
+    "description": "Build base lead-log rows with name, email, company and assignee.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route_leads.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_base",
+    "kind": "task",
+    "needs": [
+     "base_rows"
+    ],
+    "description": "Append the base assignments to the lead-log sheet.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.base_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "extra_leads",
+    "kind": "task",
+    "needs": [
+     "append_base"
+    ],
+    "description": "Keep California leads (base Marcus) with company size over 200; they also go to Priya.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route_leads.rows"
+     },
+     "where": [
+      {
+       "field": "assignTo",
+       "op": "eq",
+       "value": "Marcus"
+      },
+      {
+       "field": "companySize",
+       "op": "gt",
+       "value": 200
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "extra_rows",
+    "kind": "task",
+    "needs": [
+     "extra_leads"
+    ],
+    "description": "Build extra lead-log rows assigned to Priya.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.extra_leads.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company"
+     ],
+     "set": {
+      "assignTo": "Priya"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_extra",
+    "kind": "task",
+    "needs": [
+     "extra_rows"
+    ],
+    "description": "Append the extra Priya assignments to the lead-log sheet.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.extra_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sum_rows",
+    "kind": "task",
+    "needs": [
+     "base_rows",
+     "extra_rows"
+    ],
+    "description": "Total expected lead-log rows (base plus extra).",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "sum",
+     "values": [
+      {
+       "$ref": "nodes.base_rows.count"
+      },
+      {
+       "$ref": "nodes.extra_rows.count"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sum_appended",
+    "kind": "task",
+    "needs": [
+     "append_base",
+     "append_extra"
+    ],
+    "description": "Total rows actually appended to lead-log.",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "sum",
+     "values": [
+      {
+       "$ref": "nodes.append_base.appended"
+      },
+      {
+       "$ref": "nodes.append_extra.appended"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "verify_log",
+    "kind": "verify",
+    "needs": [
+     "append_base",
+     "append_extra",
+     "sum_rows"
+    ],
+    "description": "Independently confirm the appended lead-log rows are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.sum_rows.value"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_base"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_base.appended"
+    },
+    "right": {
+     "$ref": "nodes.base_rows.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_extra.appended"
+    },
+    "right": {
+     "$ref": "nodes.extra_rows.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sum_appended.value"
+    },
+    "right": {
+     "$ref": "nodes.sum_rows.value"
+    }
+   }
+  ],
+  "metadata": {
+   "rationale": "The original flow used one ordered rule, so a California lead over 200 employees got only Priya. The request says 'also send to priya', so the corrected flow assigns the base owner first and then adds an extra Priya row for each California lead over 200 employees. Assignments are recorded in lead-log, the only outbound-style effect available.",
+   "tags": [
+    "leads",
+    "routing"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "Marcus",
+      "company": "Oakland Homes",
+      "email": "lena@oaklandhomes.example",
+      "name": "Lena Park"
+     },
+     {
+      "assignTo": "Priya",
+      "company": "Desert Sun HOA",
+      "email": "raj@desertsunhoa.example",
+      "name": "Raj Mehta"
+     },
+     {
+      "assignTo": "Priya",
+      "company": "Bayview Logistics",
+      "email": "tom@bayviewlogistics.example",
+      "name": "Tom Kwan"
+     },
+     {
+      "assignTo": "Marcus",
+      "company": "Golden Gate Farms",
+      "email": "ivy@goldengatefarms.example",
+      "name": "Ivy Chen"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-t2/foundry-live-CHdbFL",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead appears in lead-log for its base assignee (Marcus if California, otherwise Priya).",
+    "exact": "the pass of “Independently confirm the appended lead-log rows are in the sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every new California lead with companySize over 200 also appears in lead-log for Priya.",
+    "exact": "the appended of “Append the base assignments to the lead-log sheet.” equals the count of “Build base lead-log rows with name, email, company and assignee.”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The appended row count equals the base rows plus the extra Priya rows.",
+    "exact": "the appended of “Append the extra Priya assignments to the lead-log sheet.” equals the count of “Build extra lead-log rows assigned to Priya.”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "sheet.audit confirms the appended lead-log rows are present.",
+    "exact": "the value of “Total rows actually appended to lead-log.” equals the value of “Total expected lead-log rows (base plus extra).”",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_log",
+    "plain": "Independently confirm the appended lead-log rows are in the sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Oakland Homes\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Desert Sun HOA\"",
+   "outbox : missing a message to priya@sunrisesolar.energy containing \"Bayview Logistics\"",
+   "outbox : missing a message to marcus@sunrisesolar.energy containing \"Golden Gate Farms\"",
+   "sheet lead-log: missing an expected item {\"email\":\"lena@oaklandhomes.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"raj@desertsunhoa.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"tom@bayviewlogistics.example\",\"assignTo\":\"priya@sunrisesolar.energy\"}",
+   "sheet lead-log: missing an expected item {\"email\":\"ivy@goldengatefarms.example\",\"assignTo\":\"marcus@sunrisesolar.energy\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Marcus\",\"company\":\"Oakland Homes\",\"email\":\"lena@oaklandhomes.example\",\"name\":\"Lena Park\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Priya\",\"company\":\"Desert Sun HOA\",\"email\":\"raj@desertsunhoa.example\",\"name\":\"Raj Mehta\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Priya\",\"company\":\"Bayview Logistics\",\"email\":\"tom@bayviewlogistics.example\",\"name\":\"Tom Kwan\"}",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"Marcus\",\"company\":\"Golden Gate Farms\",\"email\":\"ivy@goldengatefarms.example\",\"name\":\"Ivy Chen\"}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HL1",
+  "verifiedBefore": false,
+  "feedback": "When it ran on practice data, these of the person's conditions were not met:\n- \"if company size is over 200 people also send to priya\": acted on, but no email effect names it\nFix the workflow so it meets them."
+ }
+}

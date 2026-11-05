@@ -101,12 +101,49 @@ async function showRun(runId) {
 async function showFlow(flowId) {
   try {
     const d = await api(`/api/flows/${encodeURIComponent(flowId)}`);
+    const asked = await api(`/api/conditions/${encodeURIComponent(flowId)}`).catch(() => null);
     $('detail').hidden = false;
-    $('detail-body').replaceChildren(...d.versions.map(v => el('div', { class: 'card' }, el('h3', {}, `${v.state === 'draft' ? 'Draft' : 'Version'} ${v.version}${v.active ? ' (on)' : ''}`),
+    $('detail-body').replaceChildren(...(asked ? [askedPanel(flowId, asked)] : []), ...d.versions.map(v => el('div', { class: 'card' }, el('h3', {}, `${v.state === 'draft' ? 'Draft' : 'Version'} ${v.version}${v.active ? ' (on)' : ''}`),
       el('p', { class: 'muted' }, `fingerprint ${v.hash.slice(0, 12)}`),
       v.diffFromPrevious ? el('p', {}, `Added: ${v.diffFromPrevious.added.map(x => x.step).join('; ') || 'nothing'} · Removed: ${v.diffFromPrevious.removed.map(x => x.step).join('; ') || 'nothing'} · Changed: ${v.diffFromPrevious.changed.map(x => `${x.step} (${x.fields.join(', ')})`).join('; ') || 'nothing'}${v.diffFromPrevious.checksChanged ? ' · the definition of done changed' : ''}`) : null,
       v.summary ? checksList(v.summary.checks.map(c => ({ ...c, passed: null }))) : null)));
   } catch (error) { showError(error); }
+}
+
+// "What you asked for": the person's conditions, each quoting their own words, with its check and status. Only the person confirms,
+// waives or accepts edits here; a coding agent can only propose them.
+const STATUS_TEXT = { met: ['✓ done', 'ok'], unmet: ['✗ not done', 'bad'], waived: ['set aside', 'muted'], unknown: ['? not known', 'wait'] };
+const REASON_TEXT = { 'not-exercised': 'practice data never reached this', 'no-check': 'no automatic check for this yet', 'check-suspect': 'the check itself looks wrong',
+  unverifiable: 'a run cannot show this: you check it', 'needs-answer': 'a question for you', 'not-run': 'not checked yet' };
+async function conditionAction(body, button) {
+  if (button) button.disabled = true;
+  try { await api('/api/conditions', body); await showFlow(body.flowId); } catch (error) { showError(error); if (button) button.disabled = false; }
+}
+function askedPanel(flowId, a) {
+  const t = a.tally ?? {};
+  const rows = a.conditions.map(c => {
+    const [label, cls] = STATUS_TEXT[c.status] ?? ['?', 'wait'];
+    const why = c.status === 'unknown' ? (c.question ? `${REASON_TEXT[c.reason] ?? c.reason}: ${c.question}` : c.why ? `${REASON_TEXT[c.reason] ?? c.reason} (${c.why})` : REASON_TEXT[c.reason] ?? c.reason)
+      : c.status === 'unmet' ? `${c.evidence?.[0]?.why ?? ''}. Is the flow wrong, the check wrong, or your words wrong?` : c.status === 'waived' ? `you set it aside: ${c.waived?.why ?? ''}` : c.thin ? 'seen only a few times in practice' : '';
+    const buttons = [
+      !c.confirmed ? el('button', { on: { click: e => conditionAction({ action: 'confirm', flowId, conditionId: c.id }, e.target) } }, 'Yes, I meant this') : null,
+      c.status !== 'waived' ? el('button', { on: { click: e => { const r = prompt('Why can this be set aside for this version?'); if (r) conditionAction({ action: 'waive', flowId, conditionId: c.id, why: r }, e.target); } } }, 'Set aside') : el('button', { on: { click: e => conditionAction({ action: 'unwaive', flowId, conditionId: c.id }, e.target) } }, 'Check it again'),
+      el('button', { on: { click: e => conditionAction({ action: 'remove', flowId, conditionId: c.id }, e.target) } }, 'Not a condition')];
+    return el('li', { class: 'cond' }, el('p', {}, el('span', { class: cls }, label), ' “', c.quote, '”', c.confirmed ? '' : el('span', { class: 'muted' }, ' (not confirmed yet)')),
+      c.check ? el('p', { class: 'muted' }, 'Checked as: ', c.check) : null, why ? el('p', { class: c.status === 'unmet' ? 'bad' : 'muted' }, why) : null,
+      c.lastLive ? el('p', { class: c.lastLive.status === 'unmet' ? 'bad' : 'muted' }, `Last real run: ${(STATUS_TEXT[c.lastLive.status] ?? [c.lastLive.status])[0]}`,
+        c.lastLive.status === 'unmet' && c.lastLive.evidence?.[0]?.why ? ` (${c.lastLive.evidence[0].why})` : c.lastLive.status === 'unknown' && c.lastLive.reason ? ` (${REASON_TEXT[c.lastLive.reason] ?? c.lastLive.reason})` : '') : null,
+      ...(c.status !== 'unknown' ? (c.questions ?? []) : []).map(q => el('p', { class: 'muted' }, 'A question for you: ', q)), el('div', { class: 'row' }, buttons));
+  });
+  const pending = (a.pending ?? []).map(p => el('div', { class: 'card' }, el('p', {}, `Your agent proposes: ${p.delta.map(d => d.op === 'ADDED' ? `add “${d.condition.quote}”` : d.op === 'REMOVED' ? `remove ${d.id}` : `change ${d.id}`).join('; ')}`),
+    el('div', { class: 'row' }, el('button', { class: 'primary', on: { click: e => conditionAction({ action: 'accept', flowId, proposalId: p.id }, e.target) } }, 'Accept'),
+      el('button', { on: { click: e => conditionAction({ action: 'reject', flowId, proposalId: p.id }, e.target) } }, 'Reject'))));
+  const add = el('input', { type: 'text', 'aria-label': 'Add a condition in your own words', placeholder: 'Add something you want, in your own words' });
+  return el('div', { class: 'card asked' }, el('h3', {}, 'What you asked for'),
+    el('p', { class: 'muted' }, `${t.met ?? 0} done · ${t.unmet ?? 0} not done · ${t.unknown ?? 0} not known · ${t.waived ?? 0} set aside. Checked on practice data, not your live data.`),
+    el('ul', { class: 'conds' }, rows), ...pending,
+    el('div', { class: 'row' }, add, el('button', { on: { click: e => { if (add.value.trim()) conditionAction({ action: 'add', flowId, quote: add.value.trim() }, e.target); } } }, 'Add'),
+      el('button', { class: 'primary', on: { click: e => conditionAction({ action: 'check', flowId }, e.target) } }, 'Check on practice data')));
 }
 async function load() {
   if (!token) { showError(new Error('This tab has no key. Run `node app/cli.mjs start` again in your own terminal: it opens a fresh link (each link works once).')); return; }

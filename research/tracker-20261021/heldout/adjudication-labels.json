@@ -1,0 +1,676 @@
+{
+ "note": "Analyst labels for the held-out adjudication groups, written by experiments/tracker-v2/heldout-labels.mjs after scoring (see its header).",
+ "causes": {
+  "unstated-qualifier": "the person's words omit a qualifier any sensible build (and the oracle) applies: unsubscribed contacts, receipts, already-paid items; the literal check calls the sensible build wrong",
+  "object-name": "the check selects a system object by the person's name for it (sheet 'mailing list') where the system's name differs ('newsletter')",
+  "state-vs-effect": "the words ask for a state ('the list has everyone'); the check counts new effects, so an item already in that state reads as missed",
+  "binding": "the binder chose a template or a filter the words do not support (a strict count for a 'when', a once-only rule nobody stated, an excluded group included)",
+  "closed-world": "a scope check's 'no other item is ever named' half from words with no exclusive cue",
+  "rules-overlap": "two of the person's rules both claim the item; the build followed the other one",
+  "keyword-category": "the person's category ('asks about shipping') bound to a keyword in free text; the item has the keyword but not the category, or the category without the keyword",
+  "scenario-chimera": "a synthesized practice row built by appending a filter keyword to another row's text; its category is ambiguous by construction",
+  "evaluator-names": "an item 'named' by a common word of its free text ('Thanks!'), so unrelated effects count as acting on it",
+  "over-literal": "content the person described ('what's done', 'alerts', 'open mon-sat 9-6') required as literal words",
+  "selector-it": "'sign it' applied to every message, including ones to the person's own inbox",
+  "boundary-ambiguity": "a synthesized row exactly on an edge the words leave open ('from the last 24h' at exactly 24 h)",
+  "contradictory": "the check fixes one effect field twice: to the item's own value (link) and to a literal (require), so no effect can ever pass",
+  "scenario-names": "a targeted copy's fresh id extends the original's (\"P-1 S2\"), so an effect about the copy also names the original (evaluator / scenario bug)",
+  "evaluator-repeat": "a once-per-run count read over the two-run repeat view"
+ },
+ "labels": {
+  "HC2:362eb81540d4": [
+   "false",
+   "state-vs-effect",
+   "crm#3 is already on the newsletter list; no new row is owed"
+  ],
+  "HC2:aa7e42d7a3a5": [
+   "false",
+   "state-vs-effect",
+   "crm#3 is already on the list"
+  ],
+  "HE2:12c00cf79326": [
+   "false",
+   "contradictory",
+   "to fixed twice: the claimant's own address (link) and owen@ (requirement)"
+  ],
+  "HE2:e9bb6441d19b": [
+   "false",
+   "contradictory",
+   "as HE2:12c00cf79326"
+  ],
+  "HI2:c0af305f4f68": [
+   "false",
+   "selector-it",
+   "\"use the emails in the sheet\" is about the customer reminders, not the summary to the person"
+  ],
+  "HI2:0dbc7be68e2e": [
+   "false",
+   "selector-it",
+   "as HI2:c0af305f4f68"
+  ],
+  "HI2:e053f12cadf9": [
+   "false",
+   "selector-it",
+   "as HI2:c0af305f4f68"
+  ],
+  "HS1:6a6b0e7989bb": [
+   "false",
+   "evaluator-names",
+   "tickets#4 (P-5, body \"Thanks!\") named by a reply that says \"Thanks for getting in touch\""
+  ],
+  "HS2:f5e0571f38f7": [
+   "true",
+   null,
+   "the build never answers a shipping question (the item shown is the overlap ticket P-3)",
+   {
+    "ref/HS2": [
+     "false",
+     "rules-overlap",
+     "tickets#2 is the urgent site-down report that mentions the shipping page: the urgent rule claims it"
+    ],
+    "control/HS2-0": [
+     "false",
+     "rules-overlap",
+     "this control answers shipping questions (FAQ to ann); P-3 is the overlap ticket"
+    ]
+   }
+  ],
+  "HS2:d20c5009d23c": [
+   "true",
+   null,
+   "as HS2:f5e0571f38f7",
+   {
+    "ref/HS2": [
+     "false",
+     "rules-overlap",
+     "as HS2:f5e0571f38f7"
+    ],
+    "control/HS2-0": [
+     "false",
+     "rules-overlap",
+     "as HS2:f5e0571f38f7"
+    ]
+   }
+  ],
+  "HS2:65c2c4fe8a75": [
+   "false",
+   "binding",
+   "\"a single daily digest\" bound as each ticket at most once ever; the repeat run is the next day, whose digest names the still-open tickets again"
+  ],
+  "HS1:ebe63a37310f": [
+   "false",
+   "binding",
+   "\"one digest each morning\" bound as each ticket at most once ever; the repeat run is the next morning"
+  ],
+  "HS2:01fe39d74190": [
+   "false",
+   "binding",
+   "\"all other tickets\" bound as every non-urgent ticket: P-1 is the shipping question answered with the FAQ (not \"other\") and P-5 is closed"
+  ],
+  "HC2:3c3b74c9a36c": [
+   "false",
+   "binding",
+   "\"isn't on the list\" bound as a requirement that the new row's e-mail IS one of the list's e-mails: nothing can pass"
+  ],
+  "HC2:44ca1b6fec83": [
+   "false",
+   "binding",
+   "as HC2:3c3b74c9a36c"
+  ],
+  "HL1:8d23a73931dd": [
+   "false",
+   "binding",
+   "\"log who got what\" bound over every lead; the words route NEW leads from the form (first sentence): the spam and already-contacted leads are not routed, so not logged"
+  ],
+  "HO2:04884cf51522": [
+   "false",
+   "binding",
+   "\"don't email for warnings\" bound as \"every critical gets an e-mail\": alerts#3 (PA-4) is acknowledged, and the words page only criticals nobody acknowledged"
+  ],
+  "HC2:cf58ac5e396a": [
+   "false",
+   "closed-world",
+   "the report naming a contact outside the add-set is not forbidden by the words"
+  ],
+  "HS2:a01b2a81859c": [
+   "false",
+   "closed-world",
+   "\"anything urgent goes to mike\" with \"never anyone else\": the other tickets also go to mike (in the digest)"
+  ],
+  "HE2:b562a4d7710d": [
+   "false",
+   "unstated-qualifier",
+   "expenses#3 is not a pending claim; every build leaves it alone"
+  ],
+  "HW1:b25ebcaf3fa1": [
+   "false",
+   "over-literal",
+   "\"what got done\" required as the literal word \"done\"; the report says \"Finished\""
+  ],
+  "HS2:082dd863f084": [
+   "false",
+   "over-literal",
+   "the whole message text (subject + greeting + answer) must EQUAL the FAQ answer"
+  ],
+  "HS2:c9da01dfb8fb": [
+   "false",
+   "over-literal",
+   "as HS2:082dd863f084"
+  ],
+  "HW2:f6b8469df136": [
+   "false",
+   "over-literal",
+   "\"no open or blocked needed\" bound as the body never containing \"open\"/\"blocked\"; the report's count line says \"Still open: 1. Blocked: 1.\" and lists only finished items"
+  ],
+  "HC1:87273cfe8cd6": [
+   "true",
+   null,
+   "the control adds the missing contacts although the person said not to change anything"
+  ],
+  "HC1:3e37ae2fc276": [
+   "true",
+   null,
+   "as HC1:87273cfe8cd6"
+  ],
+  "HC1:6b500078a7a4": [
+   "true",
+   null,
+   "as HC1:87273cfe8cd6"
+  ],
+  "HC1:ae4eb28c1afe": [
+   "true",
+   null,
+   "no report to the person (b0-h sends none; the control guesses the address)"
+  ],
+  "HC2:5d925b7ee05e": [
+   "true",
+   null,
+   "Rosa (wholesale) is not added"
+  ],
+  "HC2:0c4a8b5edadb": [
+   "true",
+   null,
+   "nobody is added"
+  ],
+  "HC2:b0fc306989b7": [
+   "true",
+   null,
+   "nobody is added"
+  ],
+  "HC2:f9eec597b86f": [
+   "true",
+   null,
+   "nobody is added"
+  ],
+  "HC2:5453f86411af": [
+   "true",
+   null,
+   "nobody is added (the check's requirement is also wrong, HC2:3c3b74c9a36c, but the shown failure is a missing row)"
+  ],
+  "HC2:d76eba47f09b": [
+   "true",
+   null,
+   "conflated: subscribed contacts not added is a real violation of HC2.1, shown under the \"skip unsubscribed\" quote"
+  ],
+  "HC2:3b120ce11cd2": [
+   "true",
+   null,
+   "report to a guessed address"
+  ],
+  "HC2:bec5e606046f": [
+   "true",
+   null,
+   "report to a guessed address"
+  ],
+  "HC2:8fde172a43b6": [
+   "true",
+   null,
+   "report to a guessed address"
+  ],
+  "HC2:4f9af24066a9": [
+   "true",
+   null,
+   "report to a guessed address"
+  ],
+  "HC2:fa127092217a": [
+   "false",
+   "binding",
+   "as HC2:3c3b74c9a36c"
+  ],
+  "HC2:dbad38afe832": [
+   "false",
+   "binding",
+   "as HC2:3c3b74c9a36c"
+  ],
+  "HE1:a4d7e2b90ec6": [
+   "true",
+   null,
+   "claims under $50 with a receipt are not approved (limit 25)"
+  ],
+  "HE1:b41677823d9d": [
+   "true",
+   null,
+   "claims under $50 with a receipt are not logged as approved"
+  ],
+  "HE1:1ee0859a9421": [
+   "true",
+   null,
+   "a $50+ claim never reaches Dana"
+  ],
+  "HE1:5f42b75c14ea": [
+   "true",
+   null,
+   "a claim without receipt never reaches Dana"
+  ],
+  "HE2:f4b48b21155e": [
+   "true",
+   null,
+   "claims under $100 with a receipt are not approved (limit 50)"
+  ],
+  "HE2:ae6f2b55c807": [
+   "true",
+   null,
+   "as HE2:f4b48b21155e"
+  ],
+  "HE2:34b82e721a66": [
+   "true",
+   null,
+   "as HE2:f4b48b21155e"
+  ],
+  "HE2:16c12e171722": [
+   "true",
+   null,
+   "over-limit claims go to a guessed approver"
+  ],
+  "HE2:5375cd634bee": [
+   "true",
+   null,
+   "as HE2:16c12e171722"
+  ],
+  "HE2:379806bb4293": [
+   "true",
+   null,
+   "as HE2:16c12e171722"
+  ],
+  "HE2:aa5c27e2c384": [
+   "true",
+   null,
+   "as HE2:16c12e171722"
+  ],
+  "HI1:f75f04bd2639": [
+   "true",
+   null,
+   "no summary to the person"
+  ],
+  "HI2:c969b6584a25": [
+   "true",
+   null,
+   "the person is never told about the second reminders"
+  ],
+  "HI2:ff0a38fad516": [
+   "false",
+   "selector-it",
+   "the summary to the person is not a customer reminder"
+  ],
+  "HI2:da36ceb60f43": [
+   "false",
+   "selector-it",
+   "as HI2:ff0a38fad516"
+  ],
+  "HI2:1a1c002dca0c": [
+   "false",
+   "selector-it",
+   "as HI2:ff0a38fad516"
+  ],
+  "HI2:f4815b8dbee1": [
+   "false",
+   "selector-it",
+   "as HI2:ff0a38fad516"
+  ],
+  "HI2:fff48688374e": [
+   "false",
+   "selector-it",
+   "as HI2:ff0a38fad516"
+  ],
+  "HI2:765289937e86": [
+   "false",
+   "selector-it",
+   "as HI2:ff0a38fad516"
+  ],
+  "HL1:cf77974a176f": [
+   "true",
+   null,
+   "the 900-person lead goes to Marcus (Marcus and Priya swapped)"
+  ],
+  "HL1:bc0a7bc0074e": [
+   "true",
+   null,
+   "as HL1:cf77974a176f"
+  ],
+  "HL1:52f5fa38b4d3": [
+   "true",
+   null,
+   "the 900-person lead is never e-mailed"
+  ],
+  "HL1:1cd09622e446": [
+   "true",
+   null,
+   "as HL1:52f5fa38b4d3"
+  ],
+  "HL1:84f9be84b10c": [
+   "true",
+   null,
+   "the 900-person lead never reaches Priya"
+  ],
+  "HL2:6ad07e738818": [
+   "true",
+   null,
+   "e-mail to an address the person never gave"
+  ],
+  "HO1:04884cf51522": [
+   "false",
+   "binding",
+   "\"isn't acknowledged within an hour\" dropped: alerts#3 (PA-4) is acknowledged; the builds are defective for other reasons"
+  ],
+  "HO1:2ec44fda2463": [
+   "false",
+   "over-literal",
+   "\"include severity and service\" required as the literal words; the digest shows \"[critical] practice-api\""
+  ],
+  "HO1:4313f5215a25": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:53a462a151f3": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:2cf5027024bc": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:32bf4d40479f": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:65b81ff0cdea": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:e2696981d8b6": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:87d74f095165": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:1e1691dd4de0": [
+   "false",
+   "over-literal",
+   "as HO1:2ec44fda2463"
+  ],
+  "HO1:b4d0078be7bd": [
+   "true",
+   null,
+   "the 2-day-old unresolved alert PA-4 is left out of \"all unresolved alerts\" (24-hour window)"
+  ],
+  "HO1:f5ace50fbce5": [
+   "true",
+   null,
+   "as HO1:b4d0078be7bd"
+  ],
+  "HO1:dbcbb6be3fb2": [
+   "true",
+   null,
+   "the info alert is left out of \"all unresolved alerts\""
+  ],
+  "HO1:81e204a1b2c9": [
+   "true",
+   null,
+   "as HO1:dbcbb6be3fb2"
+  ],
+  "HO1:0f2ebed4d794": [
+   "true",
+   null,
+   "info and 2-day-old alerts left out of the digest"
+  ],
+  "HO1:823670dbe712": [
+   "true",
+   null,
+   "as HO1:0f2ebed4d794"
+  ],
+  "HO1:636c11b3846f": [
+   "true",
+   null,
+   "mixed: the unacknowledged critical PA-1 is never e-mailed (real); PA-4 is acknowledged (not owed)"
+  ],
+  "HO1:996b8522cf2b": [
+   "true",
+   null,
+   "no e-mail to the person"
+  ],
+  "HO1:934472969150": [
+   "true",
+   null,
+   "no page for the unacknowledged critical"
+  ],
+  "HO1:1f6c0349a82c": [
+   "true",
+   null,
+   "as HO1:934472969150"
+  ],
+  "HO1:a5563f06b4b0": [
+   "true",
+   null,
+   "the page goes to an address the person never gave"
+  ],
+  "HO1:2dc6c52f108f": [
+   "true",
+   null,
+   "as HO1:a5563f06b4b0"
+  ],
+  "HO1:fd29a8488eaa": [
+   "true",
+   null,
+   "e-mail to an address the person never gave"
+  ],
+  "HO1:7ba52de9a695": [
+   "true",
+   null,
+   "as HO1:fd29a8488eaa"
+  ],
+  "HO2:b80182b4e14a": [
+   "true",
+   null,
+   "no e-mail for the unacknowledged critical"
+  ],
+  "HO2:846fcbfc56ac": [
+   "true",
+   null,
+   "as HO2:b80182b4e14a"
+  ],
+  "HO2:ff55f3a7d951": [
+   "true",
+   null,
+   "the page goes to an address the person never gave"
+  ],
+  "HO2:2b6ec2490721": [
+   "true",
+   null,
+   "as HO2:ff55f3a7d951"
+  ],
+  "HO2:7b6335218db4": [
+   "true",
+   null,
+   "e-mail to an address the person never gave"
+  ],
+  "HO2:d28fe9f0fbdc": [
+   "true",
+   null,
+   "no e-mail to the person"
+  ],
+  "HO2:636c11b3846f": [
+   "true",
+   null,
+   "conflated and mixed: PA-1 (unacknowledged critical) never e-mailed is a real violation of HO2.3, shown under \"don't email for warnings\"; PA-4 is acknowledged"
+  ],
+  "HO2:8fde4f33a5ae": [
+   "false",
+   "binding",
+   "alerts#6 is the targeted copy of PA-1 with acknowledged = true (the edge of HO2.3's own filter): correctly not paged; the check dropped \"nobody has acknowledged\". b-h/HO2 and b-m/HO2 are defective for another reason (24-hour window)"
+  ],
+  "HS1:6da6c929e5cd": [
+   "true",
+   null,
+   "the refund ticket gets no canned reply"
+  ],
+  "HS1:adbf4315548f": [
+   "true",
+   null,
+   "as HS1:6da6c929e5cd"
+  ],
+  "HS1:a64b84aa475a": [
+   "true",
+   null,
+   "as HS1:6da6c929e5cd"
+  ],
+  "HS1:3a8799dfb8aa": [
+   "true",
+   null,
+   "as HS1:6da6c929e5cd"
+  ],
+  "HS1:2fe0571abe28": [
+   "false",
+   "selector-it",
+   "the digest to zara mentions the refund ticket; the canned-reply wording is about replies to customers"
+  ],
+  "HS1:7db2c64441fc": [
+   "true",
+   null,
+   "urgent tickets to a guessed address"
+  ],
+  "HS1:d17ca734c46c": [
+   "true",
+   null,
+   "the digest goes to a guessed address"
+  ],
+  "HS1:be93c1633753": [
+   "false",
+   "evaluator-repeat",
+   "\"at most 1 digest in one run\" counted over the two-run repeat view: one digest per run"
+  ],
+  "HS1:ef5fbda044c2": [
+   "false",
+   "scenario-names",
+   "a targeted copy's fresh id \"P-1 S2\" contains \"P-1\", so the e-mail about the copy names P-1 too; and the repeat run is the next morning"
+  ],
+  "HS1:cc3a805d408c": [
+   "false",
+   "scenario-names",
+   "as HS1:ef5fbda044c2 (targeted view only)"
+  ],
+  "HS2:12cbe110375a": [
+   "true",
+   null,
+   "urgent tickets to a guessed address"
+  ],
+  "HS2:6e96a29e7d4b": [
+   "true",
+   null,
+   "as HS2:12cbe110375a"
+  ],
+  "HS2:81c77e857769": [
+   "true",
+   null,
+   "mixed: P-2 goes to the guessed address (real); P-1 is the shipping question answered with the FAQ (not owed)"
+  ],
+  "HS2:103e9044f684": [
+   "false",
+   "unstated-qualifier",
+   "tickets#4 is P-5, closed"
+  ],
+  "HS2:9a21c2f623bb": [
+   "false",
+   "binding",
+   "as HS2:65c2c4fe8a75 (the repeat run is the next day)"
+  ],
+  "HS2:e402fc86f96e": [
+   "false",
+   "scenario-names",
+   "as HS1:ef5fbda044c2"
+  ],
+  "HS2:84e49f3b22ec": [
+   "false",
+   "scenario-names",
+   "as HS1:ef5fbda044c2 (targeted view only)"
+  ],
+  "HS2:721a89d95b6a": [
+   "false",
+   "over-literal",
+   "as HS2:082dd863f084"
+  ],
+  "HS2:3f6bd13940fd": [
+   "false",
+   "over-literal",
+   "as HS2:082dd863f084"
+  ],
+  "HS2:7ed54e2ebf30": [
+   "false",
+   "over-literal",
+   "as HS2:082dd863f084"
+  ],
+  "HS2:db5ec0b8af22": [
+   "false",
+   "closed-world",
+   "as HS2:a01b2a81859c"
+  ],
+  "HW1:351a7e8a162a": [
+   "true",
+   null,
+   "wrong recipient"
+  ],
+  "HW2:cfd3ff09e9f3": [
+   "true",
+   null,
+   "open items listed although the person said not needed"
+  ],
+  "HW2:4891c9d037bb": [
+   "true",
+   null,
+   "as HW2:cfd3ff09e9f3"
+  ],
+  "HW2:423102c424fe": [
+   "true",
+   null,
+   "blocked items listed"
+  ],
+  "HW2:92b8edff693f": [
+   "true",
+   null,
+   "as HW2:423102c424fe"
+  ],
+  "HW2:c7ed616fa88d": [
+   "true",
+   null,
+   "guessed recipient"
+  ],
+  "HW2:91221f2e376c": [
+   "true",
+   null,
+   "conflated: done tasks never reach the person (guessed recipient), shown under \"no open or blocked needed\""
+  ],
+  "HW2:3204152ed237": [
+   "false",
+   "over-literal",
+   "as HW2:f6b8469df136; the control is defective for its recipient, not for this"
+  ]
+ }
+}

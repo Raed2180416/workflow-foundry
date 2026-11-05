@@ -1,0 +1,405 @@
+{
+ "arm": "B0-H+repair-t1",
+ "case": "HW2",
+ "expected": "weekly-report",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t1",
+     "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-003: The flow filters only on status == done and has no completion date, so it cannot restrict to last week. Its own assumptions say it sends all currently done items, and the practice run includes tasks with no date check. Items finished in earlier weeks would be included.\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004367435,
+  "tokens": 4661,
+  "inputTokens": 2,
+  "outputTokens": 4659,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.004367435,
+   "inputTokens": 2,
+   "outputTokens": 4659
+  }
+ ],
+ "builderWallMs": 25746,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "weekly-done-tasks-email",
+  "version": 2,
+  "title": "Email Liz the tasks newly marked done",
+  "goal": "Each Monday, email liz@beaconcontent.co the tracker items with status done that have not already been reported, then record them in a log so they are not sent again. The tracker has no completion date, so 'new since the last email' stands in for 'done last week'.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Recipient is liz@beaconcontent.co, as the person specified.",
+    "The tracker has no completion date, so 'last week' is approximated by 'done and not yet reported in an earlier email'. Running weekly makes this roughly last week's completions.",
+    "The first run sends all items currently marked done, because the reported log starts empty.",
+    "The person chose the simple format: one line per item."
+   ],
+   "risks": [
+    "If a task is marked done, reopened, and marked done again, it will not be re-reported.",
+    "If the flow is not run weekly, the email may cover more than one week.",
+    "The capabilities have no scheduler, so the Monday-morning timing must be set up outside this flow.",
+    "outbox.send asks a person before each dispatch when run live."
+   ],
+   "successCriteria": [
+    "The email lists only tracker items with status done that were not in the reported log.",
+    "The email is delivered to liz@beaconcontent.co and the outbox audit passes.",
+    "The reported log is updated only after successful delivery."
+   ],
+   "unsupported": [
+    "Filtering to items completed in the last 7 days, because the tracker has no completion date."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_tracker",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all work items from the tracker sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "ensure_log",
+    "kind": "task",
+    "needs": [],
+    "description": "Make sure the reported-tasks log sheet exists (appending no rows creates it if absent).",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "tasks-reported",
+     "rows": []
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_reported",
+    "kind": "task",
+    "needs": [
+     "ensure_log"
+    ],
+    "description": "Read the tasks already reported in earlier emails.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tasks-reported"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "done_items",
+    "kind": "task",
+    "needs": [
+     "read_tracker"
+    ],
+    "description": "Keep only items whose status is done.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tracker.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "done"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_items",
+    "kind": "task",
+    "needs": [
+     "done_items",
+     "read_reported"
+    ],
+    "description": "Keep only done items whose title is not already in the reported log.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.done_items.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_reported.rows"
+     },
+     "key": "title"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "tally",
+    "kind": "task",
+    "needs": [
+     "new_items"
+    ],
+    "description": "Build the list of new done item titles.",
+    "tool": "report.tally",
+    "args": {
+     "items": {
+      "$ref": "nodes.new_items.missing"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "email_body",
+    "kind": "task",
+    "needs": [
+     "tally"
+    ],
+    "description": "Fill the email body with the new done list.",
+    "tool": "core.template",
+    "args": {
+     "text": "Tasks newly marked done:\n{{done}}",
+     "variables": {
+      "done": {
+       "$ref": "nodes.tally.doneLines"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "email_body"
+    ],
+    "description": "Email the new done list to Liz.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "liz@beaconcontent.co",
+     "subject": "Tasks marked done",
+     "body": {
+      "$ref": "nodes.email_body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_send",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Re-read the outbox to confirm the email was delivered to Liz with the saved hash.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "liz@beaconcontent.co"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "log_sent",
+    "kind": "task",
+    "needs": [
+     "verify_send",
+     "new_items"
+    ],
+    "description": "Record the newly reported tasks in the log, only after delivery is verified.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "tasks-reported",
+     "rows": {
+      "$ref": "nodes.new_items.missing"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_send.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "liz@beaconcontent.co",
+     "subject": "Tasks marked done",
+     "body": "Tasks newly marked done:\n- Blog post: spring SEO checklist (Ava)\n- Client newsletter for Harbor Gym (Noor)\n- Case study: Lakeside Dental (Ava)"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "tasks-reported": [
+     {
+      "owner": "Ava",
+      "status": "done",
+      "title": "Blog post: spring SEO checklist"
+     },
+     {
+      "owner": "Noor",
+      "status": "done",
+      "title": "Client newsletter for Harbor Gym"
+     },
+     {
+      "owner": "Ava",
+      "status": "done",
+      "title": "Case study: Lakeside Dental"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-t1/foundry-live-GBoI8A",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "The email lists only tracker items with status done that were not in the reported log.",
+    "exact": "the delivered of “Email the new done list to Liz.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The email is delivered to liz@beaconcontent.co and the outbox audit passes.",
+    "exact": "the pass of “Re-read the outbox to confirm the email was delivered to Liz with the saved hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_send",
+    "plain": "Re-read the outbox to confirm the email was delivered to Liz with the saved hash.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 3,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HW2",
+  "verifiedBefore": true,
+  "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-003: The flow filters only on status == done and has no completion date, so it cannot restrict to last week. Its own assumptions say it sends all currently done items, and the practice run includes tasks with no date check. Items finished in earlier weeks would be included.\nFix the workflow so it meets them."
+ }
+}

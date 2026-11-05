@@ -1,0 +1,1450 @@
+{
+ "scoredAt": "2026-11-04T20:18:15.439Z",
+ "prereg": "research/tracker-20261021/PREREG-TRACKER-H2.md",
+ "settings": {
+  "orig-key": {
+   "arms": [
+    "REF",
+    "CONTROL",
+    "B-H",
+    "B-M",
+    "B0-H"
+   ],
+   "builds": 97,
+   "defective": 65,
+   "modelBuilt": 42,
+   "modelDefective": 22,
+   "T0": {
+    "builds": 97,
+    "defective": 65,
+    "caught": 2,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "T0model": {
+    "builds": 42,
+    "defective": 22,
+    "caught": 2,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "Tlit": {
+    "builds": 97,
+    "defective": 65,
+    "caught": 33,
+    "falseAlarms": 8,
+    "precision": 0.804878,
+    "falseAlarmIds": [
+     "ref/HE1",
+     "ref/HE2",
+     "ref/HL1",
+     "b-h/HE1",
+     "b-h/HE2",
+     "b-h/HL1",
+     "b-m/HE1",
+     "b-m/HE2"
+    ]
+   },
+   "TlitModel": {
+    "builds": 42,
+    "defective": 22,
+    "caught": 10,
+    "falseAlarms": 5,
+    "precision": 0.666667,
+    "falseAlarmIds": [
+     "b-h/HE1",
+     "b-h/HE2",
+     "b-h/HL1",
+     "b-m/HE1",
+     "b-m/HE2"
+    ]
+   },
+   "TlitTolerantPostHoc": {
+    "builds": 97,
+    "defective": 65,
+    "caught": 31,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "TlitTolerantPostHocModel": {
+    "builds": 42,
+    "defective": 22,
+    "caught": 10,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "T1": [
+    {
+     "all": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 60,
+      "falseAlarms": 18,
+      "precision": 0.769231,
+      "falseAlarmIds": [
+       "ref/HC2",
+       "ref/HI1",
+       "ref/HI2",
+       "ref/HL1",
+       "ref/HS2",
+       "ref/HW1",
+       "ref/HW2",
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h/HW2"
+      ]
+     },
+     "model": {
+      "builds": 42,
+      "defective": 22,
+      "caught": 18,
+      "falseAlarms": 11,
+      "precision": 0.62069,
+      "falseAlarmIds": [
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h/HW2"
+      ]
+     }
+    },
+    null,
+    null
+   ],
+   "T1majority": null,
+   "T2": {
+    "v3-s0": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 37,
+      "falseAlarms": 1,
+      "precision": 0.973684,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 37,
+      "falseAlarms": 1,
+      "precision": 0.973684,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 22,
+      "caught": 15,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v4-s0": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 35,
+      "falseAlarms": 1,
+      "precision": 0.972222,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 35,
+      "falseAlarms": 1,
+      "precision": 0.972222,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 22,
+      "caught": 13,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "G3modelPool": {
+      "builds": 28,
+      "defective": 12,
+      "caught": 2,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v3-s1": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 37,
+      "falseAlarms": 4,
+      "precision": 0.902439,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 37,
+      "falseAlarms": 4,
+      "precision": 0.902439,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 22,
+      "caught": 13,
+      "falseAlarms": 2,
+      "precision": 0.866667,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "missing": []
+    },
+    "v4-s1": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 37,
+      "falseAlarms": 4,
+      "precision": 0.902439,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 37,
+      "falseAlarms": 4,
+      "precision": 0.902439,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 22,
+      "caught": 13,
+      "falseAlarms": 2,
+      "precision": 0.866667,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "G3modelPool": {
+      "builds": 28,
+      "defective": 12,
+      "caught": 2,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v3-s2": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 40,
+      "falseAlarms": 4,
+      "precision": 0.909091,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 40,
+      "falseAlarms": 4,
+      "precision": 0.909091,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 22,
+      "caught": 16,
+      "falseAlarms": 2,
+      "precision": 0.888889,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "missing": []
+    },
+    "v4-s2": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 39,
+      "falseAlarms": 4,
+      "precision": 0.906977,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 65,
+      "caught": 39,
+      "falseAlarms": 4,
+      "precision": 0.906977,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 22,
+      "caught": 15,
+      "falseAlarms": 2,
+      "precision": 0.882353,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "G3modelPool": {
+      "builds": 28,
+      "defective": 12,
+      "caught": 2,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    }
+   },
+   "rules": {
+    "v3-s0": {
+     "H1": true,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 1
+    },
+    "v4-s0": {
+     "H1": true,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 1
+    },
+    "v3-s1": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 1
+    },
+    "v4-s1": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 1
+    },
+    "v3-s2": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 1
+    },
+    "v4-s2": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 1
+    }
+   }
+  },
+  "corr-key": {
+   "arms": [
+    "REF",
+    "CONTROL",
+    "B-H",
+    "B-M",
+    "B0-H2"
+   ],
+   "builds": 97,
+   "defective": 64,
+   "modelBuilt": 42,
+   "modelDefective": 21,
+   "T0": {
+    "builds": 97,
+    "defective": 64,
+    "caught": 4,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "T0model": {
+    "builds": 42,
+    "defective": 21,
+    "caught": 4,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "Tlit": {
+    "builds": 97,
+    "defective": 64,
+    "caught": 29,
+    "falseAlarms": 8,
+    "precision": 0.783784,
+    "falseAlarmIds": [
+     "ref/HE1",
+     "ref/HE2",
+     "ref/HL1",
+     "b-h/HE1",
+     "b-h/HE2",
+     "b-h/HL1",
+     "b-m/HE1",
+     "b-m/HE2"
+    ]
+   },
+   "TlitModel": {
+    "builds": 42,
+    "defective": 21,
+    "caught": 6,
+    "falseAlarms": 5,
+    "precision": 0.545455,
+    "falseAlarmIds": [
+     "b-h/HE1",
+     "b-h/HE2",
+     "b-h/HL1",
+     "b-m/HE1",
+     "b-m/HE2"
+    ]
+   },
+   "TlitTolerantPostHoc": {
+    "builds": 97,
+    "defective": 64,
+    "caught": 27,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "TlitTolerantPostHocModel": {
+    "builds": 42,
+    "defective": 21,
+    "caught": 6,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "T1": [
+    null,
+    null,
+    null
+   ],
+   "T1majority": null,
+   "T2": {
+    "v3-s0": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 34,
+      "falseAlarms": 1,
+      "precision": 0.971429,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 35,
+      "falseAlarms": 1,
+      "precision": 0.972222,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 12,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "G3modelPool": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 6,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v4-s0": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 32,
+      "falseAlarms": 1,
+      "precision": 0.969697,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 33,
+      "falseAlarms": 1,
+      "precision": 0.970588,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 10,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "G3modelPool": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 5,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v3-s1": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 35,
+      "falseAlarms": 4,
+      "precision": 0.897436,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 36,
+      "falseAlarms": 4,
+      "precision": 0.9,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 11,
+      "falseAlarms": 2,
+      "precision": 0.846154,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "G3modelPool": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 5,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v4-s1": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 35,
+      "falseAlarms": 4,
+      "precision": 0.897436,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 36,
+      "falseAlarms": 4,
+      "precision": 0.9,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 11,
+      "falseAlarms": 2,
+      "precision": 0.846154,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "G3modelPool": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 5,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v3-s2": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 36,
+      "falseAlarms": 4,
+      "precision": 0.9,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 37,
+      "falseAlarms": 4,
+      "precision": 0.902439,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 12,
+      "falseAlarms": 2,
+      "precision": 0.857143,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "G3modelPool": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 6,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v4-s2": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 35,
+      "falseAlarms": 4,
+      "precision": 0.897436,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 36,
+      "falseAlarms": 4,
+      "precision": 0.9,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 11,
+      "falseAlarms": 2,
+      "precision": 0.846154,
+      "falseAlarmIds": [
+       "b-h/HL1",
+       "b-m/HL1"
+      ]
+     },
+     "G3modelPool": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 5,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    }
+   },
+   "rules": {
+    "v3-s0": {
+     "H1": true,
+     "H2": false,
+     "H3": true,
+     "H4": false,
+     "H4against": 0
+    },
+    "v4-s0": {
+     "H1": true,
+     "H2": false,
+     "H3": true,
+     "H4": false,
+     "H4against": 0
+    },
+    "v3-s1": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": false,
+     "H4against": 0
+    },
+    "v4-s1": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": false,
+     "H4against": 0
+    },
+    "v3-s2": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": false,
+     "H4against": 0
+    },
+    "v4-s2": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": false,
+     "H4against": 0
+    }
+   }
+  },
+  "corr-own": {
+   "arms": [
+    "REF",
+    "CONTROL",
+    "B-H",
+    "B-M",
+    "B0-H2"
+   ],
+   "builds": 97,
+   "defective": 64,
+   "modelBuilt": 42,
+   "modelDefective": 21,
+   "T0": {
+    "builds": 97,
+    "defective": 64,
+    "caught": 4,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "T0model": {
+    "builds": 42,
+    "defective": 21,
+    "caught": 4,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "Tlit": {
+    "builds": 97,
+    "defective": 64,
+    "caught": 25,
+    "falseAlarms": 8,
+    "precision": 0.757576,
+    "falseAlarmIds": [
+     "ref/HE1",
+     "ref/HE2",
+     "ref/HL1",
+     "b-h/HE1",
+     "b-h/HE2",
+     "b-h/HL1",
+     "b-m/HE1",
+     "b-m/HE2"
+    ]
+   },
+   "TlitModel": {
+    "builds": 42,
+    "defective": 21,
+    "caught": 2,
+    "falseAlarms": 5,
+    "precision": 0.285714,
+    "falseAlarmIds": [
+     "b-h/HE1",
+     "b-h/HE2",
+     "b-h/HL1",
+     "b-m/HE1",
+     "b-m/HE2"
+    ]
+   },
+   "TlitTolerantPostHoc": {
+    "builds": 97,
+    "defective": 64,
+    "caught": 23,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "TlitTolerantPostHocModel": {
+    "builds": 42,
+    "defective": 21,
+    "caught": 2,
+    "falseAlarms": 0,
+    "precision": 1,
+    "falseAlarmIds": []
+   },
+   "T1": [
+    {
+     "all": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 52,
+      "falseAlarms": 19,
+      "precision": 0.732394,
+      "falseAlarmIds": [
+       "ref/HC2",
+       "ref/HI1",
+       "ref/HI2",
+       "ref/HL1",
+       "ref/HS2",
+       "ref/HW1",
+       "ref/HW2",
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h2/HI1",
+       "b0-h2/HW2"
+      ]
+     },
+     "model": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 10,
+      "falseAlarms": 12,
+      "precision": 0.454545,
+      "falseAlarmIds": [
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h2/HI1",
+       "b0-h2/HW2"
+      ]
+     }
+    },
+    {
+     "all": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 54,
+      "falseAlarms": 17,
+      "precision": 0.760563,
+      "falseAlarmIds": [
+       "ref/HC2",
+       "ref/HI1",
+       "ref/HI2",
+       "ref/HL1",
+       "ref/HW1",
+       "ref/HW2",
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h2/HW2"
+      ]
+     },
+     "model": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 12,
+      "falseAlarms": 11,
+      "precision": 0.521739,
+      "falseAlarmIds": [
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h2/HW2"
+      ]
+     }
+    },
+    {
+     "all": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 53,
+      "falseAlarms": 19,
+      "precision": 0.736111,
+      "falseAlarmIds": [
+       "ref/HC2",
+       "ref/HI1",
+       "ref/HI2",
+       "ref/HL1",
+       "ref/HO2",
+       "ref/HS2",
+       "ref/HW1",
+       "ref/HW2",
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h2/HW2"
+      ]
+     },
+     "model": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 11,
+      "falseAlarms": 11,
+      "precision": 0.5,
+      "falseAlarmIds": [
+       "b-h/HC2",
+       "b-h/HI1",
+       "b-h/HL1",
+       "b-h/HW1",
+       "b-h/HW2",
+       "b-m/HC2",
+       "b-m/HI1",
+       "b-m/HL1",
+       "b-m/HW1",
+       "b-m/HW2",
+       "b0-h2/HW2"
+      ]
+     }
+    }
+   ],
+   "T1majority": {
+    "all": {
+     "builds": 97,
+     "defective": 64,
+     "caught": 54,
+     "falseAlarms": 18,
+     "precision": 0.75,
+     "falseAlarmIds": [
+      "ref/HC2",
+      "ref/HI1",
+      "ref/HI2",
+      "ref/HL1",
+      "ref/HS2",
+      "ref/HW1",
+      "ref/HW2",
+      "b-h/HC2",
+      "b-h/HI1",
+      "b-h/HL1",
+      "b-h/HW1",
+      "b-h/HW2",
+      "b-m/HC2",
+      "b-m/HI1",
+      "b-m/HL1",
+      "b-m/HW1",
+      "b-m/HW2",
+      "b0-h2/HW2"
+     ]
+    },
+    "model": {
+     "builds": 42,
+     "defective": 21,
+     "caught": 12,
+     "falseAlarms": 11,
+     "precision": 0.521739,
+     "falseAlarmIds": [
+      "b-h/HC2",
+      "b-h/HI1",
+      "b-h/HL1",
+      "b-h/HW1",
+      "b-h/HW2",
+      "b-m/HC2",
+      "b-m/HI1",
+      "b-m/HL1",
+      "b-m/HW1",
+      "b-m/HW2",
+      "b0-h2/HW2"
+     ]
+    }
+   },
+   "T2": {
+    "v3-s0": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 28,
+      "falseAlarms": 1,
+      "precision": 0.965517,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 30,
+      "falseAlarms": 1,
+      "precision": 0.967742,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 6,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v4-s0": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 27,
+      "falseAlarms": 1,
+      "precision": 0.964286,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 29,
+      "falseAlarms": 1,
+      "precision": 0.966667,
+      "falseAlarmIds": [
+       "ref/HS2"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 5,
+      "falseAlarms": 0,
+      "precision": 1,
+      "falseAlarmIds": []
+     },
+     "missing": []
+    },
+    "v3-s1": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 37,
+      "falseAlarms": 3,
+      "precision": 0.925,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 40,
+      "falseAlarms": 3,
+      "precision": 0.930233,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 13,
+      "falseAlarms": 1,
+      "precision": 0.928571,
+      "falseAlarmIds": [
+       "b-m/HL1"
+      ]
+     },
+     "missing": []
+    },
+    "v4-s1": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 35,
+      "falseAlarms": 3,
+      "precision": 0.921053,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 38,
+      "falseAlarms": 3,
+      "precision": 0.926829,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HO2",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 11,
+      "falseAlarms": 1,
+      "precision": 0.916667,
+      "falseAlarmIds": [
+       "b-m/HL1"
+      ]
+     },
+     "missing": []
+    },
+    "v3-s2": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 30,
+      "falseAlarms": 3,
+      "precision": 0.909091,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 32,
+      "falseAlarms": 3,
+      "precision": 0.914286,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 6,
+      "falseAlarms": 1,
+      "precision": 0.857143,
+      "falseAlarmIds": [
+       "b-m/HL1"
+      ]
+     },
+     "missing": []
+    },
+    "v4-s2": {
+     "T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 30,
+      "falseAlarms": 3,
+      "precision": 0.909091,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-m/HL1"
+      ]
+     },
+     "T0+T2solo": {
+      "builds": 97,
+      "defective": 64,
+      "caught": 32,
+      "falseAlarms": 3,
+      "precision": 0.914286,
+      "falseAlarmIds": [
+       "ref/HL1",
+       "ref/HS2",
+       "b-m/HL1"
+      ]
+     },
+     "T2soloModel": {
+      "builds": 42,
+      "defective": 21,
+      "caught": 6,
+      "falseAlarms": 1,
+      "precision": 0.857143,
+      "falseAlarmIds": [
+       "b-m/HL1"
+      ]
+     },
+     "missing": []
+    }
+   },
+   "rules": {
+    "v3-s0": {
+     "H1": true,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 4
+    },
+    "v4-s0": {
+     "H1": true,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 4
+    },
+    "v3-s1": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 4
+    },
+    "v4-s1": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 4
+    },
+    "v3-s2": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 4
+    },
+    "v4-s2": {
+     "H1": false,
+     "H2": false,
+     "H3": true,
+     "H4": true,
+     "H4against": 4
+    }
+   }
+  }
+ },
+ "H5": {
+  "s0": {
+   "covered": 58,
+   "total": 58
+  },
+  "s1": {
+   "covered": 58,
+   "total": 58
+  },
+  "s2": {
+   "covered": 58,
+   "total": 58
+  }
+ },
+ "H7": {
+  "t2": {
+   "repaired": 4,
+   "fixed": [
+    "HO1"
+   ],
+   "broken": [],
+   "stillDefective": [
+    "HI2",
+    "HL1",
+    "HS1"
+   ],
+   "costUsd": 0.022768
+  },
+  "t1": {
+   "repaired": 3,
+   "fixed": [],
+   "broken": [
+    "HW2"
+   ],
+   "stillDefective": [
+    "HL1"
+   ],
+   "costUsd": 0.015625
+  },
+  "none": {
+   "repaired": 14,
+   "fixed": [],
+   "broken": [
+    "HI1"
+   ],
+   "stillDefective": [
+    "HC1",
+    "HE1",
+    "HI2",
+    "HL1",
+    "HL2",
+    "HO1",
+    "HO2",
+    "HS1",
+    "HS2"
+   ],
+   "costUsd": 0.064398
+  }
+ },
+ "spendUsd": {
+  "b0h2Builds": 0.102779,
+  "ownCapture": 0.018813,
+  "ownBind": 0.110842,
+  "t1": 0.25563,
+  "h7": 0.102791,
+  "total": 0.590855
+ },
+ "b0h2": {
+  "builds": 14,
+  "defective": 9,
+  "hostIdentity": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "conversations": {
+  "modelBuilds": 42,
+  "ownWords": 15,
+  "distinct": 12
+ }
+}

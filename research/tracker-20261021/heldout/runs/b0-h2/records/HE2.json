@@ -1,0 +1,631 @@
+{
+ "arm": "B0-H",
+ "case": "HE2",
+ "expected": "expense-approval",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "owen_contact",
+     "slot": null,
+     "question": "What is Owen's email address (or the chat channel name) that should receive the claims sent for approval?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "owen_contact",
+   "slot": null,
+   "question": "What is Owen's email address (or the chat channel name) that should receive the claims sent for approval?",
+   "matched": [
+    "approver"
+   ],
+   "answer": "Owen is owen@evergreenlandscaping.co"
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "owen_contact": "Owen is owen@evergreenlandscaping.co"
+ },
+ "cost": {
+  "usd": 0.008072,
+  "tokens": 39799,
+  "inputTokens": 4,
+  "outputTokens": 8789,
+  "cacheReadTokens": 1730,
+  "cacheWriteTokens": 29276,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 736,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14617,
+   "costUsd": 0.002203975,
+   "costUnknown": false,
+   "latencyMs": 4993,
+   "journalId": 4
+  },
+  {
+   "turn": 1,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 8053,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14659,
+   "costUsd": 0.005867724999999999,
+   "costUnknown": false,
+   "latencyMs": 37797,
+   "journalId": 5
+  }
+ ],
+ "builderWallMs": 42835,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-claims-triage",
+  "version": 1,
+  "title": "Expense claim triage with approver summary",
+  "goal": "Approve submitted claims under 100 that have a receipt photo; send claims of 100 or more, and claims without a receipt, to Owen (owen@evergreenlandscaping.co) for approval; record every decision in expense-decisions.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "'Photo' means receipt = true in the expenses sheet.",
+    "Amount is a number in the same currency as the 100 threshold.",
+    "Only claims with status 'submitted' are processed.",
+    "'Approved automatically' means a row with decision 'approved' is appended to expense-decisions; the expenses sheet status is not changed because no write capability exists for it.",
+    "Owen receives one summary email listing all claims waiting for approval."
+   ],
+   "risks": [
+    "A claim with a missing receipt field is treated as having no receipt and goes to Owen.",
+    "The expenses sheet status is not updated, so the same claim could be re-processed on a later run unless its status is changed by a person.",
+    "The at field is the run time from input.now, which is set per decision row by the map body."
+   ],
+   "successCriteria": [
+    "Every submitted claim gets exactly one row in expense-decisions.",
+    "Claims under 100 with a receipt are marked approved; all others are marked waiting for approver.",
+    "If any claim is waiting, one summary email is delivered to owen@evergreenlandscaping.co and verified in the outbox.",
+    "The expense-decisions rows are verified as written."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 1,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all expense claims.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pending",
+    "kind": "task",
+    "needs": [
+     "read_expenses"
+    ],
+    "description": "Keep only submitted claims.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "pending"
+    ],
+    "description": "Label each claim: over 100 or no receipt waits for approver; otherwise approved.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.pending.rows"
+     },
+     "rules": [
+      {
+       "field": "amount",
+       "op": "gte",
+       "value": 100,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "over 100"
+       }
+      },
+      {
+       "field": "receipt",
+       "op": "ne",
+       "value": true,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "no receipt"
+       }
+      }
+     ],
+     "otherwise": {
+      "decision": "approved",
+      "reason": "under 100 with receipt"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "waiting",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Keep claims waiting for the approver.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "waiting for approver"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decision_rows",
+    "kind": "map",
+    "needs": [
+     "route"
+    ],
+    "description": "Build one decision record per claim, stamped with the run time.",
+    "items": {
+     "$ref": "nodes.route.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "row",
+       "kind": "task",
+       "needs": [],
+       "description": "Decision record for one claim.",
+       "tool": "core.identity",
+       "args": {
+        "id": {
+         "$ref": "item.id"
+        },
+        "employee": {
+         "$ref": "item.employee"
+        },
+        "amount": {
+         "$ref": "item.amount"
+        },
+        "decision": {
+         "$ref": "item.decision"
+        },
+        "reason": {
+         "$ref": "item.reason"
+        },
+        "at": {
+         "$ref": "input.now"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.row.id"
+       },
+       "right": {
+        "$ref": "item.id"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "collect_rows",
+    "kind": "task",
+    "needs": [
+     "decision_rows"
+    ],
+    "description": "Collect the decision records.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.decision_rows.items"
+     },
+     "field": "row"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_decisions",
+    "kind": "task",
+    "needs": [
+     "collect_rows"
+    ],
+    "description": "Append one row per claim to expense-decisions.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.collect_rows.items"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit_sheet",
+    "kind": "verify",
+    "needs": [
+     "append_decisions"
+    ],
+    "description": "Confirm the decision rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.append_decisions.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_decisions"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "waiting_lines",
+    "kind": "task",
+    "needs": [
+     "waiting"
+    ],
+    "description": "One line per claim waiting for approval.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.waiting.rows"
+     },
+     "line": "{{id}} | {{employee}} | {{amount}} | {{reason}}",
+     "empty": "No claims waiting."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "owen_body",
+    "kind": "task",
+    "needs": [
+     "waiting_lines"
+    ],
+    "description": "Compose the summary email for Owen.",
+    "tool": "core.template",
+    "args": {
+     "text": "Hi Owen,\n\nThese expense claims need your approval:\n{{lines}}\n\nThank you.",
+     "variables": {
+      "lines": {
+       "$ref": "nodes.waiting_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_owen",
+    "kind": "task",
+    "needs": [
+     "owen_body"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.waiting_lines.count"
+     },
+     "right": 0
+    },
+    "description": "Send the approval summary to Owen when any claim is waiting.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "owen@evergreenlandscaping.co",
+     "subject": "Expense claims waiting for your approval",
+     "body": {
+      "$ref": "nodes.owen_body.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit_owen",
+    "kind": "verify",
+    "needs": [
+     "send_owen"
+    ],
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.waiting_lines.count"
+     },
+     "right": 0
+    },
+    "description": "Confirm the summary reached Owen's address.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "owen@evergreenlandscaping.co"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_owen"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_sheet.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_decisions.appended"
+    },
+    "right": {
+     "$ref": "nodes.collect_rows.count"
+    }
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.waiting_lines.count"
+      },
+      "right": 0
+     },
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.audit_owen.pass",
+       "default": true
+      },
+      "right": true
+     }
+    ]
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "owen@evergreenlandscaping.co",
+     "subject": "Expense claims waiting for your approval",
+     "body": "Hi Owen,\n\nThese expense claims need your approval:\nEG-3 | Luis Ortega | 180 | over 100\nEG-4 | Dee Walsh | 40 | no receipt\n\nThank you."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 64.2,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "approved",
+      "employee": "Luis Ortega",
+      "id": "EG-1",
+      "reason": "under 100 with receipt"
+     },
+     {
+      "amount": 99,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "approved",
+      "employee": "Hana Kim",
+      "id": "EG-2",
+      "reason": "under 100 with receipt"
+     },
+     {
+      "amount": 180,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Luis Ortega",
+      "id": "EG-3",
+      "reason": "over 100"
+     },
+     {
+      "amount": 40,
+      "at": "2026-10-28T16:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Dee Walsh",
+      "id": "EG-4",
+      "reason": "no receipt"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h2/foundry-live-E3hd2Q",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim gets exactly one row in expense-decisions.",
+    "exact": "the pass of “Confirm the decision rows were written.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Claims under 100 with a receipt are marked approved; all others are marked waiting for approver.",
+    "exact": "the appended of “Append one row per claim to expense-decisions.” equals the count of “Collect the decision records.”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "If any claim is waiting, one summary email is delivered to owen@evergreenlandscaping.co and verified in the outbox.",
+    "exact": "the count of “One line per claim waiting for approval.” equals 0 or {\"$ref\":\"nodes.audit_owen.pass\",\"default\":true} equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit_sheet",
+    "plain": "Confirm the decision rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.audit_owen",
+    "plain": "Confirm the summary reached Owen's address.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": 3,
+  "personActionsBeforeRun": 2,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ },
+ "rerun": {
+  "of": "b0-h",
+  "why": "PREREG-TRACKER-H2: the same writer through the identity-isolated claude-cli provider",
+  "hostIdentityOccurrences": 0
+ }
+}

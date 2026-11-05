@@ -1,0 +1,404 @@
+{
+  "schemaVersion": "1.0",
+  "id": "lead-triage",
+  "version": 1,
+  "title": "New lead routing",
+  "goal": "Each run, send every new lead to the first matching person (region is EMEA → emea@practice.example; companySize at least 500 → enterprise@practice.example; otherwise sales@practice.example), one e-mail per lead after a person approves it, and log the assignment.",
+  "domain": "general",
+  "envelope": {
+    "assumptions": [
+      "The leads sheet holds one row per lead with name, email, company, region, country, source, companySize, budget, message and status",
+      "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+    ],
+    "risks": [
+      "A lead sent to the wrong person or to no one",
+      "A lead's details sent outside the team"
+    ],
+    "successCriteria": [
+      "Every new lead was sent to exactly one person",
+      "Every assignment is in the lead log",
+      "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"
+    ],
+    "unsupported": [
+      "Replying to leads",
+      "Changing the leads sheet",
+      "Running on a schedule by itself"
+    ]
+  },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "now"
+    ],
+    "properties": {
+      "now": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 40
+      }
+    }
+  },
+  "budget": {
+    "maxSteps": 3000,
+    "maxConcurrency": 2,
+    "maxDurationMs": 300000,
+    "maxCost": 0
+  },
+  "nodes": [
+    {
+      "id": "read",
+      "kind": "task",
+      "needs": [],
+      "description": "Read the leads sheet",
+      "tool": "sheet.read",
+      "args": {
+        "sheet": "leads"
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "fresh",
+      "kind": "task",
+      "needs": [
+        "read"
+      ],
+      "description": "Keep the new leads that have an e-mail address",
+      "tool": "rows.filter",
+      "args": {
+        "rows": {
+          "$ref": "nodes.read.rows"
+        },
+        "where": [
+          {
+            "field": "status",
+            "op": "eq",
+            "value": "new"
+          },
+          {
+            "field": "email",
+            "op": "exists"
+          }
+        ]
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "routed",
+      "kind": "task",
+      "needs": [
+        "fresh"
+      ],
+      "description": "Pick the person for each lead",
+      "tool": "rows.route",
+      "args": {
+        "rows": {
+          "$ref": "nodes.fresh.rows"
+        },
+        "rules": [
+          {
+            "field": "region",
+            "op": "eq",
+            "value": "EMEA",
+            "set": {
+              "assignTo": "emea@practice.example"
+            }
+          },
+          {
+            "field": "companySize",
+            "op": "gte",
+            "value": 500,
+            "set": {
+              "assignTo": "enterprise@practice.example"
+            }
+          }
+        ],
+        "otherwise": {
+          "assignTo": "sales@practice.example"
+        }
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "notify",
+      "kind": "map",
+      "needs": [
+        "routed"
+      ],
+      "description": "E-mail each lead to its person",
+      "items": {
+        "$ref": "nodes.routed.rows"
+      },
+      "maxItems": 500,
+      "concurrency": 1,
+      "body": {
+        "nodes": [
+          {
+            "id": "compose",
+            "kind": "task",
+            "needs": [],
+            "description": "Write the lead e-mail",
+            "tool": "core.template",
+            "args": {
+              "text": "New lead for you:\n\nName: {{name}}\nCompany: {{company}}\nE-mail: {{email}}\nRegion: {{region}} ({{country}})\nCompany size: {{size}}\nBudget: {{budget}}\nSource: {{source}}\n\nMessage:\n{{message}}\n\nPlease follow up within one business day.",
+              "variables": {
+                "name": {
+                  "$ref": "item.name",
+                  "default": ""
+                },
+                "company": {
+                  "$ref": "item.company",
+                  "default": ""
+                },
+                "email": {
+                  "$ref": "item.email"
+                },
+                "region": {
+                  "$ref": "item.region",
+                  "default": ""
+                },
+                "country": {
+                  "$ref": "item.country",
+                  "default": ""
+                },
+                "size": {
+                  "$ref": "item.companySize",
+                  "default": ""
+                },
+                "budget": {
+                  "$ref": "item.budget",
+                  "default": ""
+                },
+                "source": {
+                  "$ref": "item.source",
+                  "default": ""
+                },
+                "message": {
+                  "$ref": "item.message",
+                  "default": ""
+                }
+              }
+            },
+            "timeoutMs": 10000,
+            "retry": {
+              "maxAttempts": 2
+            }
+          },
+          {
+            "id": "subject",
+            "kind": "task",
+            "needs": [],
+            "description": "Write the subject line",
+            "tool": "core.template",
+            "args": {
+              "text": "New lead: {{company}} ({{name}})",
+              "variables": {
+                "company": {
+                  "$ref": "item.company",
+                  "default": ""
+                },
+                "name": {
+                  "$ref": "item.name",
+                  "default": ""
+                }
+              }
+            },
+            "timeoutMs": 10000,
+            "retry": {
+              "maxAttempts": 2
+            }
+          },
+          {
+            "id": "send",
+            "kind": "task",
+            "needs": [
+              "compose",
+              "subject"
+            ],
+            "description": "E-mail the lead to its person (asks you first)",
+            "tool": "outbox.send",
+            "args": {
+              "to": {
+                "$ref": "item.assignTo"
+              },
+              "subject": {
+                "$ref": "nodes.subject.text"
+              },
+              "body": {
+                "$ref": "nodes.compose.text"
+              }
+            },
+            "timeoutMs": 10000,
+            "retry": {
+              "maxAttempts": 1
+            }
+          }
+        ],
+        "acceptance": [
+          {
+            "op": "eq",
+            "left": {
+              "$ref": "nodes.send.delivered"
+            },
+            "right": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "logRows",
+      "kind": "task",
+      "needs": [
+        "routed"
+      ],
+      "description": "Prepare the assignment log rows",
+      "tool": "rows.select",
+      "args": {
+        "rows": {
+          "$ref": "nodes.routed.rows"
+        },
+        "fields": [
+          "name",
+          "email",
+          "company",
+          "assignTo"
+        ],
+        "set": {
+          "assignedAt": {
+            "$ref": "input.now"
+          }
+        }
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "log",
+      "kind": "task",
+      "needs": [
+        "logRows",
+        "notify"
+      ],
+      "description": "Log who got which lead in the lead-log sheet",
+      "tool": "sheet.append",
+      "args": {
+        "sheet": "lead-log",
+        "rows": {
+          "$ref": "nodes.logRows.rows"
+        }
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "expected",
+      "kind": "task",
+      "needs": [
+        "routed"
+      ],
+      "description": "Who should have received a lead e-mail",
+      "tool": "core.pluck",
+      "args": {
+        "items": {
+          "$ref": "nodes.routed.rows"
+        },
+        "field": "assignTo"
+      },
+      "timeoutMs": 10000,
+      "retry": {
+        "maxAttempts": 2
+      }
+    },
+    {
+      "id": "audit",
+      "kind": "verify",
+      "needs": [
+        "expected",
+        "notify"
+      ],
+      "description": "Re-read the outbox: one e-mail per lead to its person, each intact",
+      "method": "capability",
+      "tool": "outbox.audit",
+      "args": {
+        "to": [
+          {
+            "$ref": "nodes.expected.items"
+          }
+        ]
+      },
+      "subject": {
+        "$ref": "nodes.notify"
+      },
+      "independence": "execution",
+      "gate": true,
+      "timeoutMs": 10000
+    },
+    {
+      "id": "logAudit",
+      "kind": "verify",
+      "needs": [
+        "log",
+        "routed"
+      ],
+      "description": "Re-read the lead log: one row per routed lead",
+      "method": "capability",
+      "tool": "sheet.audit",
+      "args": {
+        "sheet": "lead-log",
+        "rows": {
+          "$ref": "nodes.routed.count"
+        }
+      },
+      "subject": {
+        "$ref": "nodes.log"
+      },
+      "independence": "execution",
+      "gate": true,
+      "timeoutMs": 10000
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.notify.count"
+      },
+      "right": {
+        "$ref": "nodes.routed.count"
+      }
+    },
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.audit.pass"
+      },
+      "right": true
+    },
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.logAudit.pass"
+      },
+      "right": true
+    }
+  ],
+  "metadata": {
+    "sources": [
+      "app/core/templates/lead-triage.json (example \"lead-triage\", filled with its own sample settings)"
+    ],
+    "rationale": "Worked example for the free-form front door, generated by tools/skillpack/gen-exemplars.mjs from the frontier-written example \"lead-triage\" (claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Shows: Someone wants each new lead (from a web form or leads sheet) sent to the right person on their team by simple rules (region, country, source, company size, budget), with a log of who got what. Never: Replying to the leads themselves, scoring leads with AI, adding leads to a CRM, cold outreach or newsletters."
+  }
+}

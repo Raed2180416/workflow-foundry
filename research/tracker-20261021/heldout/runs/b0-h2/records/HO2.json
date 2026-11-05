@@ -1,0 +1,618 @@
+{
+ "arm": "B0-H",
+ "case": "HO2",
+ "expected": "oncall-digest",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "channel",
+     "slot": null,
+     "question": "Which chat channel should the 9am summary be posted to? Please give the channel name exactly as it appears in the chat tool."
+    },
+    {
+     "id": "email",
+     "slot": null,
+     "question": "What email address should the critical-unacknowledged alert emails go to?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "round": 0,
+     "kind": "validation",
+     "feedback": "- UNDECLARED_DATA_DEPENDENCY at workflow.email_lines: nodes.count_critical.value is not available through needs"
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "channel",
+   "slot": null,
+   "question": "Which chat channel should the 9am summary be posted to? Please give the channel name exactly as it appears in the chat tool.",
+   "matched": [
+    "channel"
+   ],
+   "answer": "#it-oncall"
+  },
+  {
+   "turn": 0,
+   "id": "email",
+   "slot": null,
+   "question": "What email address should the critical-unacknowledged alert emails go to?",
+   "matched": [
+    "pageTo"
+   ],
+   "answer": "n.okafor@stmaryshospital.org"
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "channel": "#it-oncall",
+  "email": "n.okafor@stmaryshospital.org"
+ },
+ "cost": {
+  "usd": 0.010447,
+  "tokens": 58448,
+  "inputTokens": 6,
+  "outputTokens": 9172,
+  "cacheReadTokens": 2595,
+  "cacheWriteTokens": 46675,
+  "calls": 3,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 591,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14620,
+   "costUsd": 0.00213185,
+   "costUnknown": false,
+   "latencyMs": 4382,
+   "journalId": 16
+  },
+  {
+   "turn": 1,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 5345,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14664,
+   "costUsd": 0.00451435,
+   "costUnknown": false,
+   "latencyMs": 24165,
+   "journalId": 17
+  },
+  {
+   "turn": 1,
+   "nodeKey": "repair",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 3236,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 17391,
+   "costUsd": 0.003800725,
+   "costUnknown": false,
+   "latencyMs": 13044,
+   "journalId": 18
+  }
+ ],
+ "builderWallMs": 41676,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "alert-oncall-summary",
+  "version": 1,
+  "title": "9am unresolved alerts summary and unacknowledged critical email",
+  "goal": "Post a summary of unresolved warnings and criticals to #it-oncall, and email n.okafor@stmaryshospital.org only when critical alerts remain unacknowledged. Warnings never trigger email.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "The 9am schedule is triggered externally; this workflow runs once per invocation.",
+    "An alert is unresolved when resolved is false; unacknowledged when acknowledged is false.",
+    "Recipient for critical e-mails is n.okafor@stmaryshospital.org."
+   ],
+   "risks": [
+    "Live chat.post and outbox.send ask a person before each dispatch.",
+    "Alert data is taken from the local alerts sheet as-is."
+   ],
+   "successCriteria": [
+    "Summary posted to #it-oncall and verified by chat.audit.",
+    "One e-mail sent to n.okafor@stmaryshospital.org and verified when unacknowledged criticals exist; no e-mail otherwise.",
+    "No e-mail is sent for warnings alone."
+   ]
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_alerts",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all alert rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_alerts",
+    "kind": "task",
+    "needs": [
+     "read_alerts"
+    ],
+    "description": "Keep unresolved warnings and criticals.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_alerts.rows"
+     },
+     "where": [
+      {
+       "field": "resolved",
+       "op": "eq",
+       "value": false
+      },
+      {
+       "field": "severity",
+       "op": "in",
+       "value": [
+        "warning",
+        "critical"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "critical_open",
+    "kind": "task",
+    "needs": [
+     "open_alerts"
+    ],
+    "description": "Keep unresolved criticals nobody has acknowledged.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_alerts.rows"
+     },
+     "where": [
+      {
+       "field": "severity",
+       "op": "eq",
+       "value": "critical"
+      },
+      {
+       "field": "acknowledged",
+       "op": "eq",
+       "value": false
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "count_open",
+    "kind": "task",
+    "needs": [
+     "open_alerts"
+    ],
+    "description": "Count unresolved warnings and criticals.",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "count",
+     "values": {
+      "$ref": "nodes.open_alerts.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "count_critical",
+    "kind": "task",
+    "needs": [
+     "critical_open"
+    ],
+    "description": "Count unacknowledged criticals.",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "count",
+     "values": {
+      "$ref": "nodes.critical_open.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "summary_lines",
+    "kind": "task",
+    "needs": [
+     "open_alerts"
+    ],
+    "description": "Render one line per unresolved alert.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_alerts.rows"
+     },
+     "line": "[{{severity}}] {{service}}: {{message}} (id {{id}}, at {{at}}, acknowledged {{acknowledged}})",
+     "empty": "No unresolved warnings or criticals."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "chat_text",
+    "kind": "task",
+    "needs": [
+     "count_open",
+     "summary_lines"
+    ],
+    "description": "Build the channel summary text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Unresolved warnings and criticals: {{count}}\n{{lines}}",
+     "variables": {
+      "count": {
+       "$ref": "nodes.count_open.value"
+      },
+      "lines": {
+       "$ref": "nodes.summary_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post_summary",
+    "kind": "task",
+    "needs": [
+     "chat_text"
+    ],
+    "description": "Post the summary to #it-oncall.",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#it-oncall",
+     "text": {
+      "$ref": "nodes.chat_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_post",
+    "kind": "verify",
+    "needs": [
+     "post_summary"
+    ],
+    "description": "Independently confirm the summary post exists in the channel.",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#it-oncall",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post_summary"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "email_lines",
+    "kind": "task",
+    "needs": [
+     "critical_open",
+     "count_critical"
+    ],
+    "description": "Render one line per unacknowledged critical.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.critical_open.rows"
+     },
+     "line": "{{service}}: {{message}} (id {{id}}, at {{at}})",
+     "empty": "none"
+    },
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.count_critical.value"
+     },
+     "right": 0
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "email_body",
+    "kind": "task",
+    "needs": [
+     "email_lines",
+     "count_critical"
+    ],
+    "description": "Build the e-mail body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Unacknowledged critical alerts: {{count}}\n{{lines}}",
+     "variables": {
+      "count": {
+       "$ref": "nodes.count_critical.value"
+      },
+      "lines": {
+       "$ref": "nodes.email_lines.text"
+      }
+     }
+    },
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.count_critical.value"
+     },
+     "right": 0
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_email",
+    "kind": "task",
+    "needs": [
+     "email_body",
+     "count_critical"
+    ],
+    "description": "E-mail the on-call lead about unacknowledged criticals.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "n.okafor@stmaryshospital.org",
+     "subject": "Unacknowledged critical alerts",
+     "body": {
+      "$ref": "nodes.email_body.text"
+     }
+    },
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.count_critical.value"
+     },
+     "right": 0
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_email",
+    "kind": "verify",
+    "needs": [
+     "send_email",
+     "count_critical"
+    ],
+    "description": "Independently confirm the e-mail was delivered to the expected recipient.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "n.okafor@stmaryshospital.org"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_email"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000,
+    "when": {
+     "op": "gt",
+     "left": {
+      "$ref": "nodes.count_critical.value"
+     },
+     "right": 0
+    }
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_post.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "any",
+    "conditions": [
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.count_critical.value"
+      },
+      "right": 0
+     },
+     {
+      "op": "eq",
+      "left": {
+       "$ref": "nodes.verify_email.pass"
+      },
+      "right": true
+     }
+    ]
+   }
+  ],
+  "metadata": {
+   "rationale": "Summary every run; e-mail only for unacknowledged criticals, never for warnings. The 9am timing is an external schedule."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "n.okafor@stmaryshospital.org",
+     "subject": "Unacknowledged critical alerts",
+     "body": "Unacknowledged critical alerts: 2\nehr: EHR login failures (id M-1, at 2026-10-28T07:10:00Z)\nlab: Lab interface down (id M-4, at 2026-10-27T03:00:00Z)"
+    }
+   ],
+   "chat": {
+    "#it-oncall": [
+     "Unresolved warnings and criticals: 4\n[critical] ehr: EHR login failures (id M-1, at 2026-10-28T07:10:00Z, acknowledged false)\n[warning] pacs: PACS disk 88% (id M-2, at 2026-10-28T01:00:00Z, acknowledged false)\n[critical] lab: Lab interface down (id M-4, at 2026-10-27T03:00:00Z, acknowledged false)\n[critical] pharmacy: Dispense queue slow (id M-5, at 2026-10-28T06:00:00Z, acknowledged true)"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h2/foundry-live-V0glZv",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Summary posted to #it-oncall and verified by chat.audit.",
+    "exact": "the pass of “Independently confirm the summary post exists in the channel.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "One e-mail sent to n.okafor@stmaryshospital.org and verified when unacknowledged criticals exist; no e-mail otherwise.",
+    "exact": "the value of “Count unacknowledged criticals.” equals 0 or the pass of “Independently confirm the e-mail was delivered to the expected recipient.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_post",
+    "plain": "Independently confirm the summary post exists in the channel.",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_email",
+    "plain": "Independently confirm the e-mail was delivered to the expected recipient.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to n.okafor@stmaryshospital.org containing \"Lab interface down\""
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 2,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 2,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ },
+ "rerun": {
+  "of": "b0-h",
+  "why": "PREREG-TRACKER-H2: the same writer through the identity-isolated claude-cli provider",
+  "hostIdentityOccurrences": 0
+ }
+}

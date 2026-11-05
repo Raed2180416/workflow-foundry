@@ -1,0 +1,292 @@
+{
+ "scoredAt": "2026-10-22T02:18:50.036Z",
+ "defective": 18,
+ "builds": 101,
+ "recall": {
+  "capture-claude-haiku-5-5-s0.json": {
+   "recall": 1,
+   "covered": 80,
+   "total": 80,
+   "testableRecall": 1,
+   "captured": 108,
+   "verificationAgreement": 0.9125,
+   "missed": [],
+   "costUsd": 0.00897
+  },
+  "capture-claude-haiku-5-5-s1.json": {
+   "recall": 0.9875,
+   "covered": 79,
+   "total": 80,
+   "testableRecall": 1,
+   "captured": 113,
+   "verificationAgreement": 0.9493670886075949,
+   "missed": [
+    "W2.2"
+   ],
+   "costUsd": 0.010177
+  },
+  "capture-claude-haiku-5-5-s2.json": {
+   "recall": 0.9875,
+   "covered": 79,
+   "total": 80,
+   "testableRecall": 0.9848484848484849,
+   "captured": 110,
+   "verificationAgreement": 0.9367088607594937,
+   "missed": [
+    "N3.2"
+   ],
+   "costUsd": 0.009571
+  },
+  "capture-rule.json": {
+   "recall": 0.8875,
+   "covered": 71,
+   "total": 80,
+   "testableRecall": 0.8787878787878788,
+   "captured": 88,
+   "verificationAgreement": 0.8169014084507042,
+   "missed": [
+    "W1.2",
+    "W1.3",
+    "W2.2",
+    "O1.2",
+    "N1.2",
+    "N2.2",
+    "N2.3",
+    "N3.2",
+    "N3.3"
+   ],
+   "costUsd": 0
+  }
+ },
+ "arms": {
+  "judge-claude-haiku-5-5-s0__claude-haiku-5-5.json": {
+   "T0": {
+    "builds": 101,
+    "defective": 18,
+    "caught": 7,
+    "falseAlarms": 0,
+    "precision": 1,
+    "caughtIds": [
+     "b0-h-1/E3",
+     "b0-h-1/I3",
+     "b0-h-1/L1",
+     "b0-h-1/L2",
+     "b0-h-1/W3",
+     "b0-h-1/E2",
+     "b0-h-1/C3"
+    ],
+    "falseAlarmIds": [],
+    "missedIds": [
+     "b-h-1/L3",
+     "b-m-1/L3",
+     "b0-h-1/C2",
+     "b0-h-1/E1",
+     "b0-h-1/I1",
+     "b0-h-1/I2",
+     "b0-h-1/L3",
+     "b0-h-1/O2",
+     "b0-h-1/O3",
+     "b0-h-1/S1",
+     "b0-h-1/S3"
+    ]
+   },
+   "T2": {
+    "builds": 101,
+    "defective": 18,
+    "caught": 7,
+    "falseAlarms": 23,
+    "precision": 0.23333333333333334,
+    "caughtIds": [
+     "b0-h-1/I2",
+     "b0-h-1/I3",
+     "b-h-1/L3",
+     "b-m-1/L3",
+     "b0-h-1/L3",
+     "b0-h-1/W3",
+     "b0-h-1/C3"
+    ],
+    "falseAlarmIds": [
+     "b-h-1/L1",
+     "b-m-1/L1",
+     "b-h-fix-1/L1",
+     "b-m-fix-1/L1",
+     "b-h-1/L2",
+     "b-m-1/L2",
+     "b-h-fix-1/L2",
+     "b-m-fix-1/L2",
+     "b-h-1/O3",
+     "b-m-1/O3",
+     "b-h-fix-1/O3",
+     "b-m-fix-1/O3",
+     "b-h-1/S2",
+     "b0-h-1/S2",
+     "b-h-fix-1/S2",
+     "b-h-1/S3",
+     "b-m-1/S3",
+     "b-h-fix-1/S3",
+     "b-m-fix-1/S3",
+     "b-h-1/W2",
+     "b-m-1/W2",
+     "b-h-fix-1/W2",
+     "b-m-fix-1/W2"
+    ],
+    "missedIds": [
+     "b0-h-1/C2",
+     "b0-h-1/E1",
+     "b0-h-1/E2",
+     "b0-h-1/E3",
+     "b0-h-1/I1",
+     "b0-h-1/L1",
+     "b0-h-1/L2",
+     "b0-h-1/O2",
+     "b0-h-1/O3",
+     "b0-h-1/S1",
+     "b0-h-1/S3"
+    ]
+   },
+   "T2noG3": {
+    "builds": 101,
+    "defective": 18,
+    "caught": 12,
+    "falseAlarms": 46,
+    "precision": 0.20689655172413793,
+    "caughtIds": [
+     "b0-h-1/C2",
+     "b0-h-1/E1",
+     "b0-h-1/I1",
+     "b0-h-1/I2",
+     "b0-h-1/I3",
+     "b-h-1/L3",
+     "b-m-1/L3",
+     "b0-h-1/L3",
+     "b0-h-1/S1",
+     "b0-h-1/S3",
+     "b0-h-1/W3",
+     "b0-h-1/C3"
+    ],
+    "falseAlarmIds": [
+     "b-h-1/C1",
+     "b-m-1/C1",
+     "b0-h-1/C1",
+     "b-h-fix-1/C1",
+     "b-m-fix-1/C1",
+     "b-h-1/C2",
+     "b-m-1/C2",
+     "b-h-fix-1/C2",
+     "b-m-fix-1/C2",
+     "b-h-1/E1",
+     "b-m-1/E1",
+     "b-h-fix-1/E1",
+     "b-m-fix-1/E1",
+     "b-h-1/I1",
+     "b-m-1/I1",
+     "b-h-fix-1/I1",
+     "b-m-fix-1/I1",
+     "b-h-1/L1",
+     "b-m-1/L1",
+     "b-h-fix-1/L1",
+     "b-m-fix-1/L1",
+     "b-h-1/L2",
+     "b-m-1/L2",
+     "b-h-fix-1/L2",
+     "b-m-fix-1/L2",
+     "b-h-1/O3",
+     "b-m-1/O3",
+     "b-h-fix-1/O3",
+     "b-m-fix-1/O3",
+     "b-h-1/S1",
+     "b-m-1/S1",
+     "b-h-fix-1/S1",
+     "b-m-fix-1/S1",
+     "b-h-1/S2",
+     "b-m-1/S2",
+     "b0-h-1/S2",
+     "b-h-fix-1/S2",
+     "b-m-fix-1/S2",
+     "b-h-1/S3",
+     "b-m-1/S3",
+     "b-h-fix-1/S3",
+     "b-m-fix-1/S3",
+     "b-h-1/W2",
+     "b-m-1/W2",
+     "b-h-fix-1/W2",
+     "b-m-fix-1/W2"
+    ],
+    "missedIds": [
+     "b0-h-1/E2",
+     "b0-h-1/E3",
+     "b0-h-1/L1",
+     "b0-h-1/L2",
+     "b0-h-1/O2",
+     "b0-h-1/O3"
+    ]
+   },
+   "T0+T2": {
+    "builds": 101,
+    "defective": 18,
+    "caught": 11,
+    "falseAlarms": 23,
+    "precision": 0.3235294117647059,
+    "caughtIds": [
+     "b0-h-1/E3",
+     "b0-h-1/I2",
+     "b0-h-1/I3",
+     "b0-h-1/L1",
+     "b0-h-1/L2",
+     "b-h-1/L3",
+     "b-m-1/L3",
+     "b0-h-1/L3",
+     "b0-h-1/W3",
+     "b0-h-1/E2",
+     "b0-h-1/C3"
+    ],
+    "falseAlarmIds": [
+     "b-h-1/L1",
+     "b-m-1/L1",
+     "b-h-fix-1/L1",
+     "b-m-fix-1/L1",
+     "b-h-1/L2",
+     "b-m-1/L2",
+     "b-h-fix-1/L2",
+     "b-m-fix-1/L2",
+     "b-h-1/O3",
+     "b-m-1/O3",
+     "b-h-fix-1/O3",
+     "b-m-fix-1/O3",
+     "b-h-1/S2",
+     "b0-h-1/S2",
+     "b-h-fix-1/S2",
+     "b-h-1/S3",
+     "b-m-1/S3",
+     "b-h-fix-1/S3",
+     "b-m-fix-1/S3",
+     "b-h-1/W2",
+     "b-m-1/W2",
+     "b-h-fix-1/W2",
+     "b-m-fix-1/W2"
+    ],
+    "missedIds": [
+     "b0-h-1/C2",
+     "b0-h-1/E1",
+     "b0-h-1/I1",
+     "b0-h-1/O2",
+     "b0-h-1/O3",
+     "b0-h-1/S1",
+     "b0-h-1/S3"
+    ]
+   },
+   "statuses": {
+    "met": 209,
+    "unmet": 36,
+    "unknown": 232,
+    "waived": 0,
+    "unknownBy": {
+     "check-suspect": 60,
+     "unverifiable": 148,
+     "not-exercised": 24
+    }
+   },
+   "conditionsPerBuild": 4.7227722772277225
+  }
+ }
+}

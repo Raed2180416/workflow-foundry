@@ -2,11 +2,12 @@
 // pastes it. What the agent can and cannot do is stated before the line. Since the P1 and P4 walkthroughs: every agent is Preview
 // (tested with a scripted client, not a released one: M1, M9); where to paste, which folder and how to check the connection are said
 // (M3); the trust wording follows Claude Code's documentation (M2); an optional allow list stops a prompt for every read-only tool (M4);
-// the cards an agent can build are listed (M10); and the command that opens Foundry's page is here (B2).
+// the examples an agent can start from are listed (M10; since the front door, 2026-11-05, as examples, not the limit of what it can
+// build); and the command that opens Foundry's page is here (B2).
 import { el, t, api, templates } from '../site.js';
 import { snippet, statusChip } from '../components/ui.js';
 
-const READ_AND_TEST = ['list_templates', 'propose_flow', 'dry_run', 'explain_flow', 'flow_status', 'list_flows'];
+const READ_AND_TEST = ['construction_guide', 'propose_flow', 'dry_run', 'explain_flow', 'flow_status', 'list_flows'];
 
 export async function render() {
   const [c, list] = await Promise.all([api('/api/connect'), templates()]);

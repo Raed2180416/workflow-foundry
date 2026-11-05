@@ -60,7 +60,7 @@ test('an address for a part that is off by default turns that part on, so it is 
 test('bad settings are refused in words before anything is built', () => {
   const b = new TemplateFormBuilder();
   assert.equal(b.build({ template: 'nope' }).status, 'unsupported');
-  assert.match(b.build({ template: 'nope' }).reply, /list_templates/);
+  assert.match(b.build({ template: 'nope' }).reply, /no example called nope.*construction_guide/);
   assert.equal(b.build({ template: 'invoice-chase', settings: { colour: 'red' } }).status, 'build_failed');
   assert.equal(b.build({ template: 'invoice-chase', settings: { firstAfterDays: { $ref: 'x' } } }).status, 'build_failed');
   const order = b.build({ template: 'invoice-chase', settings: { firstAfterDays: 20, secondAfterDays: 10 } });

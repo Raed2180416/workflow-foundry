@@ -2,7 +2,8 @@
 //
 // Reads: runs, their hash-chained events and workflow versions are read through tools/run-view/store-adapter.mjs, which opens the
 // SQLite store read-only and re-verifies every event's chain link; plain-language explanations come from app/core/explain.mjs.
-// Writes: only a person's decisions (turn a version on; allow or refuse one paused action), through FoundryApp with channel 'dashboard'.
+// Writes: only a person's decisions (turn a version on; allow or refuse one paused action; confirm, edit, waive or accept edits to what
+// they asked for), through FoundryApp with channel 'dashboard'.
 //
 // Boundary: keys made per start and per browser tab, each traded for a one-time code (app/site/gate.mjs: the code, not a key, is what
 // reaches the browser opener's command line), a Host check (DNS rebinding) and, on Linux, an OS-account check of the client socket
@@ -78,7 +79,7 @@ export function flowDetail(app, file, flowId) {
 }
 
 /**
- * The dashboard's API routes (overview, run detail, flow versions, a person's decision), shared with the onboarding site
+ * The dashboard's API routes (overview, run detail, flow versions, a person's decision, the person's conditions), shared with the onboarding site
  * (app/site/server.mjs mounts it). The caller has already checked the Host header and the token. Returns true when it answered.
  */
 export async function handleDashboardApi(app, req, res, url, send) {
@@ -92,6 +93,28 @@ export async function handleDashboardApi(app, req, res, url, send) {
   let m;
   if (req.method === 'GET' && (m = url.pathname.match(/^\/api\/runs\/([A-Za-z0-9-]{1,64})$/))) { send(res, 200, runDetail(app, file, m[1])); return true; }
   if (req.method === 'GET' && (m = url.pathname.match(/^\/api\/flows\/([A-Za-z][A-Za-z0-9_-]{0,63})$/))) { send(res, 200, flowDetail(app, file, m[1])); return true; }
+  // What the person asked for (the condition tracker, app/core/tracker/): read, and the person's own decisions and edits (channel 'dashboard').
+  if (req.method === 'GET' && (m = url.pathname.match(/^\/api\/conditions\/([A-Za-z][A-Za-z0-9_-]{0,63})$/))) { send(res, 200, app.conditions({ flowId: m[1] })); return true; }
+  if (req.method === 'POST' && url.pathname === '/api/conditions') {
+    if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) { send(res, 415, { error: 'JSON only' }); return true; }
+    let size = 0; const chunks = [];
+    for await (const chunk of req) { size += chunk.length; if (size > MAX_BODY) { send(res, 413, { error: 'too large' }); return true; } chunks.push(chunk); }
+    const b = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    const str = v => (typeof v === 'string' ? v : null);
+    if (typeof b.flowId !== 'string') { send(res, 400, { error: 'flowId is required' }); return true; }
+    // A model has no route to these: the gate's key is the person's page.
+    if (['accept', 'reject', 'confirm', 'waive', 'unwaive'].includes(b.action)) {
+      send(res, 200, await app.decideCondition({ flowId: b.flowId, action: b.action, proposalId: str(b.proposalId), conditionId: str(b.conditionId), why: str(b.why), workflowHash: str(b.workflowHash), channel: 'dashboard' }));
+      return true;
+    }
+    if (['add', 'change', 'remove'].includes(b.action)) {
+      send(res, 200, await app.proposeConditionEdit({ flowId: b.flowId, changes: [{ op: b.action, conditionId: str(b.conditionId), quote: str(b.quote), summary: str(b.summary) }], by: 'person', channel: 'dashboard' }));
+      return true;
+    }
+    if (b.action === 'check') { send(res, 200, await app.checkConditions({ flowId: b.flowId })); return true; }
+    send(res, 400, { error: 'action is accept, reject, confirm, waive, unwaive, add, change, remove or check' });
+    return true;
+  }
   if (req.method === 'POST' && url.pathname === '/api/decide') {
     if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) { send(res, 415, { error: 'JSON only' }); return true; }
     let size = 0; const chunks = [];

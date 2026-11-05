@@ -1,0 +1,363 @@
+{
+ "arm": "B0-H+repair-none",
+ "case": "HC1",
+ "expected": "contact-sync",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.0036653099999999997,
+  "tokens": 3241,
+  "inputTokens": 2,
+  "outputTokens": 3239,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.0036653099999999997,
+   "inputTokens": 2,
+   "outputTokens": 3239
+  }
+ ],
+ "builderWallMs": 13313,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "newsletter-crm-diff",
+  "version": 2,
+  "title": "Diff CRM contacts missing from newsletter list (report only)",
+  "goal": "Read the CRM sheet and the newsletter list, skip CRM contacts marked unsubscribed, and report which remaining CRM contacts are not in the newsletter list. Make no changes to any sheet and send nothing. Unsubscribed contacts are left alone entirely.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "The crm sheet is the Mindbody contact export with email, name, company, tags, unsubscribed.",
+    "The newsletter sheet stands in for the Mailchimp audience.",
+    "Emails are matched ignoring case and spaces, as rows.reconcile does.",
+    "Unsubscribed CRM contacts are left out of the diff entirely and never added."
+   ],
+   "risks": [
+    "Sheet exports may contain duplicate or malformed emails that are reported as-is.",
+    "The report is a snapshot; it does not add anyone to the newsletter list. The user reviews the list before any manual action."
+   ],
+   "successCriteria": [
+    "Every reported contact is in crm, has unsubscribed not true, and is absent from the newsletter sheet.",
+    "No rows are appended to the crm or newsletter sheets and no message is sent (verified by sheet.audit with zero appends).",
+    "A diff artifact is written for review."
+   ]
+  },
+  "budget": {
+   "maxSteps": 10,
+   "maxConcurrency": 2,
+   "maxDurationMs": 120000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read-crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all CRM contacts.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read-newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the current newsletter list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "eligible",
+    "kind": "task",
+    "needs": [
+     "read-crm"
+    ],
+    "description": "Keep CRM contacts that are not unsubscribed.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read-crm.rows"
+     },
+     "where": [
+      {
+       "field": "unsubscribed",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "diff",
+    "kind": "task",
+    "needs": [
+     "eligible",
+     "read-newsletter"
+    ],
+    "description": "Find eligible CRM contacts whose email is not in the newsletter list.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.eligible.rows"
+     },
+     "right": {
+      "$ref": "nodes.read-newsletter.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "report",
+    "kind": "task",
+    "needs": [
+     "diff"
+    ],
+    "description": "Render the missing contacts as one line each.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.diff.missing"
+     },
+     "line": "{{email}} | {{name}} | {{company}}",
+     "empty": "No eligible CRM contacts are missing from the newsletter list."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "artifact",
+    "kind": "task",
+    "needs": [
+     "report"
+    ],
+    "description": "Save the diff report as a run artifact for review.",
+    "tool": "core.artifact",
+    "args": {
+     "name": "newsletter-diff.txt",
+     "content": {
+      "$ref": "nodes.report.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "verify-newsletter-untouched",
+    "kind": "verify",
+    "needs": [
+     "report"
+    ],
+    "description": "Confirm this run appended no rows to the newsletter sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "newsletter",
+     "rows": 0
+    },
+    "subject": {
+     "$ref": "nodes.report"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "verify-crm-untouched",
+    "kind": "verify",
+    "needs": [
+     "report"
+    ],
+    "description": "Confirm this run appended no rows to the crm sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "crm",
+     "rows": 0
+    },
+    "subject": {
+     "$ref": "nodes.report"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify-newsletter-untouched.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify-crm-untouched.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "exists",
+    "value": {
+     "$ref": "nodes.artifact.sha256"
+    }
+   }
+  ],
+  "oracle": {
+   "mode": "none",
+   "reason": "No capability independently re-checks a reconcile diff of two sheets; a person should spot-check a few reported emails against the crm and newsletter sheets before acting on the list."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "unverified",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-none/foundry-live-oEz7eg",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every reported contact is in crm, has unsubscribed not true, and is absent from the newsletter sheet.",
+    "exact": "the pass of “Confirm this run appended no rows to the newsletter sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No rows are appended to the crm or newsletter sheets and no message is sent (verified by sheet.audit with zero appends).",
+    "exact": "the pass of “Confirm this run appended no rows to the crm sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "A diff artifact is written for review.",
+    "exact": "the sha256 of “Save the diff report as a run artifact for review.” exists",
+    "passed": true
+   },
+   {
+    "id": "verify.verify-newsletter-untouched",
+    "plain": "Confirm this run appended no rows to the newsletter sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify-crm-untouched",
+    "plain": "Confirm this run appended no rows to the crm sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended succeeded (verdict unverified)",
+   "outbox : missing a message to nadia@yogaflowstudio.com containing \"ben.k@quickpost.example\", \"devi@inbox.example\" without carla@sunmail.example"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 2,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HC1",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

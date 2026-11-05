@@ -1,0 +1,88 @@
+{
+ "arm": "B0-H+repair-t1",
+ "case": "HI1",
+ "expected": "invoice-chase",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "build_failed",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "t1",
+     "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-006: Exclusion is per invoice (status must be open), not per client. A client with a disputed invoice and another open overdue invoice would still get reminders. The sample has no such case, but the logic allows it.\n- C-007: The summary goes to requester@example.test, not maria@pixelandpixel.com, as the user asked. The summary_send node and audit both hardcode the wrong address.\nFix the workflow so it meets them."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.0030130599999999997,
+  "tokens": 1110,
+  "inputTokens": 2,
+  "outputTokens": 1108,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.0030130599999999997,
+   "inputTokens": 2,
+   "outputTokens": 1108
+  }
+ ],
+ "builderWallMs": 7741,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "build_failed",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {},
+ "builtValid": false,
+ "validationErrors": null,
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "no flow ran: the builder ended build_failed"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 5,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HI1",
+  "verifiedBefore": false,
+  "feedback": "A reviewer checked it against the person's conditions and found these not met:\n- C-006: Exclusion is per invoice (status must be open), not per client. A client with a disputed invoice and another open overdue invoice would still get reminders. The sample has no such case, but the logic allows it.\n- C-007: The summary goes to requester@example.test, not maria@pixelandpixel.com, as the user asked. The summary_send node and audit both hardcode the wrong address.\nFix the workflow so it meets them."
+ }
+}

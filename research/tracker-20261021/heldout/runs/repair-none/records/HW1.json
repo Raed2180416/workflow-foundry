@@ -1,0 +1,422 @@
+{
+ "arm": "B0-H+repair-none",
+ "case": "HW1",
+ "expected": "weekly-report",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00382581,
+  "tokens": 3413,
+  "inputTokens": 2,
+  "outputTokens": 3411,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00382581,
+   "inputTokens": 2,
+   "outputTokens": 3411
+  }
+ ],
+ "builderWallMs": 14276,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "weekly-tracker-report",
+  "version": 2,
+  "title": "Friday tracker status report to Rick",
+  "goal": "Read the tracker export, summarise what is marked done, and list what is open and blocked, then e-mail the report to rick@summitconstruction.com. Intended to run every Friday at 16:00. The tracker has no date field, so the report covers every item in the export, not only items completed this week.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "The tracker sheet holds the export to report on; it has no date field, so no week filtering is applied and the report says so.",
+    "The every-Friday-at-4 schedule is provided by an external trigger that starts a run with input.now.",
+    "Each outbox.send to Rick requires a person's approval when the flow runs live."
+   ],
+   "risks": [
+    "Items completed in earlier weeks will appear as done because the export has no dates; the report header states this.",
+    "The report is only as current as the tracker export at run time."
+   ],
+   "successCriteria": [
+    "The tracker is read and every row is counted as done, open or blocked.",
+    "The report e-mail is delivered to rick@summitconstruction.com and labelled as covering all export items.",
+    "The delivered message matches the saved report hash."
+   ]
+  },
+  "budget": {
+   "maxSteps": 14,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read every row of the tracker export.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "select",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep only title, status and owner of each tracker row.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "fields": [
+      "title",
+      "status",
+      "owner"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "tally",
+    "kind": "task",
+    "needs": [
+     "select"
+    ],
+    "description": "Count done, open and blocked items and list the done ones.",
+    "tool": "report.tally",
+    "args": {
+     "items": {
+      "$ref": "nodes.select.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_rows",
+    "kind": "task",
+    "needs": [
+     "select"
+    ],
+    "description": "Keep the open items.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.select.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked_rows",
+    "kind": "task",
+    "needs": [
+     "select"
+    ],
+    "description": "Keep the blocked items.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.select.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "blocked"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_lines",
+    "kind": "task",
+    "needs": [
+     "open_rows"
+    ],
+    "description": "Render one line per open item.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_rows.rows"
+     },
+     "line": "- {{title}} (owner: {{owner}})",
+     "empty": "None"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked_lines",
+    "kind": "task",
+    "needs": [
+     "blocked_rows"
+    ],
+    "description": "Render one line per blocked item.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.blocked_rows.rows"
+     },
+     "line": "- {{title}} (owner: {{owner}})",
+     "empty": "None"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "compose",
+    "kind": "task",
+    "needs": [
+     "tally",
+     "open_lines",
+     "blocked_lines",
+     "read"
+    ],
+    "description": "Assemble the report text, stating that it covers all tracker export items because the export has no dates.",
+    "tool": "core.template",
+    "args": {
+     "text": "Tracker status report as of {{now}}\n(Covers every item in the tracker export; the export has no dates, so 'done' is not limited to this week.)\n\nDone: {{done}} of {{total}}\n{{doneLines}}\n\nOpen: {{open}}\n{{openLines}}\n\nBlocked: {{blocked}}\n{{blockedLines}}\n",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "done": {
+       "$ref": "nodes.tally.done"
+      },
+      "total": {
+       "$ref": "nodes.tally.total"
+      },
+      "open": {
+       "$ref": "nodes.tally.open"
+      },
+      "blocked": {
+       "$ref": "nodes.tally.blocked"
+      },
+      "doneLines": {
+       "$ref": "nodes.tally.doneLines"
+      },
+      "openLines": {
+       "$ref": "nodes.open_lines.text"
+      },
+      "blockedLines": {
+       "$ref": "nodes.blocked_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "compose"
+    ],
+    "description": "E-mail the status report to Rick.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "rick@summitconstruction.com",
+     "subject": "Tracker status report (all export items)",
+     "body": {
+      "$ref": "nodes.compose.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Re-read the delivered message and compare its hash with the saved report.",
+    "method": "capability",
+    "tool": "outbox.check",
+    "args": {
+     "messageId": {
+      "$ref": "nodes.send.messageId"
+     },
+     "sha256": {
+      "$ref": "nodes.send.sha256"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "rick@summitconstruction.com",
+     "subject": "Tracker status report (all export items)",
+     "body": "Tracker status report as of 2026-10-30T16:00:00Z\n(Covers every item in the tracker export; the export has no dates, so 'done' is not limited to this week.)\n\nDone: 3 of 6\n- Pour foundation at Elm St (Gus)\n- Frame second floor at Oak Ave (Rita)\n- Order windows for Birch Ct (Gus)\n\nOpen: 2\n- Electrical rough-in at Oak Ave (owner: Hal)\n- Final walkthrough at Maple Rd (owner: Rita)\n\nBlocked: 1\n- City permit for Pine St (owner: Hal)\n"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair-none/foundry-live-64zzJL",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "The tracker is read and every row is counted as done, open or blocked.",
+    "exact": "the delivered of “E-mail the status report to Rick.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The report e-mail is delivered to rick@summitconstruction.com and labelled as covering all export items.",
+    "exact": "the pass of “Re-read the delivered message and compare its hash with the saved report.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify",
+    "plain": "Re-read the delivered message and compare its hash with the saved report.",
+    "exact": "outbox.check (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 3,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h/HW1",
+  "verifiedBefore": true,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

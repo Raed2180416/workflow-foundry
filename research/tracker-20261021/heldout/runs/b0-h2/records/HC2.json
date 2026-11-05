@@ -1,0 +1,492 @@
+{
+ "arm": "B0-H",
+ "case": "HC2",
+ "expected": "contact-sync",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00386,
+  "tokens": 19551,
+  "inputTokens": 2,
+  "outputTokens": 4043,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14641,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4043,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14641,
+   "costUsd": 0.0038604749999999995,
+   "costUnknown": false,
+   "latencyMs": 18096,
+   "journalId": 2
+  }
+ ],
+ "builderWallMs": 18142,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "newsletter-sync-crm",
+  "version": 1,
+  "title": "Add missing subscribed CRM contacts to newsletter and report",
+  "goal": "Add every subscribed contact from the crm sheet that is not already on the newsletter list, skip unsubscribed contacts, and e-mail janet@happytailsbakery.com a report of who was added.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The crm and newsletter sheets exist in the workspace and use email as the key.",
+    "Contacts are matched by email, ignoring case and spaces.",
+    "Newly added newsletter rows get source 'crm sheet'; addedAt is left empty because rows.select cannot take the run time as a constant reference.",
+    "The report recipient is janet@happytailsbakery.com."
+   ],
+   "risks": [
+    "Sending the report is an outside action and asks a person before dispatch.",
+    "If the newsletter sheet is missing, the read fails and nothing is added."
+   ],
+   "successCriteria": [
+    "Every subscribed crm contact missing from the newsletter is appended to the newsletter sheet.",
+    "Unsubscribed crm contacts are never appended.",
+    "The appended rows are confirmed by sheet.audit.",
+    "The report is delivered to janet@happytailsbakery.com and confirmed by outbox.check."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_crm",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the customer sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "crm"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_newsletter",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the current mailing list.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "newsletter"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "subscribed",
+    "kind": "task",
+    "needs": [
+     "read_crm"
+    ],
+    "description": "Keep contacts that are not unsubscribed.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_crm.rows"
+     },
+     "where": [
+      {
+       "field": "unsubscribed",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recon",
+    "kind": "task",
+    "needs": [
+     "subscribed",
+     "read_newsletter"
+    ],
+    "description": "Find subscribed contacts whose e-mail is not on the mailing list.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.subscribed.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_newsletter.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_rows",
+    "kind": "task",
+    "needs": [
+     "recon"
+    ],
+    "description": "Shape the missing contacts as mailing list rows.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recon.missing"
+     },
+     "fields": [
+      "email",
+      "name"
+     ],
+     "set": {
+      "source": "crm sheet"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_contacts",
+    "kind": "task",
+    "needs": [
+     "new_rows"
+    ],
+    "description": "Append the missing contacts to the newsletter sheet.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.new_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "count_added",
+    "kind": "task",
+    "needs": [
+     "recon"
+    ],
+    "description": "Count the added contacts.",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "count",
+     "values": {
+      "$ref": "nodes.recon.missing"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "verify_append",
+    "kind": "verify",
+    "needs": [
+     "append_contacts",
+     "count_added"
+    ],
+    "description": "Confirm the appended rows are in the newsletter sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "newsletter",
+     "rows": {
+      "$ref": "nodes.count_added.value"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_contacts"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "report_lines",
+    "kind": "task",
+    "needs": [
+     "recon"
+    ],
+    "description": "Render one line per added contact.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recon.missing"
+     },
+     "line": "- {{name}} <{{email}}>",
+     "empty": "No new contacts were added."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "report_text",
+    "kind": "task",
+    "needs": [
+     "report_lines",
+     "count_added"
+    ],
+    "description": "Build the report body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Newsletter sync on {{date}}: {{count}} contact(s) added from the crm sheet. Unsubscribed contacts were skipped.\n\n{{lines}}",
+     "variables": {
+      "date": {
+       "$ref": "input.now"
+      },
+      "count": {
+       "$ref": "nodes.count_added.value"
+      },
+      "lines": {
+       "$ref": "nodes.report_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_report",
+    "kind": "task",
+    "needs": [
+     "report_text",
+     "verify_append"
+    ],
+    "description": "E-mail the report to Janet.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "janet@happytailsbakery.com",
+     "subject": "Newsletter sync: contacts added",
+     "body": {
+      "$ref": "nodes.report_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_report",
+    "kind": "verify",
+    "needs": [
+     "send_report"
+    ],
+    "description": "Re-read the delivered report and compare its hash.",
+    "method": "capability",
+    "tool": "outbox.check",
+    "args": {
+     "messageId": {
+      "$ref": "nodes.send_report.messageId"
+     },
+     "sha256": {
+      "$ref": "nodes.send_report.sha256"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.send_report"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_append.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_report.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_report.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "rationale": "Filter out unsubscribed rows, reconcile by email, append only the missing subscribed contacts, then report the added names to Janet and verify both the append and the sent message.",
+   "tags": [
+    "newsletter",
+    "crm",
+    "report"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "janet@happytailsbakery.com",
+     "subject": "Newsletter sync: contacts added",
+     "body": "Newsletter sync on 2026-10-26T08:00:00Z: 3 contact(s) added from the crm sheet. Unsubscribed contacts were skipped.\n\n- Pip Tran <pip@barkmail.example>\n- Rosa Vega <rosa@woofpost.example>\n- Uma Shah <uma@treatbox.example>"
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "newsletter": [
+     {
+      "email": "pip@barkmail.example",
+      "name": "Pip Tran",
+      "source": "crm sheet"
+     },
+     {
+      "email": "rosa@woofpost.example",
+      "name": "Rosa Vega",
+      "source": "crm sheet"
+     },
+     {
+      "email": "uma@treatbox.example",
+      "name": "Uma Shah",
+      "source": "crm sheet"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b0-h2/foundry-live-aOpgEk",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every subscribed crm contact missing from the newsletter is appended to the newsletter sheet.",
+    "exact": "the pass of “Confirm the appended rows are in the newsletter sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Unsubscribed crm contacts are never appended.",
+    "exact": "the delivered of “E-mail the report to Janet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The appended rows are confirmed by sheet.audit.",
+    "exact": "the pass of “Re-read the delivered report and compare its hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_append",
+    "plain": "Confirm the appended rows are in the newsletter sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_report",
+    "plain": "Re-read the delivered report and compare its hash.",
+    "exact": "outbox.check (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ },
+ "rerun": {
+  "of": "b0-h",
+  "why": "PREREG-TRACKER-H2: the same writer through the identity-isolated claude-cli provider",
+  "hostIdentityOccurrences": 0
+ }
+}

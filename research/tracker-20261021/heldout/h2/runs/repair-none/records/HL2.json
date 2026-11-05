@@ -1,0 +1,506 @@
+{
+ "arm": "B0-H2+repair-none",
+ "case": "HL2",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00415306,
+  "tokens": 4057,
+  "inputTokens": 2,
+  "outputTokens": 4055,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00415306,
+   "inputTokens": 2,
+   "outputTokens": 4055
+  }
+ ],
+ "builderWallMs": 15770,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-leads",
+  "version": 2,
+  "title": "Route leads by region and log assignments",
+  "goal": "Read the leads sheet, skip spam, assign west coast leads to Ellen, east coast leads to Rajesh and all other leads to Sarah, append one lead-log row per routed lead with the assignment time, and send Tom a notification for each routed lead whose budget is above 25000.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Spam leads (status = spam) are not routed.",
+    "West coast = region values west, west coast or pacific; east coast = region values east, east coast, northeast, southeast or atlantic (matched ignoring case). Everything else goes to Sarah.",
+    "'cc me' is implemented as a separate notification e-mail to Tom for each routed lead with budget above 25000, because outbox.send has no cc field.",
+    "assignedAt is set to the run's input.now for every routed lead."
+   ],
+   "risks": [
+    "Region labels that do not match the listed values fall through to Sarah.",
+    "Each notification to Tom is a live outbound e-mail and asks a person before dispatch.",
+    "A lead with a missing budget is not notified to Tom."
+   ],
+   "successCriteria": [
+    "Every non-spam lead is assigned to exactly one of Ellen, Rajesh or Sarah.",
+    "One lead-log row is appended per routed lead and the audit of the sheet passes.",
+    "Each lead with budget above 25000 produces one notification to Tom."
+   ]
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all leads.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "drop_spam",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Keep leads that are not spam.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "ne",
+       "value": "spam"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "drop_spam"
+    ],
+    "description": "Assign each lead to a rep by region.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.drop_spam.rows"
+     },
+     "rules": [
+      {
+       "field": "region",
+       "op": "in",
+       "value": [
+        "west coast",
+        "west",
+        "pacific"
+       ],
+       "set": {
+        "assignTo": "ellen@nimbusconsulting.io"
+       }
+      },
+      {
+       "field": "region",
+       "op": "in",
+       "value": [
+        "east coast",
+        "east",
+        "northeast",
+        "southeast",
+        "atlantic"
+       ],
+       "set": {
+        "assignTo": "rajesh@nimbusconsulting.io"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "sarah@nimbusconsulting.io"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "shape",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Keep the log fields and stamp the assignment time.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log",
+    "kind": "task",
+    "needs": [
+     "shape"
+    ],
+    "description": "Append one log row per routed lead.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.shape.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "log"
+    ],
+    "description": "Independently confirm the appended log rows are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "notify",
+    "kind": "map",
+    "needs": [
+     "route"
+    ],
+    "description": "For each routed lead with budget above 25000, notify Tom.",
+    "items": {
+     "$ref": "nodes.route.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "text",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the notification text.",
+       "when": {
+        "op": "gt",
+        "left": {
+         "$ref": "item.budget"
+        },
+        "right": 25000
+       },
+       "tool": "core.template",
+       "args": {
+        "text": "Lead {{name}} from {{company}} has budget {{budget}} and was routed to {{assignTo}}.",
+        "variables": {
+         "name": {
+          "$ref": "item.name"
+         },
+         "company": {
+          "$ref": "item.company"
+         },
+         "budget": {
+          "$ref": "item.budget"
+         },
+         "assignTo": {
+          "$ref": "item.assignTo"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send_tom",
+       "kind": "task",
+       "needs": [
+        "text"
+       ],
+       "description": "Send the notification to Tom.",
+       "when": {
+        "op": "gt",
+        "left": {
+         "$ref": "item.budget"
+        },
+        "right": 25000
+       },
+       "tool": "outbox.send",
+       "args": {
+        "to": "tom@nimbusconsulting.io",
+        "subject": "Large lead routed",
+        "body": {
+         "$ref": "nodes.text.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "any",
+       "conditions": [
+        {
+         "op": "lte",
+         "left": {
+          "$ref": "item.budget"
+         },
+         "right": 25000
+        },
+        {
+         "op": "eq",
+         "left": {
+          "$ref": "nodes.send_tom.delivered"
+         },
+         "right": true
+        }
+       ]
+      }
+     ]
+    }
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.log.appended"
+    },
+    "right": {
+     "$ref": "nodes.shape.count"
+    }
+   }
+  ],
+  "metadata": {
+   "rationale": "Region rules are checked in order with spam excluded; the log is verified by re-reading the sheet and stamped with the run time; the budget copy goes to Tom as a separate outbound notification per large lead.",
+   "tags": [
+    "leads",
+    "routing"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "tom@nimbusconsulting.io",
+     "subject": "Large lead routed",
+     "body": "Lead Dex Long from Gulf Energy has budget 30000 and was routed to sarah@nimbusconsulting.io."
+    },
+    {
+     "to": "tom@nimbusconsulting.io",
+     "subject": "Large lead routed",
+     "body": "Lead Ben Ruiz from Harbor Bank has budget 40000 and was routed to rajesh@nimbusconsulting.io."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "ellen@nimbusconsulting.io",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Pacific Retail",
+      "email": "ana@pacificretail.example",
+      "name": "Ana Holt"
+     },
+     {
+      "assignTo": "rajesh@nimbusconsulting.io",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Harbor Bank",
+      "email": "ben@harborbank.example",
+      "name": "Ben Ruiz"
+     },
+     {
+      "assignTo": "sarah@nimbusconsulting.io",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Prairie Foods",
+      "email": "cleo@prairiefoods.example",
+      "name": "Cleo Ward"
+     },
+     {
+      "assignTo": "sarah@nimbusconsulting.io",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Gulf Energy",
+      "email": "dex@gulfenergy.example",
+      "name": "Dex Long"
+     },
+     {
+      "assignTo": "ellen@nimbusconsulting.io",
+      "assignedAt": "2026-10-28T08:00:00Z",
+      "company": "Redwood Labs",
+      "email": "eve@redwoodlabs.example",
+      "name": "Eve Moss"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair2-none/foundry-live-4mwfBD",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every non-spam lead is assigned to exactly one of Ellen, Rajesh or Sarah.",
+    "exact": "the pass of “Independently confirm the appended log rows are in the sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "One lead-log row is appended per routed lead and the audit of the sheet passes.",
+    "exact": "the appended of “Append one log row per routed lead.” equals the count of “Keep the log fields and stamp the assignment time.”",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Independently confirm the appended log rows are in the sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to ellen@nimbusconsulting.io containing \"Pacific Retail\"",
+   "outbox : missing a message to rajesh@nimbusconsulting.io containing \"Harbor Bank\"",
+   "outbox : missing a message to sarah@nimbusconsulting.io containing \"Prairie Foods\"",
+   "outbox : missing a message to sarah@nimbusconsulting.io containing \"Gulf Energy\"",
+   "sheet lead-log: unexpected or wrong item {\"assignTo\":\"ellen@nimbusconsulting.io\",\"assignedAt\":\"2026-10-28T08:00:00Z\",\"company\":\"Redwood Labs\",\"email\":\"eve@redwoodlabs.example\",\"name\":\"Eve Moss\"}"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h2/HL2",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

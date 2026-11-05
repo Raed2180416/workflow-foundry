@@ -1,0 +1,550 @@
+{
+ "note": "Each model build's own conversation (PREREG-TRACKER-H2 §2.2). same: the answers are the key's, so the key capture and bind apply.",
+ "builds": {
+  "b-h/HC1": {
+   "case": "HC1",
+   "arm": "B-H",
+   "conv": "HC1",
+   "same": true,
+   "answers": 1
+  },
+  "b-h/HC2": {
+   "case": "HC2",
+   "arm": "B-H",
+   "conv": "HC2",
+   "same": true,
+   "answers": 0
+  },
+  "b-h/HE1": {
+   "case": "HE1",
+   "arm": "B-H",
+   "conv": "HE1",
+   "same": true,
+   "answers": 0
+  },
+  "b-h/HE2": {
+   "case": "HE2",
+   "arm": "B-H",
+   "conv": "HE2",
+   "same": true,
+   "answers": 1
+  },
+  "b-h/HI1": {
+   "case": "HI1",
+   "arm": "B-H",
+   "conv": "HI1",
+   "same": true,
+   "answers": 1
+  },
+  "b-h/HI2": {
+   "case": "HI2",
+   "arm": "B-H",
+   "conv": "HI2~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b-h/HL1": {
+   "case": "HL1",
+   "arm": "B-H",
+   "conv": "HL1~063fbc73",
+   "same": false,
+   "answers": 2
+  },
+  "b-h/HL2": {
+   "case": "HL2",
+   "arm": "B-H",
+   "conv": "HL2",
+   "same": true,
+   "answers": 2
+  },
+  "b-h/HO1": {
+   "case": "HO1",
+   "arm": "B-H",
+   "conv": "HO1",
+   "same": true,
+   "answers": 1
+  },
+  "b-h/HO2": {
+   "case": "HO2",
+   "arm": "B-H",
+   "conv": "HO2",
+   "same": true,
+   "answers": 2
+  },
+  "b-h/HS1": {
+   "case": "HS1",
+   "arm": "B-H",
+   "conv": "HS1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b-h/HS2": {
+   "case": "HS2",
+   "arm": "B-H",
+   "conv": "HS2~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b-h/HW1": {
+   "case": "HW1",
+   "arm": "B-H",
+   "conv": "HW1",
+   "same": true,
+   "answers": 0
+  },
+  "b-h/HW2": {
+   "case": "HW2",
+   "arm": "B-H",
+   "conv": "HW2",
+   "same": true,
+   "answers": 1
+  },
+  "b-m/HC1": {
+   "case": "HC1",
+   "arm": "B-M",
+   "conv": "HC1",
+   "same": true,
+   "answers": 1
+  },
+  "b-m/HC2": {
+   "case": "HC2",
+   "arm": "B-M",
+   "conv": "HC2",
+   "same": true,
+   "answers": 0
+  },
+  "b-m/HE1": {
+   "case": "HE1",
+   "arm": "B-M",
+   "conv": "HE1",
+   "same": true,
+   "answers": 0
+  },
+  "b-m/HE2": {
+   "case": "HE2",
+   "arm": "B-M",
+   "conv": "HE2",
+   "same": true,
+   "answers": 1
+  },
+  "b-m/HI1": {
+   "case": "HI1",
+   "arm": "B-M",
+   "conv": "HI1",
+   "same": true,
+   "answers": 1
+  },
+  "b-m/HI2": {
+   "case": "HI2",
+   "arm": "B-M",
+   "conv": "HI2~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b-m/HL1": {
+   "case": "HL1",
+   "arm": "B-M",
+   "conv": "HL1",
+   "same": true,
+   "answers": 2
+  },
+  "b-m/HL2": {
+   "case": "HL2",
+   "arm": "B-M",
+   "conv": "HL2",
+   "same": true,
+   "answers": 2
+  },
+  "b-m/HO1": {
+   "case": "HO1",
+   "arm": "B-M",
+   "conv": "HO1",
+   "same": true,
+   "answers": 1
+  },
+  "b-m/HO2": {
+   "case": "HO2",
+   "arm": "B-M",
+   "conv": "HO2",
+   "same": true,
+   "answers": 2
+  },
+  "b-m/HS1": {
+   "case": "HS1",
+   "arm": "B-M",
+   "conv": "HS1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b-m/HS2": {
+   "case": "HS2",
+   "arm": "B-M",
+   "conv": "HS2~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b-m/HW1": {
+   "case": "HW1",
+   "arm": "B-M",
+   "conv": "HW1",
+   "same": true,
+   "answers": 0
+  },
+  "b-m/HW2": {
+   "case": "HW2",
+   "arm": "B-M",
+   "conv": "HW2",
+   "same": true,
+   "answers": 1
+  },
+  "b0-h2/HC1": {
+   "case": "HC1",
+   "arm": "B0-H2",
+   "conv": "HC1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b0-h2/HC2": {
+   "case": "HC2",
+   "arm": "B0-H2",
+   "conv": "HC2",
+   "same": true,
+   "answers": 0
+  },
+  "b0-h2/HE1": {
+   "case": "HE1",
+   "arm": "B0-H2",
+   "conv": "HE1",
+   "same": true,
+   "answers": 0
+  },
+  "b0-h2/HE2": {
+   "case": "HE2",
+   "arm": "B0-H2",
+   "conv": "HE2",
+   "same": true,
+   "answers": 1
+  },
+  "b0-h2/HI1": {
+   "case": "HI1",
+   "arm": "B0-H2",
+   "conv": "HI1~46b67239",
+   "same": false,
+   "answers": 2
+  },
+  "b0-h2/HI2": {
+   "case": "HI2",
+   "arm": "B0-H2",
+   "conv": "HI2~0b195a9f",
+   "same": false,
+   "answers": 2
+  },
+  "b0-h2/HL1": {
+   "case": "HL1",
+   "arm": "B0-H2",
+   "conv": "HL1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b0-h2/HL2": {
+   "case": "HL2",
+   "arm": "B0-H2",
+   "conv": "HL2~c06128c4",
+   "same": false,
+   "answers": 3
+  },
+  "b0-h2/HO1": {
+   "case": "HO1",
+   "arm": "B0-H2",
+   "conv": "HO1",
+   "same": true,
+   "answers": 1
+  },
+  "b0-h2/HO2": {
+   "case": "HO2",
+   "arm": "B0-H2",
+   "conv": "HO2",
+   "same": true,
+   "answers": 2
+  },
+  "b0-h2/HS1": {
+   "case": "HS1",
+   "arm": "B0-H2",
+   "conv": "HS1~a762cff7",
+   "same": false,
+   "answers": 2
+  },
+  "b0-h2/HS2": {
+   "case": "HS2",
+   "arm": "B0-H2",
+   "conv": "HS2~230c9acb",
+   "same": false,
+   "answers": 3
+  },
+  "b0-h2/HW1": {
+   "case": "HW1",
+   "arm": "B0-H2",
+   "conv": "HW1",
+   "same": true,
+   "answers": 0
+  },
+  "b0-h2/HW2": {
+   "case": "HW2",
+   "arm": "B0-H2",
+   "conv": "HW2~9b83ed82",
+   "same": false,
+   "answers": 4
+  },
+  "b0-h/HC1": {
+   "case": "HC1",
+   "arm": "B0-H",
+   "conv": "HC1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b0-h/HC2": {
+   "case": "HC2",
+   "arm": "B0-H",
+   "conv": "HC2",
+   "same": true,
+   "answers": 0
+  },
+  "b0-h/HE1": {
+   "case": "HE1",
+   "arm": "B0-H",
+   "conv": "HE1",
+   "same": true,
+   "answers": 0
+  },
+  "b0-h/HE2": {
+   "case": "HE2",
+   "arm": "B0-H",
+   "conv": "HE2~039d88de",
+   "same": false,
+   "answers": 2
+  },
+  "b0-h/HI1": {
+   "case": "HI1",
+   "arm": "B0-H",
+   "conv": "HI1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b0-h/HI2": {
+   "case": "HI2",
+   "arm": "B0-H",
+   "conv": "HI2~e04773d9",
+   "same": false,
+   "answers": 2
+  },
+  "b0-h/HL1": {
+   "case": "HL1",
+   "arm": "B0-H",
+   "conv": "HL1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b0-h/HL2": {
+   "case": "HL2",
+   "arm": "B0-H",
+   "conv": "HL2~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b0-h/HO1": {
+   "case": "HO1",
+   "arm": "B0-H",
+   "conv": "HO1~4f53cda1",
+   "same": false,
+   "answers": 0
+  },
+  "b0-h/HO2": {
+   "case": "HO2",
+   "arm": "B0-H",
+   "conv": "HO2~55787947",
+   "same": false,
+   "answers": 1
+  },
+  "b0-h/HS1": {
+   "case": "HS1",
+   "arm": "B0-H",
+   "conv": "HS1~83395161",
+   "same": false,
+   "answers": 2
+  },
+  "b0-h/HS2": {
+   "case": "HS2",
+   "arm": "B0-H",
+   "conv": "HS2~15dc1305",
+   "same": false,
+   "answers": 3
+  },
+  "b0-h/HW1": {
+   "case": "HW1",
+   "arm": "B0-H",
+   "conv": "HW1",
+   "same": true,
+   "answers": 0
+  },
+  "b0-h/HW2": {
+   "case": "HW2",
+   "arm": "B0-H",
+   "conv": "HW2~2c421460",
+   "same": false,
+   "answers": 2
+  }
+ },
+ "conversations": {
+  "HI2~4f53cda1": {
+   "id": "HI2~4f53cda1",
+   "template": "invoice-chase",
+   "request": "chase any open invoice that's overdue from our sheet. start 3 days after due date, remind again after 10, then 17. bcc me on the 2nd one. use the emails in the sheet.",
+   "questions": []
+  },
+  "HL1~063fbc73": {
+   "id": "HL1~063fbc73",
+   "template": "lead-triage",
+   "request": "new leads come in on our website form. if they're in california send to Marcus else send to priya. actually if company size is over 200 people also send to priya. log who got what.",
+   "questions": [
+    {
+     "id": "q1",
+     "answer": "Marcus is marcus@sunrisesolar.energy and Priya is priya@sunrisesolar.energy"
+    },
+    {
+     "id": "q2",
+     "answer": "Marcus is marcus@sunrisesolar.energy and Priya is priya@sunrisesolar.energy everything else goes to Priya, priya@sunrisesolar.energy"
+    }
+   ]
+  },
+  "HS1~4f53cda1": {
+   "id": "HS1~4f53cda1",
+   "template": "support-deflection",
+   "request": "tickets that mention 'refund' get our standard refund reply (I'll paste the text below). urgent tickets go to zara@widgetly.app. everything else also goes to zara in one digest each morning.",
+   "questions": []
+  },
+  "HS2~4f53cda1": {
+   "id": "HS2~4f53cda1",
+   "template": "support-deflection",
+   "request": "if a ticket mentions 'shipping' answer with our shipping faq answer. anything urgent goes to mike at mike@fitzone.com, and all other tickets also go to mike in a single daily digest.",
+   "questions": []
+  },
+  "HC1~4f53cda1": {
+   "id": "HC1~4f53cda1",
+   "template": "contact-sync",
+   "request": "Hey can u sync my newsletter list with my customer sheet? We use Mindbody for crm. I wanna see who's missing from Mailchimp before adding anyone. don't change anything yet just tell me the diff. if someone unsubscribed leave em alone.",
+   "questions": []
+  },
+  "HI1~46b67239": {
+   "id": "HI1~46b67239",
+   "template": "invoice-chase",
+   "request": "Our invoice spreadsheet has clients who are late. send a polite reminder at 30 days past due, a firmer one at 60, and a final one at 90. also email me a summary every monday of who still owes. don't send anything to clients who disputed.",
+   "questions": [
+    {
+     "id": "q1",
+     "answer": "maria@pixelandpixel.com"
+    },
+    {
+     "id": "q2",
+     "answer": "I don't mind - use whatever you think is sensible."
+    }
+   ]
+  },
+  "HI2~0b195a9f": {
+   "id": "HI2~0b195a9f",
+   "template": "invoice-chase",
+   "request": "chase any open invoice that's overdue from our sheet. start 3 days after due date, remind again after 10, then 17. bcc me on the 2nd one. use the emails in the sheet.",
+   "questions": [
+    {
+     "id": "q1",
+     "answer": "dave@midwestpipesupply.com"
+    },
+    {
+     "id": "q2",
+     "answer": "dave@midwestpipesupply.com"
+    }
+   ]
+  },
+  "HL1~4f53cda1": {
+   "id": "HL1~4f53cda1",
+   "template": "lead-triage",
+   "request": "new leads come in on our website form. if they're in california send to Marcus else send to priya. actually if company size is over 200 people also send to priya. log who got what.",
+   "questions": []
+  },
+  "HL2~c06128c4": {
+   "id": "HL2~c06128c4",
+   "template": "lead-triage",
+   "request": "route leads: west coast to ellen, east coast to rajesh, everyone else to sarah. if budget is above 25k also cc me. keep a log.",
+   "questions": [
+    {
+     "id": "q1",
+     "answer": "I don't mind - use whatever you think is sensible."
+    },
+    {
+     "id": "q2",
+     "answer": "I don't mind - use whatever you think is sensible."
+    },
+    {
+     "id": "q3",
+     "answer": "ellen@nimbusconsulting.io, rajesh@nimbusconsulting.io, sarah@nimbusconsulting.io, and me: tom@nimbusconsulting.io"
+    }
+   ]
+  },
+  "HS1~a762cff7": {
+   "id": "HS1~a762cff7",
+   "template": "support-deflection",
+   "request": "tickets that mention 'refund' get our standard refund reply (I'll paste the text below). urgent tickets go to zara@widgetly.app. everything else also goes to zara in one digest each morning.",
+   "questions": [
+    {
+     "id": "q1",
+     "answer": "Here it is: \"Refunds are processed within 5 business days of approval. Reply with your order number and we'll start it right away.\""
+    },
+    {
+     "id": "q2",
+     "answer": "I don't mind - use whatever you think is sensible."
+    }
+   ]
+  },
+  "HS2~230c9acb": {
+   "id": "HS2~230c9acb",
+   "template": "support-deflection",
+   "request": "if a ticket mentions 'shipping' answer with our shipping faq answer. anything urgent goes to mike at mike@fitzone.com, and all other tickets also go to mike in a single daily digest.",
+   "questions": [
+    {
+     "id": "q1",
+     "answer": "Our shipping FAQ answer: \"Orders ship within 2 business days and arrive in 3-5 days. You'll get a tracking number by email.\""
+    },
+    {
+     "id": "q2",
+     "answer": "I don't mind - use whatever you think is sensible."
+    },
+    {
+     "id": "q3",
+     "answer": "I don't mind - use whatever you think is sensible."
+    }
+   ]
+  },
+  "HW2~9b83ed82": {
+   "id": "HW2~9b83ed82",
+   "template": "weekly-report",
+   "request": "monday mornings email me just the tasks marked done last week. no open or blocked needed. short list is fine.",
+   "questions": [
+    {
+     "id": "q1",
+     "answer": "I don't mind - use whatever you think is sensible."
+    },
+    {
+     "id": "q2",
+     "answer": "liz@beaconcontent.co"
+    },
+    {
+     "id": "q3",
+     "answer": "I don't mind - use whatever you think is sensible."
+    },
+    {
+     "id": "q4",
+     "answer": "liz@beaconcontent.co"
+    }
+   ]
+  }
+ }
+}

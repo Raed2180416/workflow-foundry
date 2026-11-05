@@ -556,3 +556,18 @@ import claiming parity; editing a config file by hand; a second person's approva
 | S7 | **Use of the n8n template library (ToS) locally** for importer coverage numbers (aggregate counts only, nothing published) | Ask counsel; until then keep to open-licence samples | for a larger import number |
 | S8 | **Engine items for the next bump**: patch 0001; ledger into the store transaction; channel and principal in `approval.decided`; standing approvals | Approve 0001 and the principal item first | for J9 and standing approvals |
 | S9 | **Licence of the engine and app** (Apache-2.0/MIT vs AGPL), and "free has no complexity ceiling" stated in the UI | As ATTACK-FABLE §4.5 | before publishing |
+
+---
+
+## Note, 2026-11-05: the free-form front door
+
+The surface no longer builds only from the seven hand-written examples (§5, §9 item 1). An agent passes a typed workflow it built
+from the construction skill to `propose_flow` (with practice cases); FoundryApp checks it by code (capabilities the app has, semantics
+it can run, every outside-effect target in the person's words or data, an independent check per outside effect, strict validation and
+the construction lint) and refuses by name otherwise; practice runs any workflow at $0 (a schema-valid input made by code, stand-in
+answers at human steps, every outside effect against its stand-in); and the lifecycle of §2 is unchanged (a passing practice run of
+the same hash, a person's yes, compare-and-swap, a yes per outside action or per exact list). `construction_guide` replaced
+`list_templates`; the examples are worked examples in `skills/foundry-construct/exemplars/app/`. A free-form builder
+(`app/core/builder-freeform.mjs`, one shot + practice + at most two repairs, Haiku 5.5 from the policy) serves words alone; it is
+tested only with a scripted ModelPort. Details, the tool list, the demo (`npm run demo`) and what is deferred:
+[app/FRONT-DOOR.md](../../app/FRONT-DOOR.md). Development work, not evaluation evidence.

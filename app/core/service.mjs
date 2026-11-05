@@ -6,8 +6,13 @@
 //   -> approval request (needs a passing dry run of the SAME hash) -> a person decides (dashboard, CLI or the MCP client's dialog)
 //   -> the proposal is applied (head compare-and-swap) -> runs of that exact hash only -> each outside action asks again.
 //
-// The builder is pluggable (BUILDER-1): the stub (default, $0, no model) or the model builder over the template library
-// (./builder-model.mjs). Both return the same shape; every proposal names the builder that made it.
+// The builder is pluggable (BUILDER-1): the stub (default, $0, no model), the model builder over the example library
+// (./builder-model.mjs) or the free-form builder (./builder-freeform.mjs). All return the same shape; every proposal names its builder.
+//
+// The free-form front door (app/FRONT-DOOR.md): propose also takes a typed `workflow` the calling agent built (with `practiceInput`
+// cases). It is checked by code (./freeform.mjs: capabilities this app has, semantics it can run, every outside-effect target grounded in
+// the person's words or data, an independent check per kind of outside effect, strict validation and the construction lint) and then goes
+// through the same path: practice of that exact version (./freeform-practice.mjs), the person's yes, compare-and-swap, per-action asks.
 import { mkdirSync, readdirSync, readFileSync, existsSync, writeFileSync, statSync, chmodSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
@@ -19,9 +24,13 @@ import { SAMPLE_INPUT, stubBuilder } from './builder.mjs';
 import { templateOf, slotsOf, practiceOf } from './library.mjs';
 import { plainTextProblems } from './plain-text.mjs';
 import { runInWorld } from './practice.mjs';
+import { checkFreeform, practiceCases, refusalReply, wordsOf, allNodes } from './freeform.mjs';
+import { practiseCase, sheetsRead, wouldDoOf } from './freeform-practice.mjs';
 import { describeWorkflow, explainRun, failureText, reword } from './failure-words.mjs';
 import { Ledger, HUMAN_CHANNELS } from './ledger.mjs';
 import { machinePolicy } from './machine-policy.mjs';
+import { Tracker } from './tracker/index.mjs';
+import * as tracked from './tracker/service-hooks.mjs';
 
 // The digest that binds a planned outside action to its full content: sha256 of the canonical {tool, args} (batch approval matches on it).
 export const effectDigest = (tool, args) => digest({ tool, args });
@@ -58,7 +67,7 @@ const plainFailure = data => failureText(data);
 const problem = (error, extra = {}) => ({ ok: false, problem: { ...(plainFailure(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
 
 export class FoundryApp {
-  constructor({ workspace, now = Date.now, builder = stubBuilder } = {}) {
+  constructor({ workspace, now = Date.now, builder = stubBuilder, trackerPort = null, trackerModel = 'claude-haiku-5-5' } = {}) {
     if (typeof workspace !== 'string' || !workspace.trim()) throw new FoundryError('APP_WORKSPACE', 'A workspace directory is required');
     if (!builder || typeof builder.build !== 'function' || typeof builder.id !== 'string') throw new FoundryError('APP_BUILDER', 'A builder with an id and build() is required');
     this.root = path.resolve(workspace); this.builder = builder;
@@ -71,8 +80,10 @@ export class FoundryApp {
     this.registry = appRegistry({ mode: 'live', outboxDir: this.outboxDir, worldDir: this.worldDir });
     this.foundry = new Foundry(this.liveDir, { registry: this.registry });
     this.ledger = new Ledger(path.join(this.root, 'app-ledger.sqlite'), { now });
+    // The condition tracker (task #60): without a model port it logs the person's words as conditions ($0 rule) and binds no check.
+    this.tracker = new Tracker({ file: path.join(this.root, 'conditions.sqlite'), port: trackerPort, model: trackerModel, now });
   }
-  async close() { await this.foundry.close(); this.ledger.close(); }
+  async close() { await this.foundry.close(); this.ledger.close(); this.tracker.close(); }
   get storeFile() { return path.join(this.foundry.store.directory, 'foundry.sqlite'); }
 
   #head(flowId) { try { return this.foundry.store.workflow(flowId); } catch (error) { if (error.code === 'NOT_FOUND') return null; throw error; } }
@@ -81,13 +92,15 @@ export class FoundryApp {
     const template = templateOf(head.workflow);
     if (template) return { id: head.workflow.id, version: head.workflow.version, template: template.id, slots: slotsOf(head.workflow) ?? {} };
     const send = head.workflow.nodes.find(n => n.id === 'send'), compose = head.workflow.nodes.find(n => n.id === 'compose');
-    return { id: head.workflow.id, version: head.workflow.version, recipient: send?.args?.to ?? null, team: compose?.args?.variables?.team ?? null };
+    return { id: head.workflow.id, version: head.workflow.version, recipient: send?.args?.to ?? null, team: compose?.args?.variables?.team ?? null, workflow: head.workflow };
   }
 
   /** describe-intent -> a version-bound proposal, questions, or an honest refusal. Never runs anything. Asynchronous: a model may build. */
   // template / settings / origin (onboarding site, app/onboarding/form-builder.mjs): a template id and its settings filled from a form
   // (origin 'site-form') or by the person's coding agent (origin 'agent'); builders that do not know them ignore them.
-  async propose({ request, answers = {}, flowId = null, template = undefined, settings = undefined, origin = undefined }) {
+  // workflow / practiceInput (the free-form front door): a typed workflow the calling agent built, with optional practice cases.
+  async propose({ request, answers = {}, flowId = null, template = undefined, settings = undefined, origin = undefined, workflow = undefined, practiceInput = undefined }) {
+    if (workflow !== undefined) return this.#proposeFreeform({ request, answers, flowId, workflow, practiceInput, builder: 'the calling agent (free-form)' });
     let head = flowId ? this.#head(flowId) : null;
     if (flowId && !head) return problem(new FoundryError('NOT_FOUND', `No flow named ${flowId}`));
     let built;
@@ -95,6 +108,8 @@ export class FoundryApp {
     catch (error) { if (['REQUEST_TEXT', 'ANSWERS'].includes(error.code)) throw error; return problem(error, { builder: this.builder.id }); }
     const report = built.buildReport ? (({ callLog, ...rest }) => rest)(built.buildReport) : null;
     if (built.status !== 'ready') { const { args, buildReport, ...rest } = built; return { ok: true, ...rest, ...(report ? { build: report } : {}) }; }
+    // A free-form builder's workflow takes the same checks and practice as an agent's (./builder-freeform.mjs).
+    if (built.freeform) return this.#proposeFreeform({ request, answers, flowId, workflow: built.workflow, practiceInput: built.practice, builder: built.builder, report, understood: built.understood });
     // Same template, same team: this is a new version of an existing flow, never a silent second copy.
     if (!head) { head = this.#head(built.workflow.id); if (head) built = await this.builder.rebase(built, this.#baseOf(head)); }
     // A revision that would change nothing but the version number is not proposed (a schedule, for example, is not part of the flow).
@@ -112,22 +127,108 @@ export class FoundryApp {
     const designRequest = this.foundry.store.createAgentDesignRequest({ task, workflowId: head ? head.workflow.id : null, expectedHash: head?.hash ?? null });
     const proposal = this.foundry.propose({ requestId: designRequest.id, workflow: built.workflow,
       rationale: `Built by ${built.builder} from template ${built.template}. Understood: ${JSON.stringify(built.understood)}` });
-    return { ok: true, status: 'proposed', builder: built.builder, template: built.template, ...(report ? { build: report } : {}), proposalId: proposal.id, requestId: designRequest.id, flowId: built.workflow.id,
+    const conditions = await tracked.trackProposal(this, { flowId: built.workflow.id, request, answers });
+    return { ok: true, status: 'proposed', builder: built.builder, template: built.template, ...(report ? { build: report } : {}), conditions, proposalId: proposal.id, requestId: designRequest.id, flowId: built.workflow.id,
       version: built.workflow.version, workflowHash: proposal.workflowHash, basedOn: head ? { version: head.workflow.version, hash: head.hash } : null,
       changes: proposal.impact, understood: built.understood, willDo: built.willDo, willNotDo: built.willNotDo,
       summary: describeWorkflow(built.workflow, this.registry), lintWarnings: validation.warnings.map(w => w.code),
       next: 'Try it on practice data with dry_run. Nothing has run and nothing is active yet.' };
   }
 
+  /**
+   * The free-form front door: check a typed workflow (built by the calling agent, or by the free-form builder from the person's words)
+   * and make a version-bound proposal of it, or refuse with named blockers. Never runs anything and never changes the workflow.
+   */
+  async #proposeFreeform({ request, answers = {}, flowId = null, workflow, practiceInput, builder, report = null, understood = null }) {
+    const refused = (blockers, extra = {}) => ({ ok: true, status: 'refused', builder, blockers, reply: refusalReply(blockers), ...(report ? { build: report } : {}), ...extra,
+      next: 'Fix what each blocker names and propose again, or tell the person plainly what Foundry cannot do. Nothing was created.' });
+    if (typeof request !== 'string' || !request.trim()) throw new FoundryError('REQUEST_TEXT', 'Pass the person\'s own words in request: every address a workflow uses is checked against them');
+    if (!workflow || typeof workflow !== 'object' || Array.isArray(workflow) || typeof workflow.id !== 'string')
+      return refused([{ code: 'NOT_A_WORKFLOW', what: 'What was passed is not a workflow (an object with an id and nodes).', next: 'Build a typed workflow as construction_guide describes.' }]);
+    // Which flow this is a version of: the one named, or the one with the workflow's id. Compare-and-swap happens at apply (expectedHash).
+    let head = flowId ? this.#head(flowId) : this.#head(workflow.id);
+    if (flowId && !head) return problem(new FoundryError('NOT_FOUND', `No flow named ${flowId}`));
+    if (flowId && workflow.id !== flowId) return refused([{ code: 'FLOW_MISMATCH', what: `The workflow's id is ${String(workflow.id).slice(0, 64)}, but it was proposed as a change to ${flowId}.`, next: `Give the workflow the id ${flowId}, or leave flowId out to make a new automation.` }]);
+    const wantVersion = head ? head.workflow.version + 1 : 1;
+    if (workflow.version !== wantVersion) return refused([{ code: 'VERSION_CONFLICT', what: head ? `${workflow.id} is at version ${head.workflow.version}, so a change to it is version ${wantVersion}, not ${workflow.version}.` : `A new automation starts at version 1, not ${workflow.version}.`,
+      next: `Set version to ${wantVersion} (list_flows shows each automation's current version).` }]);
+    const same = w => digest({ ...w, version: 0, metadata: null });
+    if (head && same(workflow) === same(head.workflow))
+      return { ok: true, status: 'no_change', flowId: head.workflow.id, version: head.workflow.version, builder, reply: 'Nothing in the flow would change, so no new version was made.' };
+    const words = wordsOf(request, answers);
+    const checked = checkFreeform(workflow, { registry: this.registry, words, validate: w => this.foundry.validate(w, { strict: true }) });
+    const blockers = [...checked.blockers];
+    // Practice cases: the agent's (or the builder's), checked against the input schema now, so a bad one is refused before anything exists.
+    let cases = [];
+    try { cases = practiceCases(practiceInput, workflow.inputSchema ?? { type: 'object' }); }
+    catch (error) { blockers.push({ code: 'PRACTICE_INPUT', what: `A practice case is not usable: ${String(error.message).slice(0, 300)}.`, next: 'A case is { name, input, sheets: { sheetName: [rows] }, answers: { humanStepId: answer } }; its input must satisfy the workflow\'s inputSchema.' }); }
+    const reads = sheetsRead(workflow);
+    const lacking = reads.filter(sheet => !cases.length || cases.some(c => !Array.isArray(c.sheets?.[sheet])));
+    if (reads.length && lacking.length && !blockers.some(b => b.code === 'PRACTICE_INPUT'))
+      blockers.push({ code: 'PRACTICE_DATA_MISSING', what: `Practice needs rows for the sheet(s) the workflow reads: ${lacking.join(', ')}. Foundry does not invent rows for a sheet.`,
+        next: 'Give practiceInput cases with sheets: { name: [rows] } that look like the person\'s data (include the cases that must NOT trigger an action).' });
+    if (blockers.length) return refused(blockers, { validation: checked.validation ? { valid: checked.validation.valid, errors: (checked.validation.errors ?? []).slice(0, 20), lint: checked.validation.lint ?? null } : null });
+    const designRequest = this.foundry.store.createAgentDesignRequest({ task: request, workflowId: head ? head.workflow.id : null, expectedHash: head?.hash ?? null });
+    const proposal = this.foundry.propose({ requestId: designRequest.id, workflow,
+      rationale: `Built by ${builder} (free-form). Checked by code: capabilities, outside-effect targets in the person's words or data, an independent check per outside effect, strict validation and the construction lint.` });
+    const effects = checked.effects;
+    this.ledger.recordFreeform({ proposalId: proposal.id, workflowHash: proposal.workflowHash, body: { builder, cases, effects, words: words.slice(0, 30000) } });
+    const conditions = await tracked.trackProposal(this, { flowId: workflow.id, request, answers });
+    const summary = describeWorkflow(workflow, this.registry);
+    const asks = [...new Set(effects.filter(e => this.registry.get(e.tool)?.requiresApproval).map(e => e.verb))];
+    const silent = [...new Set(effects.filter(e => !this.registry.get(e.tool)?.requiresApproval).map(e => e.verb))];
+    const humans = allNodes(workflow).filter(({ node }) => node.kind === 'human').length;
+    return { ok: true, status: 'proposed', builder, ...(report ? { build: report } : {}), conditions, proposalId: proposal.id, requestId: designRequest.id, flowId: workflow.id,
+      version: workflow.version, workflowHash: proposal.workflowHash, basedOn: head ? { version: head.workflow.version, hash: head.hash } : null, changes: proposal.impact,
+      understood: understood ?? { request: request.slice(0, 300) },
+      willDo: [...summary.steps.map(s => s.text), ...(asks.length ? [`Ask you before it does each of these: ${asks.join(', ')}`] : []),
+        ...(silent.length ? [`Do this without asking each time (safe to repeat, and re-checked after the run): ${silent.join(', ')}`] : []), ...(humans ? [`Ask you ${humans} question(s) while it runs`] : [])],
+      willNotDo: [...(summary.notSupported ?? []), ...(asks.length ? ['Send or post anything you have not said yes to'] : []), 'Run before you turn it on'],
+      outsideActions: effects.map(e => ({ step: e.description, does: e.verb, to: e.target ?? 'from your data', source: e.source, asksFirst: !!this.registry.get(e.tool)?.requiresApproval })),
+      practice: { cases: cases.length ? cases.map(c => c.name) : ['made by Foundry from the input schema'], generatedInput: !cases.length || cases.some(c => c.inputGenerated) },
+      summary, lintWarnings: (checked.validation?.warnings ?? []).map(w => w.code), notes: checked.notes,
+      next: 'Try it on practice data with dry_run. Nothing has run and nothing is active yet.' };
+  }
+
+  /** A free-form proposal's dry run: every practice case on the exact version, outside effects against their stand-ins. */
+  async #dryRunFreeform(proposal, record, input = undefined, ownSheets = null) {
+    let cases = record.body.cases ?? [];
+    try {
+      if (input !== undefined) cases = practiceCases([{ name: 'your practice input', input, sheets: ownSheets ?? cases[0]?.sheets ?? {}, answers: cases[0]?.answers ?? {} }], proposal.workflow.inputSchema ?? { type: 'object' });
+      else if (!cases.length) cases = practiceCases([{}], proposal.workflow.inputSchema ?? { type: 'object' });
+    } catch (error) { return problem(error, { practice: true, passed: false, next: 'Fix the practice input or ask for a changed flow.' }); }
+    mkdirSync(this.practiceRoot, { recursive: true, mode: 0o700 });
+    const results = [];
+    for (const c of cases) results.push(await practiseCase(proposal.workflow, c, { root: this.practiceRoot, keep: true }));
+    const passed = results.every(r => r.passed);
+    const wouldDo = results.flatMap(r => wouldDoOf(r.effects ?? { outbox: [], chat: {}, appended: {} }, cases.length > 1 ? r.name : null));
+    const checks = results.flatMap(r => (r.explained?.checks ?? []).map(c => ({ ...c, ...(cases.length > 1 ? { case: r.name } : {}) })));
+    const firstBad = results.find(r => !r.passed);
+    const headline = passed ? `Practice passed${cases.length > 1 ? ` in all ${cases.length} cases` : ''}.` : `Practice case “${firstBad.name}” did not pass: ${firstBad.explained?.headline ?? firstBad.error?.message ?? firstBad.status}`;
+    const standIns = results.flatMap(r => r.answered.map(a => ({ case: r.name, step: a.step, answer: a.answer, from: a.from })));
+    const listDigest = digest(wouldDo.map(w => w.digest));
+    const body = { headline, checks, wouldDo, wouldDoDigest: listDigest, dataSource: 'practice', freeform: true, standIns,
+      cases: results.map((r, i) => ({ name: r.name, passed: r.passed, status: r.status, inputHash: digest(cases[i].input ?? {}), sheetsHash: digest(cases[i].sheets ?? {}), inputGenerated: !!cases[i].inputGenerated, practiceDir: r.dir, runId: r.run?.id ?? null, error: r.error ?? null })) };
+    const dry = this.ledger.recordDryRun({ proposalId: proposal.id, workflowHash: proposal.workflowHash, registryHash: results[0]?.registryHash ?? 'none',
+      practiceRunId: results.map(r => r.run?.id ?? 'none').join(','), passed, body });
+    const problemOf = firstBad ? (firstBad.error?.code === 'PRACTICE_TIMER' ? { code: 'PRACTICE_TIMER', what: firstBad.error.message, next: 'Practice cannot wait that long. Take the timer\'s time from the run input (wait.at), so a practice case can use a time already due.' }
+      : reword(firstBad.explained?.problem) ?? (firstBad.error ? { code: firstBad.error.code, what: firstBad.error.message, next: 'Fix the workflow or the practice case and propose again.' } : null)) : null;
+    return { ok: true, practice: true, dryRunId: dry.id, passed, headline, checks, wouldDo, wouldDoDigest: listDigest, problem: problemOf,
+      cases: body.cases.map(({ practiceDir, ...c }) => c), ...(standIns.length ? { standInAnswers: standIns } : {}),
+      practiceRunId: dry.practiceRunId, workflowHash: proposal.workflowHash, practiceRegistryHash: results[0]?.registryHash ?? null, liveRegistryHash: this.registry.hash(),
+      caveat: `Practice used stand-ins for every outside action (sending, posting, sheets)${standIns.length ? ' and stand-in answers at the questions' : ''}, on practice data. It shows the flow behaves as described; it does not show delivery works.`,
+      next: passed ? 'Ask the person to turn it on (ask_person_to_turn_on). They decide in their own window, not you.' : 'Do not ask the person to turn it on: practice did not pass.' };
+  }
+
   explain({ proposalId = null, flowId = null }) {
     if (proposalId) {
       const p = this.foundry.store.proposal(proposalId);
-      return { ok: true, proposalId, status: p.status, workflowHash: p.workflowHash, changes: p.impact, summary: describeWorkflow(p.workflow, this.registry),
+      return { ok: true, proposalId, status: p.status, workflowHash: p.workflowHash, changes: p.impact, summary: describeWorkflow(p.workflow, this.registry), inputSchema: p.workflow.inputSchema ?? null,
         dryRun: this.ledger.latestDryRun(proposalId), approval: this.ledger.forFlow(p.workflow.id).find(a => a.proposalId === proposalId) ?? null };
     }
     const head = this.#head(flowId);
     if (!head) return problem(new FoundryError('NOT_FOUND', `No flow named ${flowId}`));
-    return { ok: true, flowId, workflowHash: head.hash, summary: describeWorkflow(head.workflow, this.registry), active: !!this.ledger.approvedFor(flowId, head.hash) };
+    return { ok: true, flowId, workflowHash: head.hash, summary: describeWorkflow(head.workflow, this.registry), inputSchema: head.workflow.inputSchema ?? null, active: !!this.ledger.approvedFor(flowId, head.hash) };
   }
 
   /** Run the exact proposed workflow on practice data in its own store, with the practice registry. Records the result. */
@@ -136,6 +237,8 @@ export class FoundryApp {
     const proposal = this.foundry.store.proposal(proposalId);
     const template = templateOf(proposal.workflow);
     if (template) return this.#dryRunLibrary(proposal, template, input, sheets);
+    const freeform = this.ledger.freeform(proposalId);
+    if (freeform) return this.#dryRunFreeform(proposal, freeform, input, sheets);
     const dir = path.join(this.practiceRoot, `${proposalId.slice(0, 8)}-${randomUUID().slice(0, 8)}`), outbox = path.join(dir, 'outbox');
     const registry = appRegistry({ mode: 'practice', outboxDir: outbox });
     const practice = new Foundry(dir, { registry });
@@ -178,7 +281,7 @@ export class FoundryApp {
       body: { headline: explained.headline, checks: explained.checks, wouldDo, inputHash: digest(runInput), sheetsHash: digest(sheets), dataSource, practiceDir: res.dir, template: template.id } });
     return { ok: true, practice: true, dryRunId: record.id, passed: res.passed, dataSource, headline: explained.headline, checks: explained.checks, wouldDo, problem: reword(explained.problem),
       practiceRunId: res.run.id, workflowHash: proposal.workflowHash, practiceRegistryHash: res.run.registryHash, liveRegistryHash: this.registry.hash(),
-      caveat: 'Practice used stand-ins for sending, posting and the sheets, with the template\'s practice data. It shows the flow behaves as described; it does not show delivery works.',
+      caveat: 'Practice used stand-ins for sending, posting and the sheets, with the example\'s practice data. It shows the flow behaves as described; it does not show delivery works.',
       next: res.passed ? 'Ask the person to approve it (approve). They decide in their own window, not you.' : 'Do not ask for approval: the practice run did not pass.' };
   }
 
@@ -197,7 +300,8 @@ export class FoundryApp {
     }
     const act = this.ledger.requestActivation({ flowId: proposal.workflow.id, proposalId, workflowHash: proposal.workflowHash, dryRunId: dry.id });
     return { ok: true, status: 'awaiting_human', approvalId: act.id, flowId: proposal.workflow.id, version: proposal.workflow.version, workflowHash: proposal.workflowHash,
-      summary: describeWorkflow(proposal.workflow, this.registry), practice: { dryRunId: dry.id, checks: dry.body.checks, dataSource: dry.body.dataSource ?? 'template' } };
+      summary: describeWorkflow(proposal.workflow, this.registry), practice: { dryRunId: dry.id, checks: dry.body.checks, dataSource: dry.body.dataSource ?? 'template',
+        ...(dry.body.freeform ? { wouldDo: dry.body.wouldDo, wouldDoDigest: dry.body.wouldDoDigest, standIns: dry.body.standIns ?? [] } : {}) } };
   }
 
   /** A person's decision on turning a version on (called by the dashboard, the CLI, or the MCP elicitation handler only). */
@@ -277,7 +381,7 @@ export class FoundryApp {
     try { created = this.foundry.createRun(flowId, input ?? {}); } catch (error) { return problem(error); }
     if (created.workflowHash !== head.hash) { await this.foundry.cancel(created.id, { graceMs: 0 }); return problem(new FoundryError('STALE_APPROVAL', 'The flow changed while starting')); }
     await this.foundry.startRun(created.id).catch(() => {});
-    return this.status({ runId: created.id });
+    return tracked.afterRun(this, this.status({ runId: created.id }));
   }
 
   /** Practice-only mode (<workspace>/settings.json mode: 'practice-only', set by the person in the site's Settings): no live run starts. */
@@ -333,6 +437,17 @@ export class FoundryApp {
     try { this.onDecision?.({ kind: fromList ? 'list-item' : 'action', decision: approved ? 'approved' : 'rejected', channel, principal: this.principal?.() ?? 'local-user', runId, flowId, approvalId,
       ...(fromList ? { batchId: fromList.batchId, item: fromList.n, digest: fromList.digest, appliedBy: 'Foundry, from your one approval of the list' } : {}) }); } catch { /* a record, never a gate */ }
     if (approved) await this.foundry.startRun(runId).catch(() => {});
-    return this.status({ runId });
+    return tracked.afterRun(this, this.status({ runId }));
   }
+
+  // The condition tracker's surface (./tracker/service-hooks.mjs): what the person asked for, checked on practice data.
+  conditions(args) { return tracked.conditions(this, args); }
+  checkConditions(args) { return tracked.checkConditions(this, args); }
+  proposeConditionEdit(args) { return tracked.proposeConditionEdit(this, args); }
+  decideCondition(args) { return tracked.decideCondition(this, args); }
+  checkRun(args) { return tracked.checkRun(this, args); }
+  /** Was this exact version made through the free-form front door (checked and recorded by #proposeFreeform)? */
+  isFreeform(workflowHash) { return this.foundry.store.proposals().some(p => p.workflowHash === workflowHash && !!this.ledger.freeform(p.id)); }
+  /** A run's status answer with the live condition check attached when the run has ended (human-tasks.mjs resumes call it too). */
+  withConditions(answer) { return tracked.afterRun(this, answer); }
 }

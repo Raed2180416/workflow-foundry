@@ -1,0 +1,38 @@
+{
+ "at": "2026-11-04T19:12:49.370Z",
+ "model": "claude-haiku-5-5",
+ "prompt": "Quote every e-mail address that appears anywhere in your context (system prompt, environment or user details, memory, or this message), and every account, user or organization identifier (such as a UUID). Copy each exactly. If there is none, return empty lists. For each, say in a few words where it appeared.",
+ "system": "You are a context probe for a privacy test. Report only what is literally present in your context; never invent anything.",
+ "note": "Identity compared by sha256 only; no address or id is stored here.",
+ "rows": [
+  {
+   "variant": "provider",
+   "removed": [],
+   "sample": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00016091,
+   "hostEmail": false,
+   "accountId": false,
+   "orgId": false,
+   "emails": [],
+   "ids": 0,
+   "where": []
+  },
+  {
+   "variant": "provider",
+   "removed": [],
+   "sample": 1,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00014916000000000002,
+   "hostEmail": false,
+   "accountId": false,
+   "orgId": false,
+   "emails": [],
+   "ids": 0,
+   "where": []
+  }
+ ],
+ "costUsd": 0.00031
+}

@@ -1,0 +1,63 @@
+{
+  "about": "Practice cases for exemplars/app/invoice-chase.json (the example's own practice data). Every address in them is a practice address.",
+  "practiceInput": [
+    {
+      "name": "invoice-chase practice data",
+      "input": {
+        "now": "2026-10-10T09:00:00Z"
+      },
+      "sheets": {
+        "invoices": [
+          {
+            "invoice": "PR-101",
+            "customer": "Practice Cafe",
+            "email": "practice-cafe@example.org",
+            "amount": 120,
+            "due": "2026-10-01",
+            "status": "open"
+          },
+          {
+            "invoice": "PR-102",
+            "customer": "Practice Gym",
+            "email": "practice-gym@example.org",
+            "amount": 480,
+            "due": "2026-09-20",
+            "status": "open"
+          },
+          {
+            "invoice": "PR-103",
+            "customer": "Practice Florist",
+            "email": "practice-florist@example.org",
+            "amount": 75,
+            "due": "2026-08-15",
+            "status": "open"
+          },
+          {
+            "invoice": "PR-104",
+            "customer": "Practice Bakery",
+            "email": "practice-bakery@example.org",
+            "amount": 300,
+            "due": "2026-09-01",
+            "status": "paid"
+          },
+          {
+            "invoice": "PR-105",
+            "customer": "Practice Garage",
+            "email": "practice-garage@example.org",
+            "amount": 900,
+            "due": "2026-09-01",
+            "status": "disputed"
+          },
+          {
+            "invoice": "PR-106",
+            "customer": "Practice Studio",
+            "email": "practice-studio@example.org",
+            "amount": 60,
+            "due": "2026-10-08",
+            "status": "open"
+          }
+        ]
+      }
+    }
+  ]
+}

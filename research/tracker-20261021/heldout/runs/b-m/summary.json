@@ -1,0 +1,15 @@
+{
+ "arm": "B-M",
+ "spentUsd": 0,
+ "tokenMeter": {
+  "inception": {
+   "cap": 120000,
+   "callCap": 20000,
+   "spent": 97560,
+   "reserved": 0,
+   "calls": 46,
+   "refused": 0,
+   "unknown": 0
+  }
+ }
+}

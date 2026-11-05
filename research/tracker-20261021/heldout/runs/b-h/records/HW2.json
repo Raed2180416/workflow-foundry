@@ -1,0 +1,639 @@
+{
+ "arm": "B-H",
+ "case": "HW2",
+ "expected": "weekly-report",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": "weekly-report",
+   "selection": {
+    "template": "weekly-report",
+    "reason": "The request is a regular Monday e-mail summarizing tasks marked done last week, which is the weekly-report template's purpose; open and blocked items are not needed, which the template allows.",
+    "notCovered": [
+     "Scheduling for Monday mornings may need to be set up outside the template.",
+     "Only the done list is wanted; the template's optional open/blocked sections would simply be left off."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "recipient",
+     "slot": "recipient",
+     "question": "Who should get the report? (one e-mail address)"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": "weekly-report",
+   "selection": {
+    "template": "weekly-report",
+    "reason": "The request is a regular (Monday) summary of tasks marked done last week, which matches weekly-report's purpose of a progress summary from a task tracker export, emailed to one person.",
+    "notCovered": [
+     "Recipient is liz@beaconcontent.co, which should be set as the single e-mail recipient; the template is to e-mail one person, so this fits.",
+     "Showing only completed tasks with no open or blocked sections; the template may include those by default and would need to be configured to omit them."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "recipient",
+   "slot": "recipient",
+   "question": "Who should get the report? (one e-mail address)",
+   "matched": [
+    "recipient"
+   ],
+   "answer": "liz@beaconcontent.co"
+  }
+ ],
+ "modelQuestions": [],
+ "answers": {
+  "recipient": "liz@beaconcontent.co"
+ },
+ "cost": {
+  "usd": 0.001667,
+  "tokens": 11327,
+  "inputTokens": 8,
+  "outputTokens": 1943,
+  "cacheReadTokens": 4144,
+  "cacheWriteTokens": 5232,
+  "calls": 4,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 212,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1637,
+   "costUsd": 0.000318945,
+   "costUnknown": false,
+   "latencyMs": 8371,
+   "journalId": 41
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 1090,
+   "cacheReadTokens": 1260,
+   "cacheWriteTokens": 949,
+   "costUsd": 0.000676425,
+   "costUnknown": false,
+   "latencyMs": 12674,
+   "journalId": 42
+  },
+  {
+   "turn": 1,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 245,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1667,
+   "costUsd": 0.00033919500000000003,
+   "costUnknown": false,
+   "latencyMs": 7769,
+   "journalId": 43
+  },
+  {
+   "turn": 1,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 396,
+   "cacheReadTokens": 1260,
+   "cacheWriteTokens": 979,
+   "costUsd": 0.000333175,
+   "costUnknown": false,
+   "latencyMs": 8448,
+   "journalId": 44
+  }
+ ],
+ "builderWallMs": 38505,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "weekly-report",
+ "slots": {
+  "recipient": "liz@beaconcontent.co",
+  "listOpen": false,
+  "listBlocked": false,
+  "team": "your team"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "weekly-report-your-team",
+  "version": 1,
+  "title": "Weekly report for your team",
+  "goal": "Each run, count what your team finished in the tracker sheet, write a short report, save it, and e-mail it to liz@beaconcontent.co after a person approves the send.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The tracker sheet in the workspace holds one row per item with a title, a status (done, open or blocked) and an owner",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Sending the report to the wrong person",
+    "A report that silently drops items"
+   ],
+   "successCriteria": [
+    "Every item has a status the report counts (done, open or blocked)",
+    "The report is saved",
+    "The report is delivered to the one recipient you named",
+    "What was delivered is exactly the saved report (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Running on a schedule by itself",
+    "Reading Jira, Linear or Asana directly",
+    "Sending to anyone other than the named recipient"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 60,
+   "maxConcurrency": 2,
+   "maxDurationMs": 120000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the tracker sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "done",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Pick the finished items",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "done"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Pick the open items",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Pick the blocked items",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "blocked"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unknown",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Find items whose status the report would not count (used by a check)",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "not_in",
+       "value": [
+        "done",
+        "open",
+        "blocked"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "count",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Count every item a second, independent way",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "count",
+     "values": {
+      "$ref": "nodes.read.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "doneLines",
+    "kind": "task",
+    "needs": [
+     "done"
+    ],
+    "description": "List the finished items",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.done.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "- nothing marked done"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "openLines",
+    "kind": "task",
+    "needs": [
+     "open"
+    ],
+    "description": "List the open items",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "- nothing open"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blockedLines",
+    "kind": "task",
+    "needs": [
+     "blocked"
+    ],
+    "description": "List the blocked items",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.blocked.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "- nothing blocked"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "compose",
+    "kind": "task",
+    "needs": [
+     "count",
+     "doneLines",
+     "openLines",
+     "blockedLines"
+    ],
+    "description": "Write the report text",
+    "tool": "core.template",
+    "args": {
+     "text": "Weekly report for your team\nReport date: {{now}}\n\nFinished {{done}} of {{total}} items. Still open: {{open}}. Blocked: {{blocked}}.\n\nFinished:\n{{doneLines}}\n",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "done": {
+       "$ref": "nodes.doneLines.count"
+      },
+      "total": {
+       "$ref": "nodes.count.value"
+      },
+      "open": {
+       "$ref": "nodes.openLines.count"
+      },
+      "blocked": {
+       "$ref": "nodes.blockedLines.count"
+      },
+      "doneLines": {
+       "$ref": "nodes.doneLines.text"
+      },
+      "openLines": {
+       "$ref": "nodes.openLines.text"
+      },
+      "blockedLines": {
+       "$ref": "nodes.blockedLines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "save",
+    "kind": "task",
+    "needs": [
+     "compose"
+    ],
+    "description": "Save the report as weekly-report.md",
+    "tool": "core.artifact",
+    "args": {
+     "name": "weekly-report.md",
+     "content": {
+      "$ref": "nodes.compose.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send",
+    "kind": "task",
+    "needs": [
+     "save"
+    ],
+    "description": "Send the report to liz@beaconcontent.co (asks you first)",
+    "tool": "outbox.send",
+    "args": {
+     "to": "liz@beaconcontent.co",
+     "subject": "Weekly report: your team",
+     "body": {
+      "$ref": "nodes.compose.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "confirm",
+    "kind": "verify",
+    "needs": [
+     "send"
+    ],
+    "description": "Re-read what was delivered and compare it with the saved report",
+    "method": "capability",
+    "tool": "outbox.check",
+    "args": {
+     "messageId": {
+      "$ref": "nodes.send.messageId"
+     },
+     "sha256": {
+      "$ref": "nodes.save.sha256"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.unknown.count"
+    },
+    "right": 0
+   },
+   {
+    "op": "exists",
+    "value": {
+     "$ref": "nodes.save.sha256"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.confirm.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "app/core/builder.mjs weeklyReportWorkflow (the stub's template)",
+    "experiments/library/cards/catalog.json P01 linear pipeline, P04 draft -> check -> deliver",
+    "app/core/templates/weekly-report.json sha256 dc550375f5f2deae2ca5529652feca574e2ba87d0f285ac8a2176da24ff902bb"
+   ],
+   "tags": [
+    "template:weekly-report",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5)",
+    "slots:{\"listBlocked\":false,\"listOpen\":false,\"recipient\":\"liz@beaconcontent.co\",\"team\":\"your team\"}"
+   ],
+   "rationale": "Frontier-written template \"weekly-report\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1, adapted from the stub template in app/core/builder.mjs)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "liz@beaconcontent.co",
+     "subject": "Weekly report: your team",
+     "body": "Weekly report for your team\nReport date: 2026-10-26T08:00:00Z\n\nFinished 3 of 5 items. Still open: 1. Blocked: 1.\n\nFinished:\n- Blog post: spring SEO checklist (Ava)\n- Client newsletter for Harbor Gym (Noor)\n- Case study: Lakeside Dental (Ava)\n"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/b-h/foundry-live-rhrVBg",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every item has a status the report counts (done, open or blocked)",
+    "exact": "the count of “Find items whose status the report would not count (used by a check)” equals 0",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The report is saved",
+    "exact": "the sha256 of “Save the report as weekly-report.md” exists",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The report is delivered to the one recipient you named",
+    "exact": "the delivered of “Send the report to liz@beaconcontent.co (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "What was delivered is exactly the saved report (checked by re-reading the outbox)",
+    "exact": "the pass of “Re-read what was delivered and compare it with the saved report” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.confirm",
+    "plain": "Re-read what was delivered and compare it with the saved report",
+    "exact": "outbox.check (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": 3,
+  "personActionsBeforeRun": 2,
+  "slotChecks": 3,
+  "slotChecksOk": 3
+ }
+}

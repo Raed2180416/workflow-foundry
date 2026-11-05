@@ -1,0 +1,601 @@
+{
+ "arm": "B0-H2+repair-none",
+ "case": "HE1",
+ "expected": "expense-approval",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [
+    {
+     "kind": "none",
+     "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+    }
+   ],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00470831,
+  "tokens": 5154,
+  "inputTokens": 2,
+  "outputTokens": 5152,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "attempt": 0,
+   "ok": true,
+   "error": null,
+   "costUsd": 0.00470831,
+   "inputTokens": 2,
+   "outputTokens": 5152
+  }
+ ],
+ "builderWallMs": 20374,
+ "repairs": 1,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-auto-approval",
+  "version": 2,
+  "title": "Expense auto-approval with Dana escalation",
+  "goal": "Read submitted expense claims. Claims under $50 that have a receipt are logged as approved. Claims of $50 or more, or with no receipt, are logged as waiting for approver and sent to dana@brightleafmarketing.com. Every submitted claim gets exactly one row in expense-decisions.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Claims with status 'submitted' are the ones to process.",
+    "'Under $50' means amount less than 50; '$50 or more' means amount 50 or greater.",
+    "Each waiting claim is e-mailed to Dana, one message per claim.",
+    "The run time input.now is written into the 'at' column of expense-decisions."
+   ],
+   "risks": [
+    "Approved claims are only logged in expense-decisions; the expenses sheet status is not changed to approved.",
+    "Outbound e-mails to Dana ask a person before each dispatch when run live."
+   ],
+   "successCriteria": [
+    "Every submitted claim has exactly one row appended to expense-decisions.",
+    "Claims under $50 with a receipt are logged as approved.",
+    "Claims of $50 or more, or without a receipt, are logged as waiting for approver and each triggers one e-mail to Dana.",
+    "The sheet audit passes for the appended decision rows.",
+    "The outbox audit confirms one e-mail to Dana per waiting claim."
+   ]
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_expenses",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all expense claims.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read_expenses"
+    ],
+    "description": "Keep only claims with status submitted.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_expenses.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Label each claim approved or waiting for approver. Amount 50 or more, or no receipt, goes to waiting; everything else is approved.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "rules": [
+      {
+       "field": "amount",
+       "op": "gte",
+       "value": 50,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "amount is 50 or more"
+       }
+      },
+      {
+       "field": "receipt",
+       "op": "ne",
+       "value": true,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "no receipt"
+       }
+      }
+     ],
+     "otherwise": {
+      "decision": "approved",
+      "reason": "under $50 with receipt"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decisions",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Shape rows for the expense-decisions sheet, stamping the run time.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount",
+      "decision",
+      "reason"
+     ],
+     "set": {
+      "at": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log",
+    "kind": "task",
+    "needs": [
+     "decisions"
+    ],
+    "description": "Append one decision row per submitted claim.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decisions.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit_log",
+    "kind": "verify",
+    "needs": [
+     "log"
+    ],
+    "description": "Independently confirm the appended decision rows are in the sheet.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.log.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "waiting",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Keep claims waiting for Dana.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "waiting for approver"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "map",
+    "needs": [
+     "waiting"
+    ],
+    "description": "Send one e-mail to Dana per waiting claim.",
+    "items": {
+     "$ref": "nodes.waiting.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the message text for one claim.",
+       "tool": "core.template",
+       "args": {
+        "text": "Expense claim {{id}} from {{employee}} for ${{amount}} needs your approval. Reason: {{reason}}.",
+        "variables": {
+         "id": {
+          "$ref": "item.id"
+         },
+         "employee": {
+          "$ref": "item.employee"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "reason": {
+          "$ref": "item.reason"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose"
+       ],
+       "description": "E-mail Dana about one claim.",
+       "tool": "outbox.send",
+       "args": {
+        "to": "dana@brightleafmarketing.com",
+        "subject": "Expense approval needed: claim {{id}}",
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "expected_to",
+    "kind": "task",
+    "needs": [
+     "waiting"
+    ],
+    "description": "One row per waiting claim, each with Dana's address, to define the expected recipient list.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.waiting.rows"
+     },
+     "fields": [
+      "id"
+     ],
+     "set": {
+      "to": "dana@brightleafmarketing.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "expected_addrs",
+    "kind": "task",
+    "needs": [
+     "expected_to"
+    ],
+    "description": "Project the expected recipient address for each waiting claim.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.expected_to.rows"
+     },
+     "field": "to"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify_audit",
+    "kind": "verify",
+    "needs": [
+     "notify",
+     "expected_addrs"
+    ],
+    "description": "Independently check the e-mails sent to Dana match the waiting claims.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": {
+      "$ref": "nodes.expected_addrs.items"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.notify"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.notify_audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.notify.count"
+    },
+    "right": {
+     "$ref": "nodes.waiting.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.log.appended"
+    },
+    "right": {
+     "$ref": "nodes.submitted.count"
+    }
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 3,
+   "approved": 3,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "dana@brightleafmarketing.com",
+     "subject": "Expense approval needed: claim {{id}}",
+     "body": "Expense claim BL-5 from Kai Brooks for $310 needs your approval. Reason: amount is 50 or more."
+    },
+    {
+     "to": "dana@brightleafmarketing.com",
+     "subject": "Expense approval needed: claim {{id}}",
+     "body": "Expense claim BL-4 from Nell Park for $22 needs your approval. Reason: no receipt."
+    },
+    {
+     "to": "dana@brightleafmarketing.com",
+     "subject": "Expense approval needed: claim {{id}}",
+     "body": "Expense claim BL-3 from Mo Reyes for $50 needs your approval. Reason: amount is 50 or more."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 12.4,
+      "at": "2026-10-27T12:00:00Z",
+      "decision": "approved",
+      "employee": "Kai Brooks",
+      "id": "BL-1",
+      "reason": "under $50 with receipt"
+     },
+     {
+      "amount": 49.5,
+      "at": "2026-10-27T12:00:00Z",
+      "decision": "approved",
+      "employee": "Lina Haas",
+      "id": "BL-2",
+      "reason": "under $50 with receipt"
+     },
+     {
+      "amount": 50,
+      "at": "2026-10-27T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Mo Reyes",
+      "id": "BL-3",
+      "reason": "amount is 50 or more"
+     },
+     {
+      "amount": 22,
+      "at": "2026-10-27T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Nell Park",
+      "id": "BL-4",
+      "reason": "no receipt"
+     },
+     {
+      "amount": 310,
+      "at": "2026-10-27T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Kai Brooks",
+      "id": "BL-5",
+      "reason": "amount is 50 or more"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/tracker-v2/heldout-worlds/repair2-none/foundry-live-o9yNU3",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every submitted claim has exactly one row appended to expense-decisions.",
+    "exact": "the pass of “Independently confirm the appended decision rows are in the sheet.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Claims under $50 with a receipt are logged as approved.",
+    "exact": "the pass of “Independently check the e-mails sent to Dana match the waiting claims.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "Claims of $50 or more, or without a receipt, are logged as waiting for approver and each triggers one e-mail to Dana.",
+    "exact": "the count of “Send one e-mail to Dana per waiting claim.” equals the count of “Keep claims waiting for Dana.”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "The sheet audit passes for the appended decision rows.",
+    "exact": "the appended of “Append one decision row per submitted claim.” equals the count of “Keep only claims with status submitted.”",
+    "passed": true
+   },
+   {
+    "id": "verify.audit_log",
+    "plain": "Independently confirm the appended decision rows are in the sheet.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.notify_audit",
+    "plain": "Independently check the e-mails sent to Dana match the waiting claims.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to dana@brightleafmarketing.com containing \"BL-3\", \"BL-4\", \"BL-5\"",
+   "outbox : unexpected or wrong message to dana@brightleafmarketing.com (\"Expense approval needed: claim {{id}}\")",
+   "outbox : unexpected or wrong message to dana@brightleafmarketing.com (\"Expense approval needed: claim {{id}}\")",
+   "outbox : unexpected or wrong message to dana@brightleafmarketing.com (\"Expense approval needed: claim {{id}}\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 2,
+  "slotChecksOk": 0
+ },
+ "repairOf": {
+  "build": "b0-h2/HE1",
+  "verifiedBefore": false,
+  "feedback": "Before it runs for real, check that it does everything the person asked, and nothing they would not want. Fix whatever it misses."
+ }
+}

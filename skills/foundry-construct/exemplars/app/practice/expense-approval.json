@@ -1,0 +1,55 @@
+{
+  "about": "Practice cases for exemplars/app/expense-approval.json (the example's own practice data). Every address in them is a practice address.",
+  "practiceInput": [
+    {
+      "name": "expense-approval practice data",
+      "input": {
+        "now": "2026-10-15T12:00:00Z"
+      },
+      "sheets": {
+        "expenses": [
+          {
+            "id": "PX-1",
+            "employee": "Practice Ana",
+            "email": "ana@practice.example",
+            "amount": 18.5,
+            "category": "meals",
+            "description": "Lunch with a client",
+            "receipt": true,
+            "status": "submitted"
+          },
+          {
+            "id": "PX-2",
+            "employee": "Practice Ben",
+            "email": "ben@practice.example",
+            "amount": 640,
+            "category": "travel",
+            "description": "Train to Leeds",
+            "receipt": true,
+            "status": "submitted"
+          },
+          {
+            "id": "PX-3",
+            "employee": "Practice Cal",
+            "email": "cal@practice.example",
+            "amount": 9,
+            "category": "office",
+            "description": "Pens",
+            "receipt": false,
+            "status": "submitted"
+          },
+          {
+            "id": "PX-4",
+            "employee": "Practice Dee",
+            "email": "dee@practice.example",
+            "amount": 50,
+            "category": "software",
+            "description": "Plugin",
+            "receipt": true,
+            "status": "paid"
+          }
+        ]
+      }
+    }
+  ]
+}
