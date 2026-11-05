@@ -16,6 +16,11 @@ D8–D16. **Held:** R-32's usage-allowance rule stays a proposal awaiting the ow
 executor egress proxy (THESIS D10), no executor reads third-party text (§2.1, §2.9). Kev follows
 THESIS D13, not the plan's default pause.*
 
+*Amended 2026-11-05 (owner, decisions D36 and D37 in
+[research/decisions-20261021.md](../research/decisions-20261021.md)): §2.5 gains the free-form front door (no user-facing
+templates; skill packs and examples are agent-side guidance); new §2.12 (recursive construction: code asks, the node
+proposes, the main agent approves, code enforces; loops only as declared channels); §5.6 gains their build and exit items.*
+
 **Read order:**
 1. [README.md](../README.md): status, how to run.
 2. [THESIS.md](THESIS.md): what we build and why.
@@ -513,6 +518,14 @@ supplies. This is the checkpoint's largest open problem. Its sources:
 - environment reward;
 - sampled human confirmation for subjective outcomes.
 
+**Free-form front door (D36, owner 2026-11-05).** Agents build any workflow the task needs; nothing on the person's side
+is a template catalogue. Skill packs and worked examples (the former 7 product cards included) are agent-side guidance,
+loaded progressively, never a ceiling and never a large on-device template store. The product's `propose_flow` takes an
+agent-built typed workflow, or Foundry's own one-shot + practice builder for words-only requests (the CI-1 finding: the
+cheapest good builder, 87 % corrected pass at $0.007 per verified build, dev), behind the same gates: strict validation
+and lint, a passing practice run of the same hash, per-action approval of outside effects, honest named refusals when a
+capability is missing.
+
 ### 2.6 Verdicts, failure handling and the adaptation ladder
 
 **Verdicts per run and per node:**
@@ -761,6 +774,36 @@ returns a ranked advisory.
 
   n8n and MCP-exposed workflows can be called as capabilities and imported into the
   dataset (§4.4). The existing export adapters were deleted under D6 (2026-10-06).
+
+### 2.12 Recursive construction and declared loops (D37, owner 2026-11-05)
+
+The meta harness builds the workflow; any node may get a sub-workflow (or a tool, or a person) while it runs, and the
+workflow's main agent approves it without interrupting the person. Evidence: when the parent decides, a sub-workflow
+passes 27-32/32 backlog nodes against 11/32 for the node alone; a node deciding on its own asked 6/32 times and gained
+nothing (SW-1); the swarm lead delegated 0/8 (rung 1). So the question is asked by code, and the judgment is the
+parent's. Full note: [RECURSIVE-APPROVAL-AND-LOOPS.md](../research/status-20261105/RECURSIVE-APPROVAL-AND-LOOPS.md).
+
+- **Ask (code).** At measured signals (input larger than the node's budget, a check failed twice, heterogeneous items,
+  a missing capability) the runtime asks the node a typed question: sub-workflow, tool, person, or nothing.
+- **Propose (node).** A sub-plan in the same IR plus a contract: inputs, outputs, acceptance, budget slice,
+  capabilities, depth.
+- **Check (code, first).** Strict validation and lint; budget within the parent's remaining budget; capabilities a subset
+  of the parent's grant; no new outside-effect target; depth within the cap; no cycle.
+- **Approve (main agent).** A typed verdict (approve, reject, amend) on goal alignment only. A model may veto; it never
+  widens anything.
+- **Authority only narrows.** A child's grant is a subset of its parent's. Anything that would widen it (a new
+  capability, outside effect, recipient, or more budget than delegated) goes to the person, batched.
+- **Practice, then use.** The sub-workflow passes its own acceptance in isolation before its result flows up; the
+  parent's acceptance still applies.
+- **Depth.** Budget slices first; a hard cap on top (the validator's nesting limit of 6, a person's setting, or a value
+  the meta agent encodes per branch).
+- **Approvals become rules.** A proposal shape approved N times becomes an audited code rule (promotion through the gate
+  only, as for heals).
+- **Loops and channels.** Any connection between nodes, sub-agents or runs (child and parent, siblings, a sub-agent of
+  one node and a sub-agent of another, critic loops, loops with the world or the person, lessons across runs) exists only
+  as a declared, typed, budgeted, journaled channel in the IR. Prefer routing a typed question to the owner of a fact over
+  open chat; agree a sibling interface once, then freeze it; every loop has a counter and a budget; deadlocks go to the
+  parent. A channel added while running goes through the same propose, check, approve path.
 
 ---
 
@@ -1114,6 +1157,14 @@ checker and the blackboard.
   reference.
 - Conformance tests for every async primitive pass.
 - C5 on ARC-AGI-3 offline plus one procedural bed.
+
+**Added 2026-11-05 (D36, D37):**
+- Build: the free-form front door in the product (an agent-built typed workflow or Foundry's own one-shot + practice
+  builder, the same gates, cards demoted to skill-pack examples); the `propose_sub` hook (§2.12); declared `channels` in
+  the IR, checked by the validator and journaled by the runtime.
+- Exit: SKILLPACK-1 scores construction through the front door; SW-1 arm A3 (code asks, node proposes, main agent
+  approves) is measured against A0 and A1F with seeded misaligned proposals (refuted if A3 does not beat A0, or if the
+  main agent approves more than 1 in 10 seeded misaligned proposals); one channel test on the swarm bed (W-bed R6).
 
 ### 5.7 Phase 7: ecosystem adapters, as experiments
 

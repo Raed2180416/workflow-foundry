@@ -16,7 +16,7 @@ language through MCP; the person approves anything that acts on the outside worl
 
 | Pillar | Where | Proven | Missing |
 |---|---|---|---|
-| Engine: durable, typed, safe, big data | ~80 % | 11/11 durability and control attacks blocked (LangGraph handles 1 of 8 natively); data handles with proof every item was read; the engine suite is green | Code steps need Linux namespaces (WSL2 on Windows); no built-in scheduler |
+| Engine: durable, typed, safe, big data | ~80 % | 11/11 durability and control attacks blocked (LangGraph handles 1 of 8 natively); data handles with proof every item was read; engine suite 1,440 pass, 0 fail, 19 skipped (2026-11-05) | Code steps need Linux namespaces (WSL2 on Windows); no built-in scheduler |
 | Building any workflow from plain language, cheaply | ~40 % | Free-form builders in research harnesses: held-out AutomationBench 29/60 against 9/60 for plain Haiku (Opus 5.5 xhigh alone: 26/60, descriptive); n8n rebuilds 83–90 % (CI-1, dev); the order saga 14/14 with a practice world against Opus one-shot 5/14 | The product path was card-bound (7 cards). A free-form front door is being integrated (§5). The agent-through-MCP path has no score of its own yet (SKILLPACK-1) |
 | As good as hand-curated or frontier-built | ~30 % | Sealed SOP-Bench (recurring work): 87.6 % against 67.1 % for an agent, about a third of the cost per run | No head-to-head against a real hand-curated org workflow |
 | Knowing a build is right | ~35 % | Independent verify nodes, locked contracts, three-way verdicts | 12 of 31 AutomationBench failures were silent; the requirement tracker adds +4..+12 catches; free-form builds need generated checks |
@@ -97,6 +97,10 @@ narrows, so the person is asked only when a proposal would widen it. Loops betwe
 as declared, typed, budgeted, journaled channels.
 
 The full design note: [research/status-20261105/RECURSIVE-APPROVAL-AND-LOOPS.md](research/status-20261105/RECURSIVE-APPROVAL-AND-LOOPS.md).
+Both of today's ideas are now in the plan as owner decisions (in
+[research/decisions-20261021.md](research/decisions-20261021.md)):
+- **D36, the free-form front door:** ROADMAP §2.5 and the THESIS model layer.
+- **D37, recursive construction and declared loops:** ROADMAP §2.12, with build and exit items in §5.6.
 
 ## 7. The next agent's queue, in order
 

@@ -113,9 +113,10 @@ nest, iterate, run in parallel or as swarms, and stay efficient and auditable. H
 - a **need router** that decides whether a task needs a workflow at all, and how much;
 - a **runtime** with durable records, async primitives and record/replay;
 - a **context system**: private by default, shared by contract;
-- a **model layer**: frontier models write the template library, build the most complex
-  workflows and take escalations; cheap models (Haiku 5.5 today) construct from templates,
-  edit through replay-proven proposals, and execute; escalation follows rules;
+- a **model layer**: frontier models write the skill packs and worked examples (agent-side guidance, never a
+  user-facing template catalogue: D36), build the most complex workflows and take escalations; cheap models (Haiku 5.5
+  today) construct free-form with that guidance, edit through replay-proven proposals, and execute; escalation follows
+  rules;
 - a **read-only run viewer**, the face of the audit ledger;
 - a **typed judgment layer**;
 - a **verdict and repair system**;
