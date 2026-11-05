@@ -282,7 +282,7 @@ export function batchCard(batch, { onDone } = {}) {
   });
   return el('article', { class: 'card emph waiting', 'aria-labelledby': headId, dataset: { decisionCard: '', batch: batch.batchId } },
     el('h2', { id: headId }, mails ? (n === 1 ? t('batch.titleDraftsOne') : t('batch.titleDraftsMany', { n })) : t('batch.title', { n, title: batch.title })),
-    el('p', {}, t('batch.lead', { version: batch.version, date: day(batch.input?.now) })),
+    el('p', {}, t('batch.lead', { version: batch.version, date: day(batch.input?.now ?? batch.createdAt) })),
     batch.remembered ? el('p', { class: 'muted' }, t('batch.remembered')) : null,
     notes.node,
     itemsList(batch.items),

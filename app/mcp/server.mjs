@@ -197,10 +197,13 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
   async function runFlowInner(a) {
     if (!batches) return app.run(a);
     let head = null; try { head = app.foundry.store.workflow(a.flowId); } catch { head = null; }
-    if (!head || !templateOf(head.workflow) || !app.ledger.approvedFor(a.flowId, head.hash) || app.practiceOnly()) return app.run(a);
+    if (!head || !app.ledger.approvedFor(a.flowId, head.hash) || app.practiceOnly()) return app.run(a);
+    const example = !!templateOf(head.workflow);
+    // A free-form automation makes its list too, unless it asks questions or waits while it runs (each action asks the person then).
+    if (!example && (!app.isFreeform(head.hash) || head.workflow.nodes.some(function inner(n) { return n.kind === 'human' || n.kind === 'wait' || (n.body?.nodes ?? []).some(inner); }))) return app.run(a);
     let b;
     // The run is as of today (the server's clock): the agent's date would decide who gets which reminder (P1 M11).
-    try { b = await batches.preview(a.flowId); }
+    try { b = await batches.preview(a.flowId, example ? {} : { input: a.input }); }
     catch (error) {
       if (error.code === 'SHEET_NOT_FOUND') return { ok: true, status: 'needs_data', needsData: error.sheets ?? [], flowId: a.flowId, where: dashboardUrl(`/go-live/${a.flowId}`) ?? 'the Foundry page (run "node app/cli.mjs site")' };
       throw error;
@@ -208,8 +211,8 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     if (!b.ok) return { ok: false, problem: { what: `A test of this version on the person's own list did not pass: ${b.headline}`, next: 'Nothing was made. Look at the run in Foundry, or change a setting.', code: 'BATCH_TEST_FAILED' }, checks: b.checks };
     if (!b.items.length) return app.run({ flowId: a.flowId, input: b.input });
     const agentDate = typeof a.input?.now === 'string' ? a.input.now.slice(0, 10) : null;
-    return { ok: true, status: 'awaiting_human', batchId: b.batchId, count: b.items.length, made: kinds(b.items), flowId: a.flowId, asOf: b.input.now,
-      ...(agentDate && agentDate !== b.input.now.slice(0, 10) ? { dateNote: `Foundry used today's date (${b.input.now.slice(0, 10)}), not ${agentDate}.` } : {}),
+    return { ok: true, status: 'awaiting_human', batchId: b.batchId, count: b.items.length, made: kinds(b.items), flowId: a.flowId, asOf: b.input?.now ?? b.createdAt,
+      ...(agentDate && typeof b.input?.now === 'string' && agentDate !== b.input.now.slice(0, 10) ? { dateNote: `Foundry used today's date (${b.input.now.slice(0, 10)}), not ${agentDate}.` } : {}),
       expiresAt: b.expiresAt, where: dashboardUrl('/waiting') ?? `the Foundry page (the person runs ${openCommand})` };
   }
   // A live run's pending sends carry real recipients and text: the agent gets the step names only (P4 walkthrough B3).

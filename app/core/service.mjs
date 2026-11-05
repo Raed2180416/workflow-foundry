@@ -446,6 +446,8 @@ export class FoundryApp {
   proposeConditionEdit(args) { return tracked.proposeConditionEdit(this, args); }
   decideCondition(args) { return tracked.decideCondition(this, args); }
   checkRun(args) { return tracked.checkRun(this, args); }
+  /** Was this exact version made through the free-form front door (checked and recorded by #proposeFreeform)? */
+  isFreeform(workflowHash) { return this.foundry.store.proposals().some(p => p.workflowHash === workflowHash && !!this.ledger.freeform(p.id)); }
   /** A run's status answer with the live condition check attached when the run has ended (human-tasks.mjs resumes call it too). */
   withConditions(answer) { return tracked.afterRun(this, answer); }
 }

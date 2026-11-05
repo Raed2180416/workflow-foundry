@@ -16,6 +16,8 @@ import { serveAppMcp } from '../mcp/server.mjs';
 import { generatePractice, practiceCases, groundedIn, wordsOf, capabilityCatalog } from '../core/freeform.mjs';
 import { constructionGuide, guideIndex } from '../core/guide.mjs';
 import { listHumanTasks, decideApproval } from '../core/human-tasks.mjs';
+import { Batches, listDigest } from '../onboarding/batch.mjs';
+import { toolDefinitions } from '../mcp/server.mjs';
 import { BUILDS, reconciliation, fanOut, approvalChain, escalation, needsSms, strangerTarget } from '../demo/workflows.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(here, '..', '..');
@@ -220,4 +222,39 @@ test('MCP: construction_guide replaced list_templates; propose_flow takes a work
   for (const r of [guide, refused, p, d, on, words]) assert.doesNotMatch(r.say, /\b(template|card)s?\b/i, r.say);
   assert.doesNotMatch(dialogText, /\b(template|card)s?\b/i);
   await client.close();
+}));
+
+test('with the site: a free-form automation\'s run starts with the exact list (a practice-registry run on the person\'s live data, bound by digest); one that asks or waits goes action by action', async () => withApp(async app => {
+  const batches = new Batches(app);
+  const tools = Object.fromEntries(toolDefinitions(app, { batches, dashboardUrl: () => 'the Foundry page' }).map(t => [t.name, t]));
+  const on = async b => {
+    const p = await app.propose({ request: b.request, workflow: b.workflow, practiceInput: b.practiceInput });
+    assert.equal((await app.dryRun({ proposalId: p.proposalId })).passed, true);
+    assert.equal(app.decideActivation(app.requestApproval({ proposalId: p.proposalId }).approvalId, true, { channel: 'dashboard' }).status, 'approved');
+    return p;
+  };
+  const p = await on(reconciliation);
+  assert.equal(app.isFreeform(p.workflowHash), true);
+  const missing = await tools.run_flow.execute({ flowId: p.flowId, input: {} });
+  assert.equal(missing.status, 'needs_data'); assert.deepEqual(missing.needsData.sort(), ['bank', 'ledger']);
+  mkdirSync(path.join(app.worldDir, 'sheets'), { recursive: true });
+  for (const [name, rows] of Object.entries(reconciliation.liveSheets)) writeFileSync(path.join(app.worldDir, 'sheets', `${name}.json`), JSON.stringify(rows));
+  const r = await tools.run_flow.execute({ flowId: p.flowId, input: {} });
+  assert.equal(r.status, 'awaiting_human'); assert.equal(r.count, 1); assert.ok(r.batchId);
+  const b = batches.get(r.batchId);
+  assert.equal(b.freeform, true); assert.equal(b.template, null); assert.equal(b.items[0].to, 'finance@acme.example'); assert.match(b.items[0].body, /B-101: bank 85, ledger 58/);
+  await assert.rejects(batches.approve(r.batchId, { listDigest: '0'.repeat(64) }), e => e.code === 'BATCH_CHANGED');
+  const done = await batches.approve(r.batchId, { listDigest: listDigest(b) });
+  assert.equal(done.status, 'succeeded'); assert.equal(done.made.length, 1); assert.equal(done.stoppedAt, null);
+  // The data changed after the list was made: the real run wants an e-mail that was not on the list, so it stops and asks.
+  const r2 = await tools.run_flow.execute({ flowId: p.flowId, input: {} });
+  writeFileSync(path.join(app.worldDir, 'sheets', 'ledger.json'), JSON.stringify([...reconciliation.liveSheets.ledger, { txn: 'B-200', amount: 9 }]));
+  const stopped = await batches.approve(r2.batchId, { listDigest: listDigest(batches.get(r2.batchId)) });
+  assert.ok(stopped.stoppedAt, 'not on the list the person approved'); assert.equal(stopped.made.length, 0);
+  // An automation that asks the person while it runs cannot have its list made in advance: its actions ask one by one.
+  const chain = await on(approvalChain);
+  writeFileSync(path.join(app.worldDir, 'sheets', 'requests.json'), JSON.stringify([{ id: 'P-1', item: 'Servers', amount: 9000, status: 'submitted' }]));
+  const c = await tools.run_flow.execute({ flowId: chain.flowId, input: {} });
+  assert.equal(c.batchId, undefined); assert.equal(c.status, 'awaiting_human', 'a question waits for the person');
+  await assert.rejects(batches.preview(chain.flowId), e => e.code === 'BATCH_INTERACTIVE');
 }));
