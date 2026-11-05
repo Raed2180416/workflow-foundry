@@ -69,7 +69,7 @@ Evidence and numbers are in IDEAS-AND-STATUS.md and WHY-NOT-HIGHER.md.
 | 49 | Represent any and all workflows (~94%); a mini harness, not a harness | [23] | ✅ | Coverage; reject rather than flatten |
 | 50 | Parallel workflows working together in AMP later | [23] | ⬜ | COMP-1 composition inconclusive |
 | 51 | Measure whether a task needs a workflow, across the complexity spectrum, with a sensitivity slider | [23] | ◐ | ROUTER-1: code router ❌, Haiku direct 5/132; slider ✅ |
-| 52 | Haiku constructs from templates; tell it everything it needs | [23] | ◐ | BUILDER-1 18/21 on its own 7 cards; the product path was card-bound (corrected 11-05): free-form front door being built (#138) |
+| 52 | Haiku constructs from templates; tell it everything it needs | [23] | ◐ | BUILDER-1 18/21 on its own 7 cards; since 11-05 the product builds free-form (D36: agent-built workflows or `--builder freeform`; cards are skill-pack examples); not yet scored with a real model (SKILLPACK-1) |
 | 53 | Rust port? | [23] | 💬 | No |
 | 54 | Missing workflow constructs; deep worst-case analysis | [23] | ✅ | Worst-case catalogue; chaos suite |
 | 55 | A workflow inside a workflow inside a workflow; iterative flows | [23] | ✅ | Nesting depth 6; loops |
@@ -105,7 +105,7 @@ Evidence and numbers are in IDEAS-AND-STATUS.md and WHY-NOT-HIGHER.md.
 | 85 | Haiku with world feedback | [71] | ✅ | Practice loop |
 | 86 | Give the builder templates and the hardest enterprise patterns | [72] | ✅ | CI-1 retrieval |
 | 87 | How long to build cheaply and accurately? | [72] | ◐ | Per bed (E8 builds $0.39) |
-| 88 | A tracker of the user's conditions, checked against the build | [72] | ◐ | Corrected re-measure (11-04): +4/+12/+4 model-built catches over no tracker, the only checker with useful precision; the earlier 37–40 gave the tracker an answer key. Product integration in progress (#138) |
+| 88 | A tracker of the user's conditions, checked against the build | [72] | ◐ | Corrected re-measure (11-04): +4/+12/+4 model-built catches over no tracker, the only checker with useful precision; the earlier 37–40 gave the tracker an answer key. In the product since 11-05 (MCP conditions / edit_conditions) |
 | 89 | Builder compares robustness against enterprise patterns | [72] | ◐ | — |
 | 90 | Enterprise workflows (payments, Jira, employees) built correctly | [72] | ◐ | E8, E7, OT-0 |
 | 91 | Realistic mocks with a real model working inside, to find complex flaws | [75] | ✅ | — |
@@ -155,5 +155,5 @@ Evidence and numbers are in IDEAS-AND-STATUS.md and WHY-NOT-HIGHER.md.
 | 135 | Recursive approval: the meta harness builds the workflow; every sub-node is asked whether it needs a sub-workflow (or something else); before creating anything at any depth it asks the workflow's main agent, which approves only what serves the goal, without interrupting the person; depth set by the person or encoded by the meta agent | [11-05] | 📐 | research/status-20261105/RECURSIVE-APPROVAL-AND-LOOPS.md; engine pieces exist (children, depth and loop caps, principals); the propose→approve hook is not built |
 | 136 | Loops of every kind: a node's sub-agent talking to another node's sub-agent, local to local across nodes, other crazy topologies | [11-05] | 📐 | Same document: declared typed channels only, journaled, authority never widens |
 | 137 | No more workflows; at most one subagent | [11-05] | ✅ | Kept |
-| 138 | Save everything to GitHub with a clean entry point; polish it so another agent can continue; the demonstrable vision cleanly integrated | [11-05] | ◐ | STATUS.md at the repo root; node-graph and durability merged; tracker + free-form front door being integrated by one agent |
+| 138 | Save everything to GitHub with a clean entry point; polish it so another agent can continue; the demonstrable vision cleanly integrated | [11-05] | ✅ | STATUS.md at the repo root; node-graph, durability, the requirement tracker and the free-form front door merged; `npm run demo`; every suite green |
 

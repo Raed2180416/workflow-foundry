@@ -47,8 +47,9 @@ else below is still development and diagnostic evidence.*
 [WHY-NOT-HIGHER](research/status-20261104/WHY-NOT-HIGHER.md).*
 
 **Where we are.**
-- **2026-11-05.** The node-graph run data and human-task channels and the durability program (DUR-1) are merged;
-  the need-router stale tests are fixed. The full picture and the next agent's queue are in [STATUS.md](STATUS.md).
+- **2026-11-05.** The product builds free-form (D36): agents propose any typed workflow through the MCP front door,
+  with the same gates, and `npm run demo` shows it end to end at $0. Also merged: the requirement tracker, the node-graph
+  run data and human-task channels, and the durability program (DUR-1); the need-router stale tests are fixed. The full picture and the next agent's queue are in [STATUS.md](STATUS.md).
 - **2026-11-04.** Everything that was waiting on branches is merged into this branch, with every suite green:
   - A1-C v2;
   - the six gap-closure items (need router, FH-1 heal, C2 reuse, SW-1 sub-workflows, game QA, memory);

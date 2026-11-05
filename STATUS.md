@@ -12,19 +12,19 @@ game, repair it, and keep only what earns reuse. Code owns the procedure, and mo
 cheap models (Haiku 5.5) do work that otherwise needs a frontier agent. People and their agents use it in natural
 language through MCP; the person approves anything that acts on the outside world.
 
-## 2. Placement against the maximal vision: about 35–40 %
+## 2. Placement against the maximal vision: about 40 %
 
 | Pillar | Where | Proven | Missing |
 |---|---|---|---|
-| Engine: durable, typed, safe, big data | ~80 % | 11/11 durability and control attacks blocked (LangGraph handles 1 of 8 natively); data handles with proof every item was read; engine suite 1,440 pass, 0 fail, 19 skipped (2026-11-05) | Code steps need Linux namespaces (WSL2 on Windows); no built-in scheduler |
-| Building any workflow from plain language, cheaply | ~40 % | Free-form builders in research harnesses: held-out AutomationBench 29/60 against 9/60 for plain Haiku (Opus 5.5 xhigh alone: 26/60, descriptive); n8n rebuilds 83–90 % (CI-1, dev); the order saga 14/14 with a practice world against Opus one-shot 5/14 | The product path was card-bound (7 cards). A free-form front door is being integrated (§5). The agent-through-MCP path has no score of its own yet (SKILLPACK-1) |
+| Engine: durable, typed, safe, big data | ~80 % | 11/11 durability and control attacks blocked (LangGraph handles 1 of 8 natively); data handles with proof every item was read; engine suite 1,448 pass, 0 fail, 19 skipped after every merge (2026-11-05) | Code steps need Linux namespaces (WSL2 on Windows); no built-in scheduler |
+| Building any workflow from plain language, cheaply | ~45 % | Free-form builders in research harnesses: held-out AutomationBench 29/60 against 9/60 for plain Haiku (Opus 5.5 xhigh alone: 26/60, descriptive); n8n rebuilds 83–90 % (CI-1, dev); the order saga 14/14 with a practice world against Opus one-shot 5/14. The product now builds free-form (§5; demo: 4/4 non-card workflows pass practice, $0) | The agent-through-MCP path has no measured score yet (SKILLPACK-1); the free-form builder is untested against a real model |
 | As good as hand-curated or frontier-built | ~30 % | Sealed SOP-Bench (recurring work): 87.6 % against 67.1 % for an agent, about a third of the cost per run | No head-to-head against a real hand-curated org workflow |
 | Knowing a build is right | ~35 % | Independent verify nodes, locked contracts, three-way verdicts | 12 of 31 AutomationBench failures were silent; the requirement tracker adds +4..+12 catches; free-form builds need generated checks |
 | Healing, adapting, growing | ~30 % | Classify → patch → replay 75 % against 0 % for retry (dev); parent-directed sub-workflows 27–32/32 against 11/32 | The reuse gate is worse than rebuilding (85 % vs 98 %); DUR-1 stopped at its own safety gate; promotion experiment not run; the swarm lead never delegated |
 | Knowing when a workflow is needed | ~40 % | Asking Haiku: 5 false triggers in 132; a sensitivity slider | The rule-based formula failed on held-out tasks |
 | Real integrations (MCP, skills, connectors) | ~20 % | Per-node MCP servers, skills, connections and a broker (dev) | Product flows use local stand-ins; no real connector proven end to end |
 | Org-wide workflows with sections for control | ~15 % | Principals, segregation of duties, approval thresholds in the engine | Org layer designed only; single-person dashboard |
-| Product for people and their agents | ~40 % | Site, dashboard, live node-graph data, approval dialogs, 11 MCP tools before the front-door change, CLI | No real users; free-form front door in integration |
+| Product for people and their agents | ~45 % | Site, dashboard, live node-graph data, approval dialogs, a free-form MCP front door (13 tools), the requirement tracker, a one-command demo, CLI | No real users; no model steps inside a person's automations yet; one-person approvals only |
 | Proof against competitors | ~30 % | AutomationBench, SOP-Bench, n8n rebuilds, LangGraph durability | Many beds written by one author; OpenAI Agents SDK, CrewAI and Temporal comparisons not run; nothing published |
 
 ## 3. Run it ($0)
@@ -34,7 +34,8 @@ language through MCP; the person approves anything that acts on the outside worl
 | Engine tests | `npm test` |
 | Product tests | `for f in app/test/*.test.mjs app/onboarding/test/*.test.mjs; do node --test "$f"; done` |
 | Engine MCP server, free-form (an agent builds any workflow with the skill pack) | `node bin/foundry.mjs mcp` |
-| Product MCP server (proposals, practice, the person's approval, runs, waiting questions) | `node app/cli.mjs mcp` |
+| Product MCP server, free-form (13 tools: `construction_guide`, `propose_flow` with an agent-built workflow, `dry_run`, `ask_person_to_turn_on`, `run_flow`, `conditions`, `list_waiting`, …) | `node app/cli.mjs mcp` (add `--builder freeform` for words-only building) |
+| The front door end to end ($0, no model) | `npm run demo` |
 | Onboarding site and dashboard (127.0.0.1 only) | `node app/cli.mjs open` |
 | What waits for the person; answer in a real terminal | `node app/cli.mjs tasks`, `node app/cli.mjs answer TASK_ID` |
 | Skill pack for building workflows | `skills/foundry-construct/` (core `SKILL.md`; references load on demand) |
@@ -47,8 +48,8 @@ All 138 items, one per line in the order raised, with evidence:
 
 | Status | Items |
 |---|---|
-| ✅ done or measured positive | 57 |
-| ◐ partial | 58 |
+| ✅ done or measured positive | 58 |
+| ◐ partial | 57 |
 | ❌ measured negative | 2 |
 | 🔧 built, not measured | 2 |
 | 📐 designed only | 5 |
@@ -74,17 +75,36 @@ tuned on held-out tasks):
 9. **Keep a library of proven workflows behind the reuse gate.**
 10. **Use separate-author sealed evaluation.**
 
-## 5. In integration right now
+## 5. Landed 2026-11-05: the free-form front door and the requirement tracker
 
-One implementation agent (no workflows) is integrating two pieces on its own branch. They merge into this branch when its
-tests are green; this section is updated when they land.
-- **The free-form front door.** The product MCP accepts an agent-built typed workflow (built with the skill pack) and
-  Foundry's own one-shot + practice builder for words-only requests. The 7 cards become examples inside the skill pack,
-  never a user-facing catalogue. Practice data and stand-ins are generated for any workflow, honest refusals when a
-  capability is missing, and the same gates throughout. It adds a $0 demo: `npm run demo`.
-- **The requirement tracker (A7)** in the product: the person's conditions from their own words, checked on practice
-  data and live runs. It lands as one squashed snapshot of `3310e803`, because its early history held the account
-  e-mail.
+Merged at `a3f6813c` after re-running every product, tracker, site, run-viewer, identity and freeze-guard test file
+(49 files, all passing) and the demo. Details and the deferred list are in [app/FRONT-DOOR.md](app/FRONT-DOOR.md).
+
+- **The free-form front door (D36).**
+  - `propose_flow` takes an agent-built typed workflow plus practice cases, built with the skill pack via
+    `construction_guide`. Words-only requests go to Foundry's own free-form builder (`--builder freeform`; Haiku,
+    allowed in Settings).
+  - Strict validation and lint, with named refusals: `MISSING_CAPABILITY`, and `UNGROUNDED_TARGET` for a recipient the
+    person never wrote.
+  - Practice for any workflow on stand-ins; the same turn-on and per-action approval gates; batch list approval derived
+    from a practice run and bound by digest.
+  - `list_templates` is gone. The 7 cards survive only as worked examples in `skills/foundry-construct/exemplars/app/`;
+    the original files stay because the BUILDER-1/CI-1 manifests freeze them.
+- **The requirement tracker (A7).** The person's conditions, taken from their own words, are checked on practice data
+  and live runs (`conditions`, `edit_conditions`; the person decides). It landed as one squashed snapshot of
+  `3310e803`. The claude-cli provider now gives every call an empty config directory, so the account e-mail never
+  enters a model's context.
+- **Run `npm run demo`** ($0, no model):
+  - four workflows the old cards could not build (a two-sheet reconciliation with an independent recount, a fan-out with
+    a coverage ledger, an approval chain, an incident escalation with a timer) pass practice;
+  - one is turned on by the person in the dialog and runs, and its audit chain verifies;
+  - two requests are refused by name.
+- **Not yet:**
+  - model steps inside a person's automations;
+  - signal waits;
+  - an organisation's authority map on free-form workflows;
+  - the free-form builder tested against a real model;
+  - re-shot P1 screenshots.
 
 ## 6. Today's design answer: recursive approval and loops
 
@@ -104,8 +124,7 @@ Both of today's ideas are now in the plan as owner decisions (in
 
 ## 7. The next agent's queue, in order
 
-1. **Front door.** If §5 has not landed, merge the implementation agent's branch after re-running its tests. Then run
-   `npm run demo` and read app/FRONT-DOOR.md.
+1. **Front door, done (§5).** Next: test the free-form builder against Haiku within a small cap, re-shoot the P1 screenshots, and lift the deferred items in app/FRONT-DOOR.md. 
 2. **SKILLPACK-1** (owner-approved $20). Fill σ_b at $0 from existing builder runs, freeze
    [the draft prereg](research/skillpack-20261104/PREREG-SKILLPACK-1-DRAFT.md), and run it on E8 and SOP-Bench dev.
    Add an arm that builds through the new front door.
