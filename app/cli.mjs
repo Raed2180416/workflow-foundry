@@ -381,7 +381,8 @@ async function main() {
     if (builderRefusal) { process.stderr.write(`${builderRefusal}\n`); process.exitCode = 2; return; }
     const [{ serveAppMcp }, { createDashboard }, { SiteBuilder }, { recordDecisions }] = await Promise.all([import('./mcp/server.mjs'), import('./dashboard/server.mjs'),
       import('./onboarding/site-builder.mjs'), import('./onboarding/decisions.mjs')]);
-    // Cards (list_templates + settings) are filled by the $0 form builder; words alone go to the chosen builder (the stub by default).
+    // The site's examples are filled by the $0 form builder; words alone go to the chosen builder (the stub by default); an agent's own
+    // typed workflow goes through the free-form front door (FoundryApp.propose with workflow; app/FRONT-DOOR.md).
     const builder = new SiteBuilder({ text: await makeBuilder(args.builder ?? 'stub', { workspace, tokenCap: args['token-cap'] ? Number(args['token-cap']) : undefined }) });
     (await import('./onboarding/proposal-check.mjs')).withOrgPolicy(builder, workspace);
     const app = new FoundryApp({ workspace, builder });

@@ -7,6 +7,9 @@
 // (FOUNDRY_URL_FILE, a file inside the workspace, stands in for the browser opener: it gets the one-time code link). The agent
 // transcript is rendered to transcript.html and screenshotted.
 // Not covered: a real Claude Code, Cursor or Codex client (their own trust and tool prompts are reported, not measured).
+// Since the free-form front door (app/FRONT-DOOR.md, 2026-11-05) the scripted agent builds the workflow itself: it reads
+// construction_guide, starts from the invoice worked example, writes in the address the person gave, and proposes the workflow with
+// its practice cases (list_templates and propose_flow's template/settings are retired). The person's steps are the same.
 // nice node --test --test-concurrency=1 app/site/test/journeys/p1-agents.mjs
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -73,11 +76,19 @@ async function agent(argv, { elicitation, urlFile, transcript, onElicit }) {
   const call = async (name, args = {}) => {
     const r = await client.callTool({ name, arguments: args });
     const out = JSON.parse(r.content[0].text);
-    const brief = name === 'list_templates' ? `${out.templates.length} cards: ${out.templates.map(t => t.id).join(', ')}` : JSON.stringify({ status: out.status, say: out.say, ...(out.questions ? { questions: out.questions.map(q => q.question) } : {}), ...(out.where ? { where: out.where } : {}), ...(out.how ? { how: out.how } : {}) }, null, 1);
+    const brief = name === 'construction_guide' ? (out.name ? `loaded ${out.name}` : `the guide: ${out.capabilities.length} capabilities, ${out.exemplars.length} worked examples`) : JSON.stringify({ status: out.status, say: out.say, ...(out.questions ? { questions: out.questions.map(q => q.question) } : {}), ...(out.where ? { where: out.where } : {}), ...(out.how ? { how: out.how } : {}) }, null, 1);
     transcript.push({ who: 'tool', name, args, result: brief });
     return { ...out, isError: !!r.isError };
   };
   return { client, call, close: () => client.close() };
+}
+
+/** The scripted agent's build: the invoice worked example from construction_guide, with the person's address written in (or a guess). */
+async function buildInvoiceChase(a, address) {
+  const guide = await a.call('construction_guide');
+  const name = guide.exemplars.find(e => /invoice/i.test(`${e.name} ${e.title}`)).name;
+  const ex = await a.call('construction_guide', { name });
+  return { workflow: JSON.parse(JSON.stringify(ex.workflow).replaceAll('owner@practice.example', address)), practiceInput: ex.practiceInput };
 }
 
 async function waitForFile(file, ms = 15000) {
@@ -125,16 +136,15 @@ test('P1 Claude Code: one pasted line, then a request; first verified in 2 actio
       const request = 'use Foundry to chase my unpaid invoices, summary to me@example.com';
       person.external(`types to the agent: "${request}"`);
       transcript.push({ who: 'person', text: request });
-      const cards = await a.call('list_templates');
-      const card = cards.templates.find(t => /invoice/i.test(t.title + t.whenToUse));
-      const p = await a.call('propose_flow', { request, template: card.id, settings: { summaryTo: 'me@example.com' } });
+      const built = await buildInvoiceChase(a, 'me@example.com');
+      const p = await a.call('propose_flow', { request, ...built });
       assert.equal(p.status, 'proposed', JSON.stringify(p));
       const d = await a.call('dry_run', { proposalId: p.proposalId });
       assert.equal(d.passed, true);
       transcript.push({ who: 'agent', text: d.say });
       mark('firstVerified');
       checks.dryRunSay = d.say;
-      await showTranscript('agent-request-and-test', 'first verified: list_templates, propose_flow, dry_run');
+      await showTranscript('agent-request-and-test', 'first verified: construction_guide, propose_flow, dry_run');
       const ok = await a.call('ask_person_to_turn_on', { proposalId: p.proposalId });
       assert.equal(ok.status, 'approved'); assert.ok(elicited, 'the client showed the dialog');
       checks.elicitation = elicited.message.split('\n')[0];
@@ -176,18 +186,18 @@ test('P1 ungrounded: the agent fills an address the person never wrote; Foundry 
       const request = 'use Foundry to chase my unpaid invoices';
       person.external(`types to the agent: "${request}"`);
       transcript.push({ who: 'person', text: request });
-      const p = await a.call('propose_flow', { request, template: 'invoice-chase', settings: { summaryTo: 'boss@example.com' } });
-      assert.equal(p.status, 'needs_answers', JSON.stringify(p));
-      assert.equal(p.questions[0].slot ?? p.questions[0].id, 'summaryTo');
-      assert.deepEqual(p.notWritten?.map(x => x.value) ?? [], ['boss@example.com']);
+      const p = await a.call('propose_flow', { request, ...(await buildInvoiceChase(a, 'boss@example.com')) });
+      assert.equal(p.status, 'refused', JSON.stringify(p));
+      assert.equal(p.blockers[0].code, 'UNGROUNDED_TARGET'); assert.equal(p.blockers[0].value, 'boss@example.com');
       const l = app.list();
       assert.equal(l.flows.length + l.proposals.length, 0, 'nothing was made from the guessed address');
-      checks.refused = { status: p.status, question: p.questions[0].question, notWritten: p.notWritten };
-      transcript.push({ who: 'agent', text: `${p.say} ${p.questions[0].question}` });
-      await showTranscript('asked-not-guessed', 'the guessed address was not used; the template\'s own question is relayed');
+      const question = 'Which e-mail address should get the summary?';
+      checks.refused = { status: p.status, blocker: p.blockers[0].code, notWritten: [p.blockers[0].value] };
+      transcript.push({ who: 'agent', text: `${p.say} ${question}` });
+      await showTranscript('asked-not-guessed', 'the guessed address was refused; the agent asks the person instead');
       person.external('answers the agent: "me@example.com"', { ask: true });
       transcript.push({ who: 'person', text: 'me@example.com' });
-      const p2 = await a.call('propose_flow', { request, template: 'invoice-chase', settings: { summaryTo: 'boss@example.com' }, answers: { summaryTo: 'me@example.com' } });
+      const p2 = await a.call('propose_flow', { request, answers: { summaryTo: 'me@example.com' }, ...(await buildInvoiceChase(a, 'me@example.com')) });
       assert.equal(p2.status, 'proposed', JSON.stringify(p2));
       const d = await a.call('dry_run', { proposalId: p2.proposalId });
       assert.equal(d.passed, true);
@@ -225,7 +235,7 @@ test('P1 Cursor or Codex: the install link and the line both decode to the same 
       const request = 'use Foundry to chase my unpaid invoices, summary to me@example.com';
       person.external(`types to the agent: "${request}"`);
       transcript.push({ who: 'person', text: request });
-      const p = await a.call('propose_flow', { request, template: 'invoice-chase', settings: { summaryTo: 'me@example.com' } });
+      const p = await a.call('propose_flow', { request, ...(await buildInvoiceChase(a, 'me@example.com')) });
       const d = await a.call('dry_run', { proposalId: p.proposalId });
       assert.equal(d.passed, true);
       mark('firstVerified');
