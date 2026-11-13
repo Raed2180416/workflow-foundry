@@ -6,6 +6,26 @@ Everything else is linked from it.
 **Exactly where the project stands (placement against the vision, every idea with its status, what runs, the next
 agent's queue): [STATUS.md](STATUS.md).**
 
+## At a glance
+
+AI assistants are capable but unreliable: they improvise every time, make different mistakes on each run, and
+cannot be trusted to act on their own. Workflow Foundry has them **build the automation instead of doing the task
+directly**: the assistant designs a small step-by-step workflow, tests it on practice cases, repairs it when a check
+fails, and the workflow runs only after a person approves it. Ordinary code checks every step.
+
+- **Works inside the assistants people already use:** Claude Code, Codex, Cursor and OpenCode, through MCP.
+- **Safe by design:** refuses requests it cannot carry out safely (for example, emailing an address the user never
+  gave), runs code in a sandbox, and keeps a hash-chained record of every run.
+- **Results so far** (details under Status):
+  - On 60 unseen AutomationBench tasks, a low-cost model (Claude Haiku) inside Foundry's harness passed **29**,
+    against **9** on its own, in a pre-registered test (exact p = 1.1e-5). Opus alone passed 26 at about 13 times the
+    cost; that comparison is descriptive and was not tested.
+  - On 1,693 sealed SOP-Bench cases, workflows built by Haiku were correct in all three repeat runs on **87.6%** of
+    cases, against 67.1% for a Haiku agent working case by case, at about a third of the cost. The pre-registered 90%
+    target was not met, and is reported as such.
+- **Try it without an API key:** `npm install && npm run demo` (Node 24+).
+- **Status:** a research system, in progress. [STATUS.md](STATUS.md) has the exact state.
+
 ## What this is
 
 Foundry lets agents **construct small, bounded, typed workflows for a specific task**
